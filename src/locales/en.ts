@@ -1,0 +1,162 @@
+export const en = {
+  // Header
+  flights: "Flights",
+  hotels: "Hotels",
+  help: "Help",
+  login: "Sign In",
+  myAccount: "My Account",
+  supportLine: "Support",
+
+  // TrustBar
+  sslSecurity: "256-bit SSL Security",
+  customerSupport: "24/7 Customer Support",
+  iataMember: "IATA Member",
+  happyPassengers: "100,000+ Happy Passengers",
+
+  // SearchHero
+  heroTitle: "Find the Best Flight and Hotel Deals",
+  flight: "Flight",
+  hotel: "Hotel",
+  bookingCheck: "Check Booking",
+
+  // Flight Form
+  oneWay: "One Way",
+  roundTrip: "Round Trip",
+  multiCity: "Multi City",
+  group: "Group",
+  from: "From",
+  to: "To",
+  departureDate: "Departure Date",
+  returnDate: "Return Date",
+  passenger: "Passenger",
+  passengers: "Passengers",
+  class: "Class",
+  economy: "Economy",
+  business: "Business",
+  adult: "Adult",
+  child: "Child",
+  infant: "Infant",
+  searchFlight: "Search Flights",
+  addFlight: "Add Flight",
+  removeFlight: "Remove Flight",
+  cityOrAirport: "City or airport",
+  selectDate: "Select date",
+  noResult: "No results found",
+  flightN: "Flight",
+  apply: "Apply",
+
+  // Hotel Form
+  cityOrHotel: "City / Hotel Name",
+  checkIn: "Check In",
+  checkOut: "Check Out",
+  room: "Room",
+  guest: "Guest",
+  searchHotel: "Search Hotels",
+  whereAreYouGoing: "Where are you going?",
+
+  // Booking Check Form
+  pnrQuery: "Ticket Inquiry",
+  pnrCode: "PNR Code",
+  lastName: "Last Name",
+  query: "Search",
+  pnrPlaceholder: "e.g. ABC123",
+  lastNamePlaceholder: "Passenger last name",
+  bookingCheckTitle: "Check Booking",
+
+  // Group Form
+  groupFlightRequest: "Group Flight Request (10+ Passengers)",
+  fullName: "Full Name",
+  phone: "Phone",
+  email: "Email",
+  estimatedPassengers: "Estimated Passengers",
+  requestQuote: "Request Quote",
+  optional: "Optional",
+
+  // Advanced Search
+  advancedSearch: "Advanced Search",
+  airlinePreference: "Airline Preference",
+  directOnly: "Direct Flights Only",
+  flexibleDates: "Flexible Dates (±3 days)",
+  baggageIncluded: "Baggage Included",
+
+  // Popular Routes
+  popularRoutes: "Popular Flight Routes",
+  pricesFrom: "Prices from",
+  pricesFromSuffix: "",
+  prev: "Previous",
+  next: "Next",
+
+  // Benefits
+  howItWorks: "How It Works?",
+  stepSearch: "Search",
+  stepSearchDesc: "Search for your flight, compare hundreds of options",
+  stepSelect: "Select",
+  stepSelectDesc: "Choose the best flight, compare prices and times",
+  stepBuy: "Purchase",
+  stepBuyDesc: "Buy your ticket instantly with secure payment",
+
+  // Blog
+  travelGuide: "Travel Guide",
+  readMore: "Read More",
+  viewAll: "View All",
+  recentPosts: "Recent Posts",
+  minRead: "min read",
+  postNotFound: "Post not found.",
+  backToBlog: "Back to Blog",
+
+  // Footer
+  corporate: "Corporate",
+  aboutUs: "About Us",
+  contact: "Contact",
+  careers: "Careers",
+  kvkk: "Privacy Policy",
+  cookiePolicy: "Cookie Policy",
+  popularFlightRoutes: "Popular Routes",
+  helpCenter: "Help",
+  faq: "FAQ",
+  bookingCheckFooter: "Check Booking",
+  cancelRefund: "Cancellation & Refund",
+  supportLineFooter: "Support: 0850 555 00 00",
+  footerDesc: "A secure and fast flight ticket platform. Compare the best prices and book your ticket instantly.",
+  allRightsReserved: "All rights reserved.",
+  sslSecure: "SSL Secure",
+
+  // Cookie Consent
+  cookieMessage: "This site uses cookies to improve your experience. By continuing, you accept our",
+  cookiePolicyLink: "Cookie Policy",
+  cookieMessageEnd: ".",
+  accept: "Accept",
+  moreInfo: "More Info",
+
+  // Validation
+  selectOrigin: "Please select origin",
+  selectDestination: "Please select destination",
+  sameAirportError: "Departure and arrival cannot be the same",
+  sameCityError: "Departure and arrival cannot be the same city",
+  returnDateError: "Return date cannot be before departure date",
+  selectCity: "Please enter a city or hotel name",
+  checkOutError: "Check-out must be after check-in",
+  enterPnr: "Please enter PNR code",
+  enterLastName: "Please enter last name",
+  enterFullName: "Please enter full name",
+  enterPhone: "Please enter phone number",
+  enterEmail: "Please enter email",
+  minPassengers: "Minimum 10 passengers required",
+
+  // Language
+  language: "English",
+  languageCode: "en",
+
+  // Calendar
+  months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"] as string[],
+  weekdays: ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"] as string[],
+
+  // Misc
+  menuOpen: "Open menu",
+  searchPlaceholder: "Search...",
+  decrease: "decrease",
+  increase: "increase",
+  ageRange12: "12+ yrs",
+  ageRange2_12: "2-12 yrs",
+  ageRange0_2: "0-2 yrs",
+};

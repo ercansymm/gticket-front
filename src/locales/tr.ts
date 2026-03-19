@@ -1,0 +1,162 @@
+export const tr = {
+  // Header
+  flights: "Uçuşlar",
+  hotels: "Oteller",
+  help: "Yardım",
+  login: "Giriş Yap",
+  myAccount: "Hesabım",
+  supportLine: "Destek Hattı",
+
+  // TrustBar
+  sslSecurity: "256-bit SSL Güvenlik",
+  customerSupport: "7/24 Müşteri Desteği",
+  iataMember: "IATA Üyesi",
+  happyPassengers: "100.000+ Mutlu Yolcu",
+
+  // SearchHero
+  heroTitle: "En Ucuz Uçak Bileti ve Otel Konaklamasını Bulun",
+  flight: "Uçuş",
+  hotel: "Otel",
+  bookingCheck: "Bilet Sorgula",
+
+  // Flight Form
+  oneWay: "Tek Yön",
+  roundTrip: "Gidiş Dönüş",
+  multiCity: "Çoklu Uçuş",
+  group: "Grup",
+  from: "Nereden",
+  to: "Nereye",
+  departureDate: "Gidiş Tarihi",
+  returnDate: "Dönüş Tarihi",
+  passenger: "Yolcu",
+  passengers: "Yolcu",
+  class: "Sınıf",
+  economy: "Ekonomi",
+  business: "Business",
+  adult: "Yetişkin",
+  child: "Çocuk",
+  infant: "Bebek",
+  searchFlight: "Uçuş Ara",
+  addFlight: "Uçuş Ekle",
+  removeFlight: "Uçuş Sil",
+  cityOrAirport: "Şehir veya havalimanı",
+  selectDate: "Tarih seçin",
+  noResult: "Sonuç bulunamadı",
+  flightN: "Uçuş",
+  apply: "Uygula",
+
+  // Hotel Form
+  cityOrHotel: "Şehir / Otel Adı",
+  checkIn: "Giriş Tarihi",
+  checkOut: "Çıkış Tarihi",
+  room: "Oda",
+  guest: "Misafir",
+  searchHotel: "Otel Ara",
+  whereAreYouGoing: "Nereye gidiyorsunuz?",
+
+  // Booking Check Form
+  pnrQuery: "Bilet Sorgula",
+  pnrCode: "PNR Kodu",
+  lastName: "Soyadı",
+  query: "Sorgula",
+  pnrPlaceholder: "Örn: ABC123",
+  lastNamePlaceholder: "Yolcu soyadı",
+  bookingCheckTitle: "Bilet Sorgula",
+
+  // Group Form
+  groupFlightRequest: "Grup Uçuş Talebi (10+ Yolcu)",
+  fullName: "Ad Soyad",
+  phone: "Telefon",
+  email: "E-posta",
+  estimatedPassengers: "Tahmini Yolcu Sayısı",
+  requestQuote: "Teklif İste",
+  optional: "Opsiyonel",
+
+  // Advanced Search
+  advancedSearch: "Detaylı Arama",
+  airlinePreference: "Havayolu Tercihi",
+  directOnly: "Direkt Uçuş",
+  flexibleDates: "Esnek Tarih (±3 gün)",
+  baggageIncluded: "Bagajlı Arama",
+
+  // Popular Routes
+  popularRoutes: "Popüler Uçuş Hatları",
+  pricesFrom: "Fiyatlar",
+  pricesFromSuffix: "'den başlayan",
+  prev: "Önceki",
+  next: "Sonraki",
+
+  // Benefits
+  howItWorks: "Nasıl Çalışır?",
+  stepSearch: "Ara",
+  stepSearchDesc: "İstediğiniz uçuşu arayın, yüzlerce seçeneği karşılaştırın",
+  stepSelect: "Seç",
+  stepSelectDesc: "Size en uygun uçuşu seçin, fiyatları ve saatleri karşılaştırın",
+  stepBuy: "Satın Al",
+  stepBuyDesc: "Güvenli ödeme ile biletinizi anında alın",
+
+  // Blog
+  travelGuide: "Seyahat Rehberi",
+  readMore: "Devamını Oku",
+  viewAll: "Tümünü Gör",
+  recentPosts: "Son Yazılar",
+  minRead: "dk okuma",
+  postNotFound: "Yazı bulunamadı.",
+  backToBlog: "Blog'a Dön",
+
+  // Footer
+  corporate: "Kurumsal",
+  aboutUs: "Hakkımızda",
+  contact: "İletişim",
+  careers: "Kariyer",
+  kvkk: "KVKK Aydınlatma Metni",
+  cookiePolicy: "Çerez Politikası",
+  popularFlightRoutes: "Popüler Rotalar",
+  helpCenter: "Yardım",
+  faq: "Sıkça Sorulan Sorular",
+  bookingCheckFooter: "Bilet Sorgula",
+  cancelRefund: "İptal ve İade",
+  supportLineFooter: "Destek Hattı: 0850 555 00 00",
+  footerDesc: "Güvenli ve hızlı uçak bileti satın alma platformu. En uygun fiyatları karşılaştırın, anında biletinizi alın.",
+  allRightsReserved: "Tüm hakları saklıdır.",
+  sslSecure: "SSL Güvenli",
+
+  // Cookie Consent
+  cookieMessage: "Bu site, deneyiminizi iyileştirmek için çerezler kullanmaktadır. Devam ederek",
+  cookiePolicyLink: "Çerez Politikamızı",
+  cookieMessageEnd: "kabul etmiş olursunuz.",
+  accept: "Kabul Et",
+  moreInfo: "Detaylı Bilgi",
+
+  // Validation
+  selectOrigin: "Kalkış noktası seçiniz",
+  selectDestination: "Varış noktası seçiniz",
+  sameAirportError: "Kalkış ve varış aynı olamaz",
+  sameCityError: "Kalkış ve varış aynı şehir olamaz",
+  returnDateError: "Dönüş tarihi gidişten önce olamaz",
+  selectCity: "Şehir veya otel adı giriniz",
+  checkOutError: "Çıkış tarihi girişten sonra olmalı",
+  enterPnr: "PNR kodu giriniz",
+  enterLastName: "Soyadı giriniz",
+  enterFullName: "Ad soyad giriniz",
+  enterPhone: "Telefon giriniz",
+  enterEmail: "E-posta giriniz",
+  minPassengers: "En az 10 yolcu olmalı",
+
+  // Language
+  language: "Türkçe",
+  languageCode: "tr",
+
+  // Calendar
+  months: ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"] as string[],
+  weekdays: ["Pt", "Sa", "Ça", "Pe", "Cu", "Ct", "Pz"] as string[],
+
+  // Misc
+  menuOpen: "Menüyü aç",
+  searchPlaceholder: "Ara...",
+  decrease: "azalt",
+  increase: "artır",
+  ageRange12: "12+ yaş",
+  ageRange2_12: "2-12 yaş",
+  ageRange0_2: "0-2 yaş",
+};

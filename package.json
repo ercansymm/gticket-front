@@ -1,0 +1,45 @@
+{
+  "name": "atabilet-next",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@emailjs/browser": "^4.4.1",
+    "@hookform/resolvers": "^5.2.2",
+    "@reduxjs/toolkit": "^2.11.2",
+    "axios": "^1.13.6",
+    "flatpickr": "^4.6.13",
+    "isotope-layout": "^3.0.6",
+    "next": "16.1.7",
+    "next-auth": "^4.24.13",
+    "react": "19.2.3",
+    "react-countup": "^6.5.3",
+    "react-dom": "19.2.3",
+    "react-flatpickr": "^4.0.11",
+    "react-hook-form": "^7.71.2",
+    "react-intersection-observer": "^10.0.3",
+    "react-modal-video": "^2.0.2",
+    "react-paginate": "^8.3.0",
+    "react-range": "^1.10.0",
+    "react-redux": "^9.2.0",
+    "react-simple-star-rating": "^5.1.7",
+    "react-toastify": "^11.0.5",
+    "swiper": "^12.1.2",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/isotope-layout": "^3.0.15",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/react-modal-video": "^1.2.3",
+    "eslint": "^9",
+    "eslint-config-next": "16.1.7",
+    "typescript": "^5"
+  }
+}
