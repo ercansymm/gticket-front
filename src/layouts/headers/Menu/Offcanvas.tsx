@@ -1,5 +1,6 @@
 import Link from "next/link";
 import MobileMenu from "./MobileMenu";
+import Logo from "../../../components/common/Logo";
 import { useState } from "react";
 import { useTranslation } from "../../../context/LanguageContext";
 
@@ -29,7 +30,7 @@ const Offcanvas = ({ offCanvas, setOffCanvas }: MobileSidebarProps) => {
             <nav className="tgmobile__menu-box">
                <div onClick={() => setOffCanvas(false)} className="close-btn"><i className="fa-solid fa-xmark"></i></div>
                <div className="nav-logo">
-                  <Link href="/" className="bb-logo bb-logo--dark">AtaBilet</Link>
+                  <Logo variant="dark" />
                </div>
                <div className="tgmobile__search">
                   <form onSubmit={handleSubmit}>

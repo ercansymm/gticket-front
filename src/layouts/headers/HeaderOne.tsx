@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import Offcanvas from "./Menu/Offcanvas";
+import Logo from "../../components/common/Logo";
 import { useTranslation } from "../../context/LanguageContext";
 
 /** AtaBilet — Header. Logo, navigasyon, destek hattı, bilet sorgula, dil seçici ve giriş butonu. */
@@ -25,7 +26,7 @@ const HeaderOne = () => {
             <div className="container">
                <div className="bb-header-inner">
                   <div className="bb-header-left">
-                     <Link className="bb-logo bb-logo--white" href="/">AtaBilet</Link>
+                     <Logo variant="white" />
                      <ul className="bb-nav-links d-none d-lg-flex">
                         <li><Link href="/">{t.flights}</Link></li>
                         <li><Link href="/hotel-grid">{t.hotels}</Link></li>
