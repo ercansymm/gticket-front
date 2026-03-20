@@ -49,11 +49,11 @@ const About = () => {
                <div className="col-lg-7">
                   <div className="tg-about-su-content-wrap ml-80 mb-30 wow fadeInRight" data-wow-delay=".4s" data-wow-duration=".6s">
                      <div className="tg-location-section-title mb-30">
-                        <h5 className="tg-section-su-subtitle mb-15">Who we are</h5>
-                        <h2 className="tg-section-su-title text-capitalize mb-15">Here is Great opportunity for adventure & travels</h2>
-                        <p className="tg-section-su-para mb-10">Dorem ipsum dolor sit amet consectetur adipiscing elit. Mauris nullam the Lorem<br />
-                           ipsum dolor sit amet consectetur adipiscing elit. consectetur adipiscing elit.<br />
-                           Mauris nullam the Lorem ipsum dolor</p>
+                        <h5 className="tg-section-su-subtitle mb-15">Biz Kimiz</h5>
+                        <h2 className="tg-section-su-title text-capitalize mb-15">Macera ve seyahat için harika fırsatlar</h2>
+                        <p className="tg-section-su-para mb-10">AtaBilet olarak yurt içi ve yurt dışı uçak biletlerini en uygun fiyatlarla<br />
+                           sunuyoruz. Tüm havayollarını karşılaştırın, güvenle satın alın.<br />
+                           7/24 müşteri desteği ile her zaman yanınızdayız.</p>
                      </div>
                      <div className="tg-about-su-funfact-wrap mb-40">
                         {feature_data.map((item) => (
@@ -70,7 +70,7 @@ const About = () => {
                      </div>
                      <div className="tg-about-su-author-wrap">
                         <div className="mr-30 mb-10">
-                           <Link className="tg-btn tg-btn-hover" href="/about">More About Us</Link>
+                           <Link className="tg-btn tg-btn-hover" href="/about">Hakkımızda</Link>
                         </div>
                         <div className="tg-about-su-author d-flex align-items-center mb-10">
                            <div className="tg-about-su-author-avatar mr-10">

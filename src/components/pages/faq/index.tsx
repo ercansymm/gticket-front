@@ -1,19 +1,19 @@
 import FaqArea from "./FaqArea"
-import Cta from "../pricing/Cta"
-import HeaderThree from "../../../layouts/headers/HeaderThree"
+import FooterOne from "../../../layouts/footers/FooterOne"
+import HeaderOne from "../../../layouts/headers/HeaderOne"
+import TrustBar from "../../homes/home-one/TrustBar"
 import BreadCrumb from "../../common/BreadCrumb"
-import FooterThree from "../../../layouts/footers/FooterThree"
 
 const Faq = () => {
    return (
       <>
-         <HeaderThree />
+         <TrustBar />
+         <HeaderOne />
          <main>
-            <BreadCrumb title="Frequently Asked Question" sub_title="Faq’s" />
+            <BreadCrumb title="Sıkça Sorulan Sorular" sub_title="SSS" />
             <FaqArea />
-            <Cta />
          </main>
-         <FooterThree />
+         <FooterOne />
       </>
    )
 }

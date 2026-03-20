@@ -28,13 +28,13 @@ const CheckoutArea = () => {
                   <div className="col-xl-3 col-lg-4">
                      <div className="tg-blog-sidebar top-sticky mb-30">
                         <div className="tg-blog-sidebar-box mb-30">
-                           <h2 className="tg-checkout-form-title tg-checkout-form-title-3 mb-15">Your Order</h2>
+                           <h2 className="tg-checkout-form-title tg-checkout-form-title-3 mb-15">Siparişiniz</h2>
                            <div className="tg-checkout-order-table table-responsive">
                               <table className="table">
                                  <thead>
                                     <tr>
-                                       <th className="product-name">Product</th>
-                                       <th className="product-total">Subtotal</th>
+                                       <th className="product-name">Ürün</th>
+                                       <th className="product-total">Ara Toplam</th>
                                     </tr>
                                  </thead>
                                  <tbody>
@@ -52,15 +52,15 @@ const CheckoutArea = () => {
                                  </tbody>
                                  <tfoot>
                                     <tr className="cart-subtotal">
-                                       <th>Subtotal</th>
+                                       <th>Ara Toplam</th>
                                        <td><span className="amount">${total.toFixed(2)}</span></td>
                                     </tr>
                                     <tr className="cart-subtotal">
-                                       <th>Shipping</th>
+                                       <th>Kargo</th>
                                        <td><span className="amount">${shipCost.toFixed(2)}</span></td>
                                     </tr>
                                     <tr className="cart-subtotal">
-                                       <th>Total</th>
+                                       <th>Toplam</th>
                                        <td><span className="amount">${(total + shipCost).toFixed(2)}</span></td>
                                     </tr>
                                  </tfoot>
@@ -68,25 +68,25 @@ const CheckoutArea = () => {
                            </div>
                         </div>
                         <div className="tg-blog-sidebar-box mb-25">
-                           <h2 className="tg-checkout-form-title tg-checkout-form-title-3 mb-15">Payment</h2>
+                           <h2 className="tg-checkout-form-title tg-checkout-form-title-3 mb-15">Ödeme</h2>
                            <div className="tg-checkout-payment mb-5">
                               <input type="radio" name="payment" id="payment" />
-                              <label htmlFor="payment">Direct bank transfer</label>
+                              <label htmlFor="payment">Banka Havalesi / EFT</label>
                            </div>
-                           <p className="tg-checkout-para mb-5">Make your payment directly into
-                              our bank account. Please use your
-                              Order ID as the payment reference.
-                              Your order will not be shipped until
-                              the funds have cleared in our
-                              account.
+                           <p className="tg-checkout-para mb-5">Ödemenizi doğrudan banka
+                              hesabımıza yapabilirsiniz. Lütfen
+                              sipariş numaranızı ödeme açıklaması
+                              olarak belirtin. Ödeme hesabımıza
+                              ulaşana kadar siparişiniz
+                              işleme alınmayacaktır.
                            </p>
                            <div className="tg-checkout-payment">
                               <input type="radio" name="payment" id="payment2" />
-                              <label htmlFor="payment2">Cas on Delivery</label>
+                              <label htmlFor="payment2">Kapıda Ödeme</label>
                            </div>
                         </div>
                         <div className="tg-checkout-form-btn">
-                           <button type="submit" className="tg-btn w-100">Place Your Order</button>
+                           <button type="submit" className="tg-btn w-100">Siparişi Tamamla</button>
                         </div>
                      </div>
                   </div>

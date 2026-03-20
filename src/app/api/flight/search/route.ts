@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     const validation = validateBody(flightSearchSchema, parsed.data);
     if (!validation.success) return validation.response;
 
-    const { signal, clear } = withTimeout(15_000);
+    const { signal, clear } = withTimeout(60_000);
     const res = await fetch(`${API_BASE}/api/flight/search`, {
       method: "POST",
       headers: {

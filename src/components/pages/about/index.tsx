@@ -1,5 +1,6 @@
-import FooterSix from "../../../layouts/footers/FooterSix"
-import HeaderThree from "../../../layouts/headers/HeaderThree"
+import FooterOne from "../../../layouts/footers/FooterOne"
+import HeaderOne from "../../../layouts/headers/HeaderOne"
+import TrustBar from "../../homes/home-one/TrustBar"
 import BreadCrumb from "../../common/BreadCrumb"
 import AboutArea from "./AboutArea"
 import Choose from "./Choose"
@@ -8,14 +9,15 @@ import Cta from "./Cta"
 const About = () => {
    return (
       <>
-         <HeaderThree />
+         <TrustBar />
+         <HeaderOne />
          <main>
-            <BreadCrumb title="About Us" sub_title="About Us" />
+            <BreadCrumb title="Hakkımızda" sub_title="Hakkımızda" />
             <AboutArea />
             <Choose />
             <Cta />
          </main>
-         <FooterSix />
+         <FooterOne />
       </>
    )
 }

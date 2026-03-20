@@ -9,7 +9,7 @@ import type {
  * Health check — API'nin çalışıp çalışmadığını kontrol et
  */
 export const healthCheck = async (): Promise<string> => {
-  const response = await apiClient.get('/auth/test');
+  const response = await apiClient.get('/health');
   return response.data;
 };
 
@@ -17,7 +17,7 @@ export const healthCheck = async (): Promise<string> => {
  * Uçuş arama — POST /api/flight/search
  */
 export const searchFlights = async (params: FlightSearchRequest): Promise<FlightSearchResponse> => {
-  const response = await apiClient.post<FlightSearchResponse>('/api/flight/search', params);
+  const response = await apiClient.post<FlightSearchResponse>('/flight/search', params);
   return response.data;
 };
 
@@ -25,7 +25,7 @@ export const searchFlights = async (params: FlightSearchRequest): Promise<Flight
  * Uçuş tahsis — POST /api/flight/allocate
  */
 export const allocateFlight = async (params: AllocateRequest): Promise<AllocateResponse> => {
-  const response = await apiClient.post<AllocateResponse>('/api/flight/allocate', params);
+  const response = await apiClient.post<AllocateResponse>('/flight/allocate', params);
   return response.data;
 };
 
@@ -34,6 +34,6 @@ export const allocateFlight = async (params: AllocateRequest): Promise<AllocateR
  * ⚠️ Şu an UpdatePassenger hatası var, backend düzeltecek
  */
 export const bookFlight = async (params: BookRequest): Promise<BookResponse> => {
-  const response = await apiClient.post<BookResponse>('/api/flight/book', params);
+  const response = await apiClient.post<BookResponse>('/flight/book', params);
   return response.data;
 };

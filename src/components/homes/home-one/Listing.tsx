@@ -25,8 +25,8 @@ const Listing = () => {
             <div className="row justify-content-center">
                <div className="col-lg-6">
                   <div className="tg-listing-section-title-wrap text-center mb-40">
-                     <h5 className="tg-section-su-subtitle su-subtitle-2 mb-15 wow fadeInUp" data-wow-delay=".4s" data-wow-duration=".9s">Explore the world</h5>
-                     <h2 className="tg-section-su-title text-capitalize wow fadeInUp mb-15" data-wow-delay=".5s" data-wow-duration=".9s">Our Amazing Featured Tour Package The World</h2>
+                     <h5 className="tg-section-su-subtitle su-subtitle-2 mb-15 wow fadeInUp" data-wow-delay=".4s" data-wow-duration=".9s">Dünyayı Keşfedin</h5>
+                     <h2 className="tg-section-su-title text-capitalize wow fadeInUp mb-15" data-wow-delay=".5s" data-wow-duration=".9s">Popüler Uçuş Rotalarımız</h2>
                   </div>
                </div>
             </div>
@@ -35,7 +35,7 @@ const Listing = () => {
                   <div key={item.id} className="col-xl-4 col-lg-4 col-md-6">
                      <div className="tg-listing-card-item tg-listing-su-card-item mb-25">
                         <div className="tg-listing-card-thumb fix mb-25 p-relative">
-                           <Link href="/tour-details">
+                           <Link href="/">
                               <Image className="tg-card-border w-100" src={item.thumb} alt="listing" width={400} height={300} />
                               {item.tag && <span className="tg-listing-item-price-discount">{item.tag}</span>}
                            </Link>
@@ -56,7 +56,7 @@ const Listing = () => {
                                  {item.guest}
                               </span>
                            </div>
-                           <h4 className="tg-listing-card-title mb-10"><Link href="tour-details.html">{item.title}</Link></h4>
+                           <h4 className="tg-listing-card-title mb-10"><Link href="/">{item.title}</Link></h4>
                            <div className="tg-listing-card-duration-tour mb-20">
                               <span className="tg-listing-card-duration-map">
                                  <Location />
@@ -80,7 +80,7 @@ const Listing = () => {
                ))}
                <div className="col-12">
                   <div className="text-center mt-15">
-                     <Link href="/tour-grid-1" className="tg-btn tg-btn-transparent tg-btn-su-transparent">See More Tours</Link>
+                     <Link href="/" className="tg-btn tg-btn-transparent tg-btn-su-transparent">Tüm Rotalar</Link>
                   </div>
                </div>
             </div>

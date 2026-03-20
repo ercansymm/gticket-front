@@ -8,8 +8,8 @@ const LoginArea = () => {
                <div className="col-xl-6 col-lg-8 col-md-10">
                   <div className="tg-login-wrapper">
                      <div className="tg-login-top text-center mb-30">
-                        <h2>Sign in to your account</h2>
-                        <p>Enter your credentials to acces your account.</p>
+                        <h2>Hesabınıza Giriş Yapın</h2>
+                        <p>Hesap bilgilerinizi girerek giriş yapın.</p>
                      </div>
                      <div className="tg-login-form">
                         <div className="tg-tour-about-review-form">

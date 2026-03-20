@@ -31,9 +31,9 @@ const CartArea = () => {
                   {productItem.length === 0 ? (
                      <div className="mb-30">
                         <div className="empty_bag text-center">
-                           <p className="py-3">Your Bag is Empty</p>
-                           <Link href={"/shop"} className="tg-btn">
-                              Go To Shop
+                           <p className="py-3">Sepetiniz boş</p>
+                           <Link href={"/"} className="tg-btn">
+                              Uçuş Ara
                            </Link>
                         </div>
                      </div>
@@ -44,21 +44,21 @@ const CartArea = () => {
                               <table className="table">
                                  <thead>
                                     <tr>
-                                       <th>Item</th>
-                                       <th className="price">Price</th>
-                                       <th>Quantity</th>
-                                       <th className="subtotal">Subtotal</th>
-                                       <th>Remove</th>
+                                       <th>Ürün</th>
+                                       <th className="price">Fiyat</th>
+                                       <th>Adet</th>
+                                       <th className="subtotal">Ara Toplam</th>
+                                       <th>Kaldır</th>
                                     </tr>
                                  </thead>
                                  <tbody>
                                     {productItem.map((item: any, i: any) =>
                                        <tr key={i}>
                                           <td className="product-thumbnail">
-                                             <Link className="thumb" href="/shop-details">
+                                             <Link className="thumb" href="/">
                                                 <Image src={item.thumb} alt="" width={80} height={80} />
                                              </Link>
-                                             <Link className="texts" href="/shop-details">{item.title}</Link>
+                                             <Link className="texts" href="/">{item.title}</Link>
                                           </td>
                                           <td className="product-price2">
                                              <span className="amount">${item.price}.00</span>
@@ -94,20 +94,20 @@ const CartArea = () => {
                            <div className="row">
                               <div className="col-xl-9 col-lg-8 col-md-7">
                                  <div className="tg-cart-coupon-all mb-20">
-                                    <input className="tg-input mb-10" placeholder="Enter Coupun Code" type="text" />
-                                    <button className="tg-btn" type="submit">Apply Coupon</button>
+                                    <input className="tg-input mb-10" placeholder="Kupon Kodu Girin" type="text" />
+                                    <button className="tg-btn" type="submit">Kuponu Uygula</button>
                                  </div>
                               </div>
                               <div className="col-xl-3 col-lg-4 col-md-5">
                                  <div className="tg-cart-page-total mb-20">
                                     <ul className="mb-20">
-                                       <li>Subtotal <span>${total.toFixed(2)}</span></li>
-                                       <li className="borders">Shopping <span>$0.00</span></li>
-                                       <li>Total <span>${total.toFixed(2)}</span></li>
+                                       <li>Ara Toplam <span>${total.toFixed(2)}</span></li>
+                                       <li className="borders">Kargo <span>$0.00</span></li>
+                                       <li>Toplam <span>${total.toFixed(2)}</span></li>
                                     </ul>
                                     <div className="d-flex justify-content-between">
-                                       <Link href="#" className="tg-btn tg-btn-black mb-10">Update</Link>
-                                       <Link href="/checkout" className="tg-btn mb-10">Checkout</Link>
+                                       <Link href="#" className="tg-btn tg-btn-black mb-10">Güncelle</Link>
+                                       <Link href="/checkout" className="tg-btn mb-10">Ödeme</Link>
                                     </div>
                                  </div>
                               </div>

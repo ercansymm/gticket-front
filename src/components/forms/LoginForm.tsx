@@ -10,19 +10,19 @@ const LoginForm = () => {
                <input className="input" type="text" placeholder="E-mail" />
             </div>
             <div className="col-lg-12 mb-25">
-               <input className="input" type="password" placeholder="Password" />
+               <input className="input" type="password" placeholder="Şifre" />
             </div>
             <div className="col-lg-12">
                <div className="d-flex align-items-center justify-content-between">
                   <div className="review-checkbox d-flex align-items-center mb-25">
                      <input className="tg-checkbox" type="checkbox" id="australia" />
-                     <label htmlFor="australia" className="tg-label">Remember me</label>
+                     <label htmlFor="australia" className="tg-label">Beni hatırla</label>
                   </div>
                   <div className="tg-login-navigate mb-25">
-                     <Link href="/register">Register Now</Link>
+                     <Link href="/register">Kayıt Ol</Link>
                   </div>
                </div>
-               <button type="submit" className="tg-btn w-100">Sign In</button>
+               <button type="submit" className="tg-btn w-100">Giriş Yap</button>
             </div>
          </div>
       </form>

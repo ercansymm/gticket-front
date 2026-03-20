@@ -1,17 +1,19 @@
-import FooterSix from "../../../../layouts/footers/FooterSix"
-import HeaderThree from "../../../../layouts/headers/HeaderThree"
+import FooterOne from "../../../../layouts/footers/FooterOne"
+import HeaderOne from "../../../../layouts/headers/HeaderOne"
+import TrustBar from "../../../homes/home-one/TrustBar"
 import BreadCrumb from "../../../common/BreadCrumb"
 import WishlistArea from "./WishlistArea"
 
 const Wishlist = () => {
   return (
     <>
-      <HeaderThree />
+      <TrustBar />
+      <HeaderOne />
       <main>
-        <BreadCrumb title="Wishlist Page" sub_title="Wishlist" />
+        <BreadCrumb title="Favoriler" sub_title="Favoriler" />
         <WishlistArea />
       </main>
-      <FooterSix />
+      <FooterOne />
     </>
   )
 }

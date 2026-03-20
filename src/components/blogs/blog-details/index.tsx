@@ -1,17 +1,19 @@
 import BlogDetailsArea from "./BlogDetailsArea"
-import FooterFive from "../../../layouts/footers/FooterFive"
-import HeaderThree from "../../../layouts/headers/HeaderThree"
+import FooterOne from "../../../layouts/footers/FooterOne"
+import HeaderOne from "../../../layouts/headers/HeaderOne"
+import TrustBar from "../../homes/home-one/TrustBar"
 import BreadCrumb from "../../common/BreadCrumb"
 
 const BlogDetails = () => {
   return (
     <>
-      <HeaderThree />
+      <TrustBar />
+      <HeaderOne />
       <main>
-        <BreadCrumb title="Blog Details" sub_title="Exploring The Green Spac Realar Residence Area Harmony" />
+        <BreadCrumb title="Blog Detay" sub_title="Blog" />
         <BlogDetailsArea />
       </main>
-      <FooterFive />
+      <FooterOne />
     </>
   )
 }

@@ -37,7 +37,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
     publisher: {
       "@type": "Organization",
       name: "AtaBilet",
-      logo: { "@type": "ImageObject", url: "https://www.atabilet.com/assets/img/logo/logo-green.png" },
+      logo: { "@type": "ImageObject", url: "https://www.atabilet.com/favicon.svg" },
     },
     mainEntityOfPage: `https://www.atabilet.com/blog/${slug}`,
   };

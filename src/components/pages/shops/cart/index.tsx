@@ -1,17 +1,19 @@
-import FooterSix from "../../../../layouts/footers/FooterSix"
-import HeaderThree from "../../../../layouts/headers/HeaderThree"
+import FooterOne from "../../../../layouts/footers/FooterOne"
+import HeaderOne from "../../../../layouts/headers/HeaderOne"
+import TrustBar from "../../../homes/home-one/TrustBar"
 import BreadCrumb from "../../../common/BreadCrumb"
 import CartArea from "./CartArea"
 
 const Cart = () => {
    return (
       <>
-         <HeaderThree />
+         <TrustBar />
+         <HeaderOne />
          <main>
-            <BreadCrumb title="Cart Page" sub_title="Cart" />
+            <BreadCrumb title="Sepet" sub_title="Sepet" />
             <CartArea />
          </main>
-         <FooterSix />
+         <FooterOne />
       </>
    )
 }

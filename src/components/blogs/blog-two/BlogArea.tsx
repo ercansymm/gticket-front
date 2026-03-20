@@ -30,7 +30,7 @@ const BlogArea = () => {
                      {currentItems.map((item) => (
                         <div key={item.id} className="tg-blog-standard-item mb-40">
                            <div className="tg-blog-standard-thumb mb-15">
-                              <Link href="/blog-details"><Image className="w-100" src={item.thumb} alt="blog" width={400} height={300} /></Link>
+                              <Link href="/blog"><Image className="w-100" src={item.thumb} alt="blog" width={400} height={300} /></Link>
                            </div>
                            <div className="tg-blog-standard-content">
                               <div className="tg-blog-standard-date mb-10">
@@ -54,12 +54,12 @@ const BlogArea = () => {
                                  </span>
                               </div>
                               <h2 className="tg-blog-standard-title">
-                                 <Link href="/blog-details">{item.title}</Link>
+                                 <Link href="/blog">{item.title}</Link>
                               </h2>
                               <p className="mb-20">{item.desc}</p>
                               <div className="tg-blog-sidebar-btn">
-                                 <Link href="/blog-details" className="tg-btn tg-btn-switch-animation">
-                                    <Button text="Read More" />
+                                 <Link href="/blog" className="tg-btn tg-btn-switch-animation">
+                                    <Button text="Devamını Oku" />
                                  </Link>
                               </div>
                            </div>

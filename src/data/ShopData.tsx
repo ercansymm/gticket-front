@@ -1,4 +1,4 @@
-interface DataType {
+﻿interface DataType {
    id: number;
    page: string;
    thumb: string;
@@ -639,7 +639,7 @@ const shop_data: DataType[] = [
       total_review: 8,
       duration: "3 Days",
       guest: "12 People",
-      desc: "when an unknown printer took a galley of type and scrambled imake type specimen bookbut also the leap into electronic."
+      desc: "Yurt ici ve yurt disi ucak biletlerini en uygun fiyatlarla AtaBilet ile satin alin."
    },
    {
       id: 2,
@@ -655,7 +655,7 @@ const shop_data: DataType[] = [
       total_review: 5,
       duration: "3 Days",
       guest: "12 People",
-      desc: "when an unknown printer took a galley of type and scrambled imake type specimen bookbut also the leap into electronic."
+      desc: "Yurt ici ve yurt disi ucak biletlerini en uygun fiyatlarla AtaBilet ile satin alin."
    },
    {
       id: 3,
@@ -669,7 +669,7 @@ const shop_data: DataType[] = [
       total_review: 10,
       duration: "5 Days",
       guest: "12 People",
-      desc: "when an unknown printer took a galley of type and scrambled imake type specimen bookbut also the leap into electronic."
+      desc: "Yurt ici ve yurt disi ucak biletlerini en uygun fiyatlarla AtaBilet ile satin alin."
    },
    {
       id: 4,
@@ -684,7 +684,7 @@ const shop_data: DataType[] = [
       total_review: 4,
       duration: "3 Days",
       guest: "12 People",
-      desc: "when an unknown printer took a galley of type and scrambled imake type specimen bookbut also the leap into electronic."
+      desc: "Yurt ici ve yurt disi ucak biletlerini en uygun fiyatlarla AtaBilet ile satin alin."
    },
    {
       id: 5,
@@ -698,7 +698,7 @@ const shop_data: DataType[] = [
       total_review: 3,
       duration: "3 Days",
       guest: "12 People",
-      desc: "when an unknown printer took a galley of type and scrambled imake type specimen bookbut also the leap into electronic."
+      desc: "Yurt ici ve yurt disi ucak biletlerini en uygun fiyatlarla AtaBilet ile satin alin."
    },
    {
       id: 6,
@@ -712,7 +712,7 @@ const shop_data: DataType[] = [
       total_review: 15,
       duration: "4 Days",
       guest: "12 People",
-      desc: "when an unknown printer took a galley of type and scrambled imake type specimen bookbut also the leap into electronic."
+      desc: "Yurt ici ve yurt disi ucak biletlerini en uygun fiyatlarla AtaBilet ile satin alin."
    },
    {
       id: 7,
@@ -726,7 +726,7 @@ const shop_data: DataType[] = [
       total_review: 3,
       duration: "3 Days",
       guest: "12 People",
-      desc: "when an unknown printer took a galley of type and scrambled imake type specimen bookbut also the leap into electronic."
+      desc: "Yurt ici ve yurt disi ucak biletlerini en uygun fiyatlarla AtaBilet ile satin alin."
    },
    {
       id: 8,
@@ -740,7 +740,7 @@ const shop_data: DataType[] = [
       total_review: 15,
       duration: "4 Days",
       guest: "12 People",
-      desc: "when an unknown printer took a galley of type and scrambled imake type specimen bookbut also the leap into electronic."
+      desc: "Yurt ici ve yurt disi ucak biletlerini en uygun fiyatlarla AtaBilet ile satin alin."
    },
 
    // shop_5

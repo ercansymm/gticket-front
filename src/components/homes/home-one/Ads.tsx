@@ -20,7 +20,7 @@ const Ads = () => {
                            </div>
                         </div>
                         <div className="tg-ads-btn">
-                           <Link href="/tour-details" className="tg-btn">Book NOw</Link>
+                           <Link href="/" className="tg-btn">Hemen Ara</Link>
                         </div>
                      </div>
                   </div>

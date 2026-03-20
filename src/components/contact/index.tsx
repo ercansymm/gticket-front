@@ -1,17 +1,19 @@
-import FooterFive from "../../layouts/footers/FooterFive"
-import HeaderThree from "../../layouts/headers/HeaderThree"
+import FooterOne from "../../layouts/footers/FooterOne"
+import HeaderOne from "../../layouts/headers/HeaderOne"
+import TrustBar from "../homes/home-one/TrustBar"
 import BreadCrumb from "../common/BreadCrumb"
 import ContactArea from "./ContactArea"
 
 const Contact = () => {
    return (
       <>
-         <HeaderThree />
+         <TrustBar />
+         <HeaderOne />
          <main>
-            <BreadCrumb title="Contact With Us" sub_title="Contact" />
+            <BreadCrumb title="İletişim" sub_title="İletişim" />
             <ContactArea />
          </main>
-         <FooterFive />
+         <FooterOne />
       </>
    )
 }

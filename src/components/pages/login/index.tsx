@@ -1,15 +1,17 @@
-import FooterFive from "../../../layouts/footers/FooterFive"
-import InnerHeader from "../../../layouts/headers/InnerHeader"
+import FooterOne from "../../../layouts/footers/FooterOne"
+import HeaderOne from "../../../layouts/headers/HeaderOne"
+import TrustBar from "../../homes/home-one/TrustBar"
 import LoginArea from "./LoginArea"
 
 const Login = () => {
    return (
       <>
-         <InnerHeader />
+         <TrustBar />
+         <HeaderOne />
          <main>
             <LoginArea />
          </main>
-         <FooterFive />
+         <FooterOne />
       </>
    )
 }

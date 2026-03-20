@@ -1,15 +1,17 @@
-import FooterFive from "../../../layouts/footers/FooterFive"
-import InnerHeader from "../../../layouts/headers/InnerHeader"
+import FooterOne from "../../../layouts/footers/FooterOne"
+import HeaderOne from "../../../layouts/headers/HeaderOne"
+import TrustBar from "../../homes/home-one/TrustBar"
 import RegisterArea from "./RegisterArea"
 
 const Register = () => {
    return (
       <>
-         <InnerHeader />
+         <TrustBar />
+         <HeaderOne />
          <main>
             <RegisterArea />
          </main>
-         <FooterFive />
+         <FooterOne />
       </>
    )
 }

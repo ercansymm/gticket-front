@@ -8,8 +8,8 @@ const PricingArea = () => {
             <div className="row">
                <div className="col-lg-12">
                   <div className="tg-location-section-title text-center mb-40">
-                     <h5 className="tg-section-subtitle mb-15 wow fadeInUp" data-wow-delay=".3s" data-wow-duration=".9s">Best Holiday Packages</h5>
-                     <h2 className="mb-15 text-capitalize wow fadeInUp" data-wow-delay=".4s" data-wow-duration=".9s">Popular Travel Destinations <br /> Available Worldwide</h2>
+                     <h5 className="tg-section-subtitle mb-15 wow fadeInUp" data-wow-delay=".3s" data-wow-duration=".9s">Fiyat Paketleri</h5>
+                     <h2 className="mb-15 text-capitalize wow fadeInUp" data-wow-delay=".4s" data-wow-duration=".9s">Size Uygun Planı <br /> Seçin</h2>
                   </div>
                </div>
                {pricing_data.map((item) => (
@@ -24,7 +24,7 @@ const PricingArea = () => {
                            <span className="dates">/month *</span>
                         </div>
                         <div className="tg-pricing-btn mb-40">
-                           <Link className="tg-btn text-center w-100" href="/contact">Buy Now</Link>
+                           <Link className="tg-btn text-center w-100" href="/contact">Satın Al</Link>
                         </div>
                         <div className="tg-pricing-list">
                            <ul>

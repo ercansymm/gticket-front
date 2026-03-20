@@ -19,9 +19,9 @@ const WishlistArea = () => {
             {wishlistItems.length === 0 ? (
               <div className="mb-30">
                 <div className="empty_bag text-center">
-                  <p className="py-3">Your Wishlist is Empty</p>
-                  <Link href={"/shop"} className="tg-btn">
-                    Go To Shop
+                  <p className="py-3">Favori listeniz boş</p>
+                  <Link href={"/"} className="tg-btn">
+                     Uçuş Ara
                   </Link>
                 </div>
               </div>
@@ -32,26 +32,26 @@ const WishlistArea = () => {
                     <table className="table">
                       <thead>
                         <tr>
-                          <th>Item</th>
-                          <th className="price">Price</th>
-                          <th className="product-quantity">Add to Cart</th>
-                          <th>Remove</th>
+                          <th>Ürün</th>
+                          <th className="price">Fiyat</th>
+                          <th className="product-quantity">Sepete Ekle</th>
+                          <th>Kaldır</th>
                         </tr>
                       </thead>
                       <tbody>
                         {wishlistItems.map((item: any, i: any) =>
                           <tr key={i}>
                             <td className="product-thumbnail">
-                              <Link className="thumb" href="/shop-details">
+                              <Link className="thumb" href="/">
                                 <Image src={item.thumb} alt="" width={100} height={100} />
                               </Link>
-                              <Link className="texts" href="/shop-details">{item.title}</Link>
+                              <Link className="texts" href="/">{item.title}</Link>
                             </td>
                             <td className="product-price2">
                               <span className="amount">${item.price}.00</span>
                             </td>
                             <td className="product-add-to-cart">
-                              <button onClick={() => dispatch(addToCart(item))} className="tg-btn">Add To Cart</button>
+                              <button onClick={() => dispatch(addToCart(item))} className="tg-btn">Sepete Ekle</button>
                             </td>
                             <td className="product-remove">
                               <a onClick={() => dispatch(removeFromWishlist(item))} style={{ cursor: "pointer" }}><i className="fa fa-times"></i></a>

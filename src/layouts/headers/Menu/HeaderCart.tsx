@@ -24,9 +24,9 @@ const HeaderCart = () => {
          {productItem.length === 0 ? (
             <div className="mb-30">
                <div className="empty_bag text-center">
-                  <p className="py-3">Your Bag is Empty</p>
-                  <Link href={"/shop"} className="swiftcart-btn-black swiftcart-btn-black-large">
-                     Go To Shop
+                  <p className="py-3">Sepetiniz boş</p>
+                  <Link href={"/"} className="tg-btn">
+                     Uçuş Ara
                   </Link>
                </div>
             </div>
@@ -36,12 +36,12 @@ const HeaderCart = () => {
                   <div key={i} className="cart-content-wrap d-flex align-items-center justify-content-between">
                      <div className="cart-img-info d-flex align-items-center">
                         <div className="cart-thumb">
-                           <Link href="/shop-details">
+                           <Link href="/">
                               <Image src={item.thumb} alt="" width={60} height={60} />
                            </Link>
                         </div>
                         <div className="cart-content">
-                           <h5 className="cart-title"><Link href="/shop-details">{item.title}</Link></h5>
+                           <h5 className="cart-title"><Link href="/">{item.title}</Link></h5>
                            <span> ${item.price} <del>${item.delete_price}</del></span>
                         </div>
                      </div>
@@ -51,12 +51,12 @@ const HeaderCart = () => {
                   </div>
                ))}
                <div className="cart-total-price d-flex align-items-center justify-content-between">
-                  <span>Total:</span>
+                  <span>Toplam:</span>
                   <span>${total.toFixed(2)}</span>
                </div>
                <div className="minicart-btn">
-                  <Link className="cart-btn mb-10" href="/cart"><span>Shopping Cart</span></Link>
-                  <Link className="cart-btn cart-btn-black" href="/checkout"><span>Checkout</span></Link>
+                  <Link className="cart-btn mb-10" href="/cart"><span>Sepet</span></Link>
+                  <Link className="cart-btn cart-btn-black" href="/checkout"><span>Ödeme</span></Link>
                </div></>
          )}
       </div>

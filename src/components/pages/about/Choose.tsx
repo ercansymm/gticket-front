@@ -15,20 +15,20 @@ const choose_data: DataType[] = [
    {
       id: 1,
       icon: (<><Choose6 /></>),
-      title: "Ultimate flexibility",
-      desc: "when an unknown printer took galleof type and scrambled make type peci bookhas survived five.",
+      title: "Esnek İptal & Değişiklik",
+      desc: "Biletinizde değişiklik veya iptal işlemlerini kolayca yapın. Esnek fiyat seçenekleriyle seyahatinizi planlamak artık çok kolay.",
    },
    {
       id: 2,
       icon: (<><Choose7 /></>),
-      title: "Memorable experiences",
-      desc: "when an unknown printer took galleof type and scrambled make type peci bookhas survived five.",
+      title: "En Uygun Fiyat Garantisi",
+      desc: "Tüm havayollarını tek seferde karşılaştırın. En uygun fiyatlı uçak biletlerini AtaBilet ayrıcalığıyla satın alın.",
    },
    {
       id: 3,
       icon: (<><Choose8 /></>),
-      title: "Award winning support",
-      desc: "when an unknown printer took galleof type and scrambled make type peci bookhas survived five.",
+      title: "7/24 Müşteri Desteği",
+      desc: "Seyahat öncesinde, sırasında ve sonrasında profesyonel destek ekibimiz her zaman yanınızda.",
    },
 ];
 
@@ -40,10 +40,10 @@ const Choose = () => {
             <div className="row justify-content-center">
                <div className="col-xl-6 col-lg-7 col-md-9">
                   <div className="tg-chose-section-title text-center mb-35">
-                     <h5 className="tg-section-subtitle mb-15 wow fadeInUp" data-wow-delay=".3s" data-wow-duration=".1s">What we do</h5>
-                     <h2 className="mb-15 text-capitalize wow fadeInUp" data-wow-delay=".4s" data-wow-duration=".9s">We Arrange the Best Tour<br /> Ever Possible</h2>
-                     <p className="text-capitalize wow fadeInUp mb-35" data-wow-delay=".5s" data-wow-duration=".9s">when an unknown printer took a galley of type and scrambled make type
-                        specimen bookhas survived not only five.</p>
+                     <h5 className="tg-section-subtitle mb-15 wow fadeInUp" data-wow-delay=".3s" data-wow-duration=".1s">Neden AtaBilet?</h5>
+                     <h2 className="mb-15 text-capitalize wow fadeInUp" data-wow-delay=".4s" data-wow-duration=".9s">En İyi Seyahat Deneyimini<br /> Sizin İçin Sunuyoruz</h2>
+                     <p className="text-capitalize wow fadeInUp mb-35" data-wow-delay=".5s" data-wow-duration=".9s">Binlerce havayolu arasından en uygun fiyatlı uçak biletlerini
+                        bulmanız için teknolojimizi ve deneyimimizi bir araya getiriyoruz.</p>
                   </div>
                </div>
             </div>

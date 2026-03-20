@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Button from "../../common/Button";
 import Image from "next/image";
 
 const Ads = () => {
@@ -7,8 +6,8 @@ const Ads = () => {
       <div className="tg-blog-ads p-relative mb-40">
          <Image className="w-100" src="/assets/img/blog/sidebar/ads.jpg" alt="ads" width={300} height={400} />
          <div className="tg-blog-ads-btn">
-            <Link href="/tour-details" className="tg-btn tg-btn-transparent tg-btn-switch-animation">
-               <Button text="Book Now" />
+            <Link href="/" className="tg-btn tg-btn-transparent tg-btn-switch-animation">
+               <span>Uçuş Ara</span>
             </Link>
          </div>
       </div>

@@ -16,9 +16,7 @@ const BreadCrumb = ({ sub_title, title }: DataType) => {
                      <h2 className="tg-breadcrumb-title mb-5 fs-40">{title}</h2>
                      <div className="tg-breadcrumb-list-4">
                         <ul>
-                           <li><Link href="/">Home</Link></li>
-                           <li><i className="fa-sharp fa-solid fa-angle-right"></i></li>
-                           <li>Pages</li>
+                           <li><Link href="/">Ana Sayfa</Link></li>
                            <li><i className="fa-sharp fa-solid fa-angle-right"></i></li>
                            <li>{sub_title}</li>
                         </ul>
