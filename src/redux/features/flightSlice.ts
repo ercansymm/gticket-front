@@ -3,7 +3,7 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import { searchFlights, allocateFlight } from '../../api/flight';
 import type {
   FlightSearchRequest, FlightSearchResponse,
-  AllocateRequest, AllocateResponse,
+  AllocateClientRequest, AllocateResponse,
   FlightResult
 } from '@/types';
 
@@ -21,6 +21,9 @@ interface FlightState {
   allocateResult: AllocateResponse | null;
   allocateLoading: boolean;
   allocateError: string | null;
+
+  // Allocate sonrası tutulan searchId
+  searchId: string | null;
 }
 
 const initialState: FlightState = {
@@ -32,6 +35,7 @@ const initialState: FlightState = {
   allocateResult: null,
   allocateLoading: false,
   allocateError: null,
+  searchId: null,
 };
 
 // Uçuş arama
@@ -50,10 +54,10 @@ export const searchFlightsThunk = createAsyncThunk(
   }
 );
 
-// Uçuş tahsis
+// Uçuş tahsis — istemci sadece searchId + productId gönderir
 export const allocateFlightThunk = createAsyncThunk(
   'flight/allocate',
-  async (params: AllocateRequest, { rejectWithValue }) => {
+  async (params: AllocateClientRequest, { rejectWithValue }) => {
     try {
       const result = await allocateFlight(params);
       return result;
@@ -81,6 +85,7 @@ const flightSlice = createSlice({
       state.searchError = null;
       state.selectedFlight = null;
       state.allocateResult = null;
+      state.searchId = null;
     },
     clearAllocate: (state) => {
       state.allocateResult = null;
@@ -111,6 +116,7 @@ const flightSlice = createSlice({
     builder.addCase(allocateFlightThunk.fulfilled, (state, action) => {
       state.allocateLoading = false;
       state.allocateResult = action.payload;
+      state.searchId = action.payload.searchId ?? null;
     });
     builder.addCase(allocateFlightThunk.rejected, (state, action) => {
       state.allocateLoading = false;

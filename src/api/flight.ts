@@ -1,39 +1,89 @@
 import apiClient from './client';
 import type {
   FlightSearchRequest, FlightSearchResponse,
-  AllocateRequest, AllocateResponse,
-  BookRequest, BookResponse
-} from '@/types';
+  AllocateClientRequest, AllocateResponse,
+  RemoveProductClientRequest, RemoveProductResponse,
+  MakePaymentClientRequest, MakePaymentResponse,
+  FinalizeShoppingClientRequest, FinalizeShoppingResponse,
+  PokeShoppingFileClientRequest, PokeShoppingFileResponse,
+  ReadShoppingFileClientRequest, ReadShoppingFileResponse,
+  LogoutClientRequest, LogoutResponse,
+  BookingDetailResponse,
+} from '@/types/flight';
+import type {
+  UpdatePassengersClientRequest, UpdatePassengersResponse,
+  MakePreBookingClientRequest, MakePreBookingResponse,
+} from '@/types/booking';
 
-/**
- * Health check — API'nin çalışıp çalışmadığını kontrol et
- */
 export const healthCheck = async (): Promise<string> => {
   const response = await apiClient.get('/health');
   return response.data;
 };
 
-/**
- * Uçuş arama — POST /api/flight/search
- */
 export const searchFlights = async (params: FlightSearchRequest): Promise<FlightSearchResponse> => {
   const response = await apiClient.post<FlightSearchResponse>('/flight/search', params);
   return response.data;
 };
 
-/**
- * Uçuş tahsis — POST /api/flight/allocate
- */
-export const allocateFlight = async (params: AllocateRequest): Promise<AllocateResponse> => {
+export const allocateFlight = async (params: AllocateClientRequest): Promise<AllocateResponse> => {
   const response = await apiClient.post<AllocateResponse>('/flight/allocate', params);
   return response.data;
 };
 
-/**
- * Rezervasyon — POST /api/flight/book
- * ⚠️ Şu an UpdatePassenger hatası var, backend düzeltecek
- */
-export const bookFlight = async (params: BookRequest): Promise<BookResponse> => {
-  const response = await apiClient.post<BookResponse>('/flight/book', params);
+export const updatePassengers = async (params: UpdatePassengersClientRequest): Promise<UpdatePassengersResponse> => {
+  const response = await apiClient.post<UpdatePassengersResponse>('/flight/update-passengers', params);
+  return response.data;
+};
+
+export const makePreBooking = async (params: MakePreBookingClientRequest): Promise<MakePreBookingResponse> => {
+  const response = await apiClient.post<MakePreBookingResponse>('/flight/make-prebooking', params);
+  return response.data;
+};
+
+// Sepetten ürün kaldırma
+export const removeProduct = async (params: RemoveProductClientRequest): Promise<RemoveProductResponse> => {
+  const response = await apiClient.post<RemoveProductResponse>('/flight/remove-product', params);
+  return response.data;
+};
+
+// Ödeme — kart bilgisi BFF üzerinden gider, istemci sadece searchId + kart gönderir
+export const makePayment = async (params: MakePaymentClientRequest): Promise<MakePaymentResponse> => {
+  const response = await apiClient.post<MakePaymentResponse>('/flight/make-payment', params);
+  return response.data;
+};
+
+// Biletleme — e-ticket numaraları döner
+export const finalizeShopping = async (params: FinalizeShoppingClientRequest): Promise<FinalizeShoppingResponse> => {
+  const response = await apiClient.post<FinalizeShoppingResponse>('/flight/finalize-shopping', params);
+  return response.data;
+};
+
+// Durum sorgulama (polling)
+export const pokeShoppingFile = async (params: PokeShoppingFileClientRequest): Promise<PokeShoppingFileResponse> => {
+  const response = await apiClient.post<PokeShoppingFileResponse>('/flight/poke-shopping-file', params);
+  return response.data;
+};
+
+// Tam detay okuma
+export const readShoppingFile = async (params: ReadShoppingFileClientRequest): Promise<ReadShoppingFileResponse> => {
+  const response = await apiClient.post<ReadShoppingFileResponse>('/flight/read-shopping-file', params);
+  return response.data;
+};
+
+// Oturum kapatma
+export const logoutSession = async (params: LogoutClientRequest): Promise<LogoutResponse> => {
+  const response = await apiClient.post<LogoutResponse>('/flight/logout', params);
+  return response.data;
+};
+
+// Booking sorgulama (DB)
+export const getBookingById = async (bookingId: string): Promise<BookingDetailResponse> => {
+  const response = await apiClient.get<BookingDetailResponse>(`/flight/booking/${encodeURIComponent(bookingId)}`);
+  return response.data;
+};
+
+// PNR ile booking sorgulama (DB)
+export const getBookingByPnr = async (pnr: string): Promise<BookingDetailResponse> => {
+  const response = await apiClient.get<BookingDetailResponse>(`/flight/booking/pnr/${encodeURIComponent(pnr)}`);
   return response.data;
 };

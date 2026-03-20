@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { rateLimit } from '@/lib/rate-limit';
 
 const SENSITIVE_KEYS = [
+  // Komisyon/maliyet bilgileri
   'customerCommissionMin',
   'customerCommissionMax',
   'customerCommissionValue',
@@ -9,6 +10,21 @@ const SENSITIVE_KEYS = [
   'markup',
   'internalPrice',
   'costPrice',
+  'netFare',
+  'systemServiceFee',
+  'lastSellerCommission',
+  // Debug/SOAP bilgileri
+  'rawSoapResponse',
+  'debugInfo',
+  // İç sistem bilgileri
+  'customerInfo',
+  // Session bilgileri (allocate response'unda da silinir)
+  'sessionId',
+  'sessionToken',
+  // Kredi kartı bilgileri (response'da dönmemeli)
+  'cardNumber',
+  'cvv',
+  'creditCard',
 ];
 
 /** Recursively strip business-sensitive fields before sending to client. */

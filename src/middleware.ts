@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
-const PROTECTED_PATHS = ["/checkout", "/wishlist"];
+const PROTECTED_PATHS = ["/wishlist"];
 
 export async function middleware(request: NextRequest) {
   // HTTPS redirect in production

@@ -1,4 +1,3 @@
-// Re-export from centralized types — backward compatibility
 export type {
   ApiResponse,
   ApiError,
@@ -13,19 +12,53 @@ export type {
   FlightResult,
   FlightSegmentResult,
   FilterOptions,
-  AllocateRequest,
+  AllocateClientRequest,
   AllocateResponse,
   AirBooking,
   BookingItem,
   AllocatePassenger,
   PriceSummary,
+  FlightSessionData,
+  FlightSortRequest,
+  FlightFilterRequest,
+  FlightFilterResponse,
+  BrandedFareItem,
+  FreeBaggageAllowance,
+  AllocateSegment,
+  AllocateBrandedFareItem,
+  AllocateBrandedItem,
+  AllocateBaggageAllowance,
+  PriceItem,
+  // Payment & finalize
+  RemoveProductClientRequest,
+  RemoveProductResponse,
+  MakePaymentClientRequest,
+  MakePaymentResponse,
+  FinalizeShoppingClientRequest,
+  FinalizeShoppingResponse,
+  TicketInfo,
+  // Polling & detail
+  PokeShoppingFileClientRequest,
+  PokeShoppingFileResponse,
+  ReadShoppingFileClientRequest,
+  ReadShoppingFileResponse,
+  ReadShoppingPassenger,
+  ReadShoppingPayment,
+  // Logout
+  LogoutClientRequest,
+  LogoutResponse,
+  // Booking query
+  BookingDetailResponse,
 } from '../types/flight';
 
 export type {
-  BookRequest,
-  BookPassenger,
+  UpdatePassengersClientRequest,
+  UpdatePassengersResponse,
+  MakePreBookingClientRequest,
+  MakePreBookingResponse,
+  PassengerItem,
   ContactInfo,
-  BookResponse,
+  PreBookingSegment,
 } from '../types/booking';
 
 export type {

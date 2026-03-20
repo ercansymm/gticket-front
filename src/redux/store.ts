@@ -4,6 +4,7 @@ import productSlice from "./features/productSlice";
 import wishlistSlice from "./features/wishlistSlice";
 import flightReducer from "./features/flightSlice";
 import bookingReducer from "./features/bookingSlice";
+import paymentReducer from "./features/paymentSlice";
 
 const store = configureStore({
    reducer: {
@@ -12,6 +13,7 @@ const store = configureStore({
       wishlist: wishlistSlice,
       flight: flightReducer,
       booking: bookingReducer,
+      payment: paymentReducer,
    },
 });
 

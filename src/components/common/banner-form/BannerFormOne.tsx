@@ -340,7 +340,7 @@ const BannerFormOne = () => {
          directFlightsOnly: directOnly,
          refundablesOnly: false,
          searchTimeoutMilliseconds: 0,
-         preferredAirlines: airlines.length > 0 ? airlines.join(',') : null,
+         preferredAirlines: airlines.length > 0 ? airlines : null,
          searchReason: 'SearchAndBook',
       };
 
