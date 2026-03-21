@@ -2818,3 +2818,677 @@ footer,
 .bb-blog-detail__back:hover {
   color: var(--ab-accent);
 }
+
+/* ================================================================
+   STEPPER BAR
+   ================================================================ */
+
+.bb-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  padding: 18px 24px;
+  background: #0B1F3B;
+  border-radius: 12px;
+  margin-bottom: 28px;
+}
+
+.bb-stepper__step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255,255,255,.45);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.bb-stepper__step--active {
+  color: #fff;
+}
+
+.bb-stepper__step--done {
+  color: rgba(255,255,255,.7);
+}
+
+.bb-stepper__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.12);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.bb-stepper__step--active .bb-stepper__icon {
+  background: var(--ab-primary, #E8604C);
+  color: #fff;
+}
+
+.bb-stepper__step--done .bb-stepper__icon {
+  background: #22c55e;
+  color: #fff;
+}
+
+.bb-stepper__text {
+  display: none;
+}
+
+.bb-stepper__connector {
+  width: 40px;
+  height: 2px;
+  background: rgba(255,255,255,.15);
+  margin: 0 8px;
+  border-radius: 2px;
+}
+
+.bb-stepper__connector--done {
+  background: #22c55e;
+}
+
+@media (min-width: 768px) {
+  .bb-stepper__text {
+    display: inline;
+  }
+  .bb-stepper__connector {
+    width: 60px;
+    margin: 0 12px;
+  }
+}
+
+/* ================================================================
+   PASSENGER FORM
+   ================================================================ */
+
+.bb-passenger-form {
+  width: 100%;
+}
+
+.bb-passenger-form__header {
+  margin-bottom: 20px;
+}
+
+.bb-passenger-form__title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0 0 6px;
+}
+
+.bb-passenger-form__subtitle {
+  font-size: 13px;
+  color: #666;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.bb-passenger-form__subtitle-link {
+  color: var(--ab-primary, #E8604C);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* ================================================================
+   PASSENGER PANEL (accordion)
+   ================================================================ */
+
+.bb-pax-panel {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  overflow: hidden;
+  transition: box-shadow .2s;
+}
+
+.bb-pax-panel--open {
+  box-shadow: 0 4px 16px rgba(0,0,0,.08);
+  border-color: #d1d5db;
+}
+
+.bb-pax-panel--error {
+  border-color: #ef4444;
+}
+
+.bb-pax-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 16px 20px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+}
+
+.bb-pax-panel__header:hover {
+  background: #fafafa;
+}
+
+.bb-pax-panel__header--contact {
+  cursor: default;
+}
+
+.bb-pax-panel__header--contact:hover {
+  background: none;
+}
+
+.bb-pax-panel__header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.bb-pax-panel__header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.bb-pax-panel__number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.bb-pax-panel--open .bb-pax-panel__number {
+  background: var(--ab-primary, #E8604C);
+  color: #fff;
+}
+
+.bb-pax-panel__title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+.bb-pax-panel__badge {
+  font-size: 12px;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+
+.bb-pax-panel__badge--adt {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.bb-pax-panel__badge--chd {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.bb-pax-panel__badge--inf {
+  background: #fce7f3;
+  color: #db2777;
+}
+
+.bb-pax-panel__preview {
+  font-size: 13px;
+  color: #22c55e;
+  font-weight: 500;
+}
+
+.bb-pax-panel__chevron {
+  font-size: 14px;
+  color: #9ca3af;
+  transition: transform .2s;
+}
+
+.bb-pax-panel__chevron--open {
+  transform: rotate(180deg);
+}
+
+/* Panel body */
+
+.bb-pax-panel__body {
+  padding: 4px 20px 24px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.bb-pax-panel__notice {
+  font-size: 12px;
+  color: #f59e0b;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin: 12px 0 16px;
+  line-height: 1.5;
+}
+
+.bb-pax-panel__row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.bb-pax-panel__field {
+  flex: 1;
+  min-width: 200px;
+}
+
+.bb-pax-panel__field--gender {
+  flex: 0 0 100%;
+}
+
+.bb-pax-panel__field--checkbox {
+  display: flex;
+  align-items: flex-end;
+  flex: 0 0 auto;
+  min-width: auto;
+  padding-bottom: 4px;
+}
+
+.bb-pax-panel__field--error .bb-pax-panel__input {
+  border-color: #ef4444;
+}
+
+.bb-pax-panel__label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 6px;
+}
+
+.bb-pax-panel__input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #1a1a2e;
+  background: #fff;
+  transition: border-color .15s;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.bb-pax-panel__input:focus {
+  border-color: var(--ab-primary, #E8604C);
+  box-shadow: 0 0 0 3px rgba(232,96,76,.12);
+}
+
+.bb-pax-panel__input::placeholder {
+  color: #9ca3af;
+}
+
+/* Gender radio buttons */
+
+.bb-pax-panel__gender-group {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.bb-pax-panel__gender-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+  transition: all .15s;
+  user-select: none;
+}
+
+.bb-pax-panel__gender-btn input[type="radio"] {
+  accent-color: var(--ab-primary, #E8604C);
+}
+
+.bb-pax-panel__gender-btn--active {
+  border-color: var(--ab-primary, #E8604C);
+  background: rgba(232,96,76,.05);
+  color: var(--ab-primary, #E8604C);
+  font-weight: 500;
+}
+
+/* Checkbox */
+
+.bb-pax-panel__checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.bb-pax-panel__checkbox-label input[type="checkbox"] {
+  accent-color: var(--ab-primary, #E8604C);
+  width: 16px;
+  height: 16px;
+}
+
+/* Phone group */
+
+.bb-pax-panel__phone-group {
+  display: flex;
+  gap: 8px;
+}
+
+.bb-pax-panel__input--phone-code {
+  flex: 0 0 90px;
+  text-align: center;
+}
+
+.bb-pax-panel__input--phone {
+  flex: 1;
+}
+
+/* Error message */
+
+.bb-pax-panel__error {
+  display: block;
+  font-size: 12px;
+  color: #ef4444;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+/* Miles hint */
+
+.bb-pax-panel__miles-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #6b7280;
+  margin-top: 4px;
+  cursor: pointer;
+}
+
+.bb-pax-panel__miles-icon {
+  font-size: 16px;
+}
+
+/* KVKK info */
+
+.bb-pax-panel__kvkk {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.bb-pax-panel__kvkk-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin: 0 0 8px;
+}
+
+.bb-pax-panel__kvkk-text {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.bb-pax-panel__kvkk-link {
+  color: var(--ab-primary, #E8604C);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* ================================================================
+   CHECKOUT PAGE (2-column)
+   ================================================================ */
+
+.bb-checkout {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 16px 60px;
+}
+
+.bb-checkout__layout {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.bb-checkout__main {
+  flex: 1;
+  min-width: 0;
+}
+
+.bb-checkout__sidebar {
+  flex: 0 0 360px;
+  position: sticky;
+  top: 100px;
+}
+
+@media (max-width: 1024px) {
+  .bb-checkout__layout {
+    flex-direction: column;
+  }
+  .bb-checkout__sidebar {
+    flex: none;
+    width: 100%;
+    position: static;
+  }
+}
+
+/* Sidebar card */
+
+.bb-checkout__card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.04);
+}
+
+.bb-checkout__card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin: 0 0 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+/* Flight summary mini */
+
+.bb-checkout__flight-mini {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.bb-checkout__flight-mini-airline {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+.bb-checkout__flight-mini-route {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1a2e;
+  letter-spacing: .5px;
+}
+
+.bb-checkout__flight-mini-arrow {
+  color: #9ca3af;
+  font-size: 14px;
+  margin: 0 6px;
+}
+
+.bb-checkout__flight-mini-detail {
+  font-size: 13px;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+/* Price table */
+
+.bb-checkout__price-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 14px;
+  color: #374151;
+}
+
+.bb-checkout__price-row--total {
+  border-top: 2px solid #e5e7eb;
+  margin-top: 8px;
+  padding-top: 12px;
+  font-weight: 700;
+  font-size: 16px;
+  color: #1a1a2e;
+}
+
+/* Price changed warning */
+
+.bb-checkout__price-warning {
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  color: #dc2626;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Auth banner */
+
+.bb-checkout__auth-banner {
+  border-radius: 8px;
+  padding: 14px 20px;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.bb-checkout__auth-banner--member {
+  background: #f0fdf4;
+  border-left: 4px solid #22c55e;
+  color: #166534;
+}
+
+.bb-checkout__auth-banner--guest {
+  background: #eff6ff;
+  border-left: 4px solid #3b82f6;
+  color: #1e40af;
+}
+
+/* Actions bar */
+
+.bb-checkout__actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+.bb-checkout__btn {
+  padding: 14px 32px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  transition: all .2s;
+}
+
+.bb-checkout__btn--back {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.bb-checkout__btn--back:hover {
+  background: #e2e8f0;
+}
+
+.bb-checkout__btn--next {
+  background: var(--ab-primary, #E8604C);
+  color: #fff;
+}
+
+.bb-checkout__btn--next:hover {
+  opacity: .9;
+}
+
+.bb-checkout__btn--next:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+/* Bottom sticky bar (mobile) */
+
+.bb-checkout__bottom-bar {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .bb-checkout__bottom-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: #0B1F3B;
+    color: #fff;
+    padding: 14px 20px;
+    box-shadow: 0 -4px 20px rgba(0,0,0,.15);
+  }
+  .bb-checkout__bottom-bar-info {
+    font-size: 12px;
+    color: rgba(255,255,255,.7);
+  }
+  .bb-checkout__bottom-bar-price {
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+  }
+  .bb-checkout__bottom-bar-btn {
+    background: var(--ab-primary, #E8604C);
+    color: #fff;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .bb-checkout__bottom-bar-btn:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+  }
+  .bb-checkout {
+    padding-bottom: 100px;
+  }
+}

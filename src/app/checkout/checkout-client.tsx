@@ -1,179 +1,235 @@
 "use client";
 
-import { useEffect } from 'react';
-import { useSelector } from 'react-redux';
+import { useEffect, useCallback, useRef } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import HeaderOne from '@/layouts/headers/HeaderOne';
 import FooterOne from '@/layouts/footers/FooterOne';
-import type { RootState } from '@/redux/store';
+import PassengerForm from '@/components/booking/PassengerForm';
+import { updatePassengersThunk } from '@/redux/features/bookingSlice';
+import { setStep, setPassengers, setContactInfo } from '@/redux/features/bookingSlice';
+import type { RootState, AppDispatch } from '@/redux/store';
+import type { PassengerItem, ContactInfo } from '@/types/booking';
 
 export default function CheckoutClient() {
   const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
   const { data: session } = useSession();
-  const { allocateResult, selectedFlight, searchParams } = useSelector(
+  const formRef = useRef<HTMLFormElement | null>(null);
+
+  const { allocateResult, selectedFlight, searchId } = useSelector(
     (state: RootState) => state.flight
   );
+  const {
+    updatePassengersLoading,
+    updatePassengersError,
+    updatePassengersDone,
+  } = useSelector((state: RootState) => state.booking);
 
+  // No allocate → back to home
   useEffect(() => {
     if (!allocateResult) {
       router.push('/');
     }
   }, [allocateResult, router]);
 
-  if (!allocateResult || !selectedFlight) {
-    return null;
-  }
+  // Set booking step
+  useEffect(() => {
+    dispatch(setStep('passenger'));
+  }, [dispatch]);
+
+  if (!allocateResult || !selectedFlight) return null;
 
   const { priceSummary, passengers, isPriceChanged } = allocateResult;
+  if (!priceSummary) return null;
 
-  if (!priceSummary) {
-    return null;
-  }
+  const paxCounts = passengers.reduce((acc, p) => {
+    const t = (p.type ?? 'ADT').toUpperCase();
+    if (t === 'CHD' || t === 'CHILD') acc.child++;
+    else if (t === 'INF' || t === 'INFANT') acc.infant++;
+    else acc.adult++;
+    return acc;
+  }, { adult: 0, child: 0, infant: 0 });
+
+  const paxSummaryText = [
+    paxCounts.adult > 0 ? `${paxCounts.adult} Yetişkin` : '',
+    paxCounts.child > 0 ? `${paxCounts.child} Çocuk` : '',
+    paxCounts.infant > 0 ? `${paxCounts.infant} Bebek` : '',
+  ].filter(Boolean).join(', ');
+
+  /* ── Submit handler ── */
+  const handlePassengerSubmit = useCallback(
+    (passengerItems: PassengerItem[], contact: ContactInfo) => {
+      if (!searchId) return;
+
+      // Save to redux
+      dispatch(setPassengers(passengerItems));
+      dispatch(setContactInfo(contact));
+
+      // Send to API
+      dispatch(updatePassengersThunk({
+        searchId,
+        passengers: passengerItems,
+        contact,
+      }));
+    },
+    [dispatch, searchId]
+  );
+
+  /* ── After successful update, navigate to next step ── */
+  useEffect(() => {
+    if (updatePassengersDone) {
+      dispatch(setStep('summary'));
+      // TODO: Navigate to payment/summary page when ready
+    }
+  }, [updatePassengersDone, dispatch]);
 
   return (
     <>
       <HeaderOne />
       <main className="bb-checkout">
-        {/* Misafir / Üye banner */}
-        {session?.user ? (
-          <div className="bb-checkout__auth-banner" style={{
-            background: '#f0fdf4', borderLeft: '4px solid #22c55e', borderRadius: 8,
-            padding: '12px 20px', marginBottom: 20, color: '#166534',
-          }}>
-            Hoş geldiniz, <strong>{session.user.name}</strong>
-          </div>
-        ) : (
-          <div className="bb-checkout__auth-banner" style={{
-            background: '#eff6ff', borderLeft: '4px solid #3b82f6', borderRadius: 8,
-            padding: '16px 20px', marginBottom: 20, color: '#1e40af',
-          }}>
-            <p style={{ margin: 0, marginBottom: 10 }}>
-              Misafir olarak devam edebilirsiniz. Üye olarak giriş yaparsanız biletlerinizi hesabınızdan takip edebilirsiniz.
-            </p>
-            <div style={{ display: 'flex', gap: 10 }}>
+        <div className="bb-checkout__layout">
+          {/* ──── LEFT: Main content ──── */}
+          <div className="bb-checkout__main">
+            {/* Auth banner — automatic guest/member detection */}
+            {session?.user ? (
+              <div className="bb-checkout__auth-banner bb-checkout__auth-banner--member">
+                Hoş geldiniz, <strong>{session.user.name || session.user.email}</strong>
+              </div>
+            ) : (
+              <div className="bb-checkout__auth-banner bb-checkout__auth-banner--guest">
+                Misafir olarak devam ediyorsunuz. Biletlerinizi takip etmek için
+                <a href={`/login?callbackUrl=/checkout`} style={{ fontWeight: 600, marginLeft: 4, color: 'inherit', textDecoration: 'underline' }}>
+                  giriş yapabilirsiniz
+                </a>.
+              </div>
+            )}
+
+            {/* Price changed warning */}
+            {isPriceChanged && (
+              <div className="bb-checkout__price-warning">
+                ⚠ Fiyat güncellenmiştir. Lütfen yeni fiyatı kontrol ediniz.
+              </div>
+            )}
+
+            {/* API Error */}
+            {updatePassengersError && (
+              <div className="bb-checkout__price-warning">
+                {updatePassengersError}
+              </div>
+            )}
+
+            {/* Passenger Form */}
+            <PassengerForm
+              passengers={passengers}
+              onSubmit={handlePassengerSubmit}
+              loading={updatePassengersLoading}
+            />
+
+            {/* Action buttons */}
+            <div className="bb-checkout__actions">
               <button
-                className="bb-error-modal__btn bb-error-modal__btn--retry"
-                style={{ padding: '8px 20px', borderRadius: 6, cursor: 'pointer', fontSize: 14 }}
-                onClick={() => {}}
+                type="button"
+                className="bb-checkout__btn bb-checkout__btn--back"
+                onClick={() => router.push('/search-results')}
               >
-                Misafir Olarak Devam Et
+                Geri Dön
               </button>
               <button
-                className="bb-error-modal__btn bb-error-modal__btn--close"
-                style={{ padding: '8px 20px', borderRadius: 6, cursor: 'pointer', fontSize: 14 }}
-                onClick={() => window.open('/login?callbackUrl=/checkout', '_blank')}
+                type="submit"
+                className="bb-checkout__btn bb-checkout__btn--next"
+                disabled={updatePassengersLoading}
+                onClick={() => {
+                  // Trigger form submit via the PassengerForm's form element
+                  const form = document.querySelector('.bb-passenger-form') as HTMLFormElement;
+                  form?.requestSubmit();
+                }}
               >
-                Giriş Yap
+                {updatePassengersLoading ? 'Kaydediliyor...' : 'Devam Et'}
               </button>
             </div>
           </div>
-        )}
 
-        {/* Fiyat değişikliği uyarısı */}
-        {isPriceChanged && (
-          <div className="bb-checkout__price-warning" style={{
-            background: '#fff3f3', border: '1px solid #e74c3c', borderRadius: 8,
-            padding: '12px 20px', marginBottom: 20, color: '#c0392b', fontWeight: 600,
-          }}>
-            ⚠ Fiyat güncellenmiştir. Lütfen yeni fiyatı kontrol ediniz.
+          {/* ──── RIGHT: Sidebar ──── */}
+          <aside className="bb-checkout__sidebar">
+            {/* Flight summary card */}
+            <div className="bb-checkout__card">
+              <h3 className="bb-checkout__card-title">Uçuş Özeti</h3>
+              <div className="bb-checkout__flight-mini">
+                <div>
+                  <div className="bb-checkout__flight-mini-airline">
+                    {selectedFlight.airlineName}
+                    <span style={{ fontWeight: 400, color: '#6b7280', marginLeft: 8, fontSize: 13 }}>
+                      {selectedFlight.flightNumber}
+                    </span>
+                  </div>
+                  <div className="bb-checkout__flight-mini-route">
+                    {selectedFlight.departureTime}
+                    <span className="bb-checkout__flight-mini-arrow">→</span>
+                    {selectedFlight.arrivalTime}
+                  </div>
+                  <div className="bb-checkout__flight-mini-detail">
+                    {selectedFlight.originCode} — {selectedFlight.destinationCode}
+                    {selectedFlight.durationFormatted && (
+                      <span style={{ marginLeft: 12 }}>{selectedFlight.durationFormatted}</span>
+                    )}
+                  </div>
+                  <div className="bb-checkout__flight-mini-detail">
+                    {selectedFlight.departureDate}
+                  </div>
+                  {selectedFlight.isDirect ? (
+                    <span style={{ fontSize: 12, color: '#22c55e', fontWeight: 500 }}>Direkt Uçuş</span>
+                  ) : (
+                    <span style={{ fontSize: 12, color: '#f59e0b', fontWeight: 500 }}>{selectedFlight.stopText}</span>
+                  )}
+                </div>
+              </div>
+              <div style={{ fontSize: 13, color: '#6b7280', marginTop: 8 }}>
+                {paxSummaryText}
+              </div>
+            </div>
+
+            {/* Price summary card */}
+            <div className="bb-checkout__card">
+              <h3 className="bb-checkout__card-title">Fiyat Özeti</h3>
+              <div className="bb-checkout__price-row">
+                <span>Bilet Ücreti</span>
+                <span>{priceSummary.totalBaseFare.toFixed(2)} {priceSummary.currency}</span>
+              </div>
+              <div className="bb-checkout__price-row">
+                <span>Vergiler</span>
+                <span>{priceSummary.totalTaxes.toFixed(2)} {priceSummary.currency}</span>
+              </div>
+              <div className="bb-checkout__price-row">
+                <span>Hizmet Bedeli</span>
+                <span>{priceSummary.totalServiceFee.toFixed(2)} {priceSummary.currency}</span>
+              </div>
+              <div className="bb-checkout__price-row bb-checkout__price-row--total">
+                <span>Toplam</span>
+                <span>{priceSummary.grandTotal.toFixed(2)} {priceSummary.currency}</span>
+              </div>
+            </div>
+          </aside>
+        </div>
+
+        {/* Mobile bottom sticky bar */}
+        <div className="bb-checkout__bottom-bar">
+          <div>
+            <div className="bb-checkout__bottom-bar-info">{paxSummaryText} toplam tutar</div>
+            <div className="bb-checkout__bottom-bar-price">
+              {priceSummary.grandTotal.toFixed(2)} {priceSummary.currency}
+            </div>
           </div>
-        )}
-
-        {/* Uçuş Özeti */}
-        <section className="bb-checkout__flight-summary" style={{
-          background: '#fff', borderRadius: 12, padding: 24, marginBottom: 20,
-          boxShadow: '0 2px 8px rgba(0,0,0,.08)',
-        }}>
-          <h2 style={{ fontSize: 18, marginBottom: 16 }}>Uçuş Özeti</h2>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-            <div>
-              <strong>{selectedFlight.airlineName}</strong>
-              <span style={{ marginLeft: 8, color: '#666' }}>{selectedFlight.flightNumber}</span>
-            </div>
-            <div style={{ fontSize: 20, fontWeight: 600 }}>
-              {selectedFlight.departureTime}
-              <span style={{ margin: '0 8px', color: '#999', fontSize: 14 }}>→</span>
-              {selectedFlight.arrivalTime}
-            </div>
-            <div style={{ color: '#666' }}>
-              {selectedFlight.originCode} — {selectedFlight.destinationCode}
-            </div>
-            <div style={{ color: '#888', fontSize: 14 }}>
-              {selectedFlight.durationFormatted}
-            </div>
-          </div>
-          <div style={{ marginTop: 8, color: '#555', fontSize: 14 }}>
-            {selectedFlight.departureDate}
-          </div>
-        </section>
-
-        {/* Fiyat Özeti */}
-        <section className="bb-checkout__price-summary" style={{
-          background: '#fff', borderRadius: 12, padding: 24, marginBottom: 20,
-          boxShadow: '0 2px 8px rgba(0,0,0,.08)',
-        }}>
-          <h2 style={{ fontSize: 18, marginBottom: 16 }}>Fiyat Özeti</h2>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <tbody>
-              <tr>
-                <td style={{ padding: '6px 0' }}>Bilet Ücreti</td>
-                <td style={{ textAlign: 'right' }}>{priceSummary.totalBaseFare.toFixed(2)} {priceSummary.currency}</td>
-              </tr>
-              <tr>
-                <td style={{ padding: '6px 0' }}>Vergiler</td>
-                <td style={{ textAlign: 'right' }}>{priceSummary.totalTaxes.toFixed(2)} {priceSummary.currency}</td>
-              </tr>
-              <tr>
-                <td style={{ padding: '6px 0' }}>Hizmet Bedeli</td>
-                <td style={{ textAlign: 'right' }}>{priceSummary.totalServiceFee.toFixed(2)} {priceSummary.currency}</td>
-              </tr>
-              <tr style={{ borderTop: '2px solid #eee', fontWeight: 700, fontSize: 16 }}>
-                <td style={{ padding: '10px 0' }}>Toplam</td>
-                <td style={{ textAlign: 'right' }}>{priceSummary.grandTotal.toFixed(2)} {priceSummary.currency}</td>
-              </tr>
-            </tbody>
-          </table>
-        </section>
-
-        {/* Yolcular */}
-        <section className="bb-checkout__passengers" style={{
-          background: '#fff', borderRadius: 12, padding: 24, marginBottom: 20,
-          boxShadow: '0 2px 8px rgba(0,0,0,.08)',
-        }}>
-          <h2 style={{ fontSize: 18, marginBottom: 16 }}>Yolcular</h2>
-          {passengers.map((pax) => (
-            <div key={pax.sequenceNo} style={{
-              display: 'flex', justifyContent: 'space-between', padding: '8px 0',
-              borderBottom: '1px solid #f0f0f0',
-            }}>
-              <span>Yolcu {pax.sequenceNo}</span>
-              <span style={{ color: '#666' }}>{pax.type}</span>
-            </div>
-          ))}
-          <p style={{ marginTop: 16, color: '#999', fontStyle: 'italic' }}>
-            Yolcu bilgilerini doldurunuz
-          </p>
-        </section>
-
-        {/* Butonlar */}
-        <div className="bb-checkout__actions" style={{
-          display: 'flex', gap: 12, justifyContent: 'flex-end', marginBottom: 40,
-        }}>
           <button
-            className="bb-error-modal__btn bb-error-modal__btn--close"
-            onClick={() => router.push('/search-results')}
-            style={{ padding: '12px 28px', borderRadius: 8, cursor: 'pointer' }}
+            className="bb-checkout__bottom-bar-btn"
+            disabled={updatePassengersLoading}
+            onClick={() => {
+              const form = document.querySelector('.bb-passenger-form') as HTMLFormElement;
+              form?.requestSubmit();
+            }}
           >
-            Geri Dön
-          </button>
-          <button
-            className="bb-error-modal__btn bb-error-modal__btn--retry"
-            disabled
-            title="Yolcu bilgi formu yakında eklenecek"
-            style={{ padding: '12px 28px', borderRadius: 8, opacity: 0.5, cursor: 'not-allowed' }}
-          >
-            Devam Et
+            {updatePassengersLoading ? 'Kaydediliyor...' : 'Devam'}
           </button>
         </div>
       </main>
