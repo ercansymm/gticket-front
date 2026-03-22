@@ -151,6 +151,48 @@ export const en = {
   months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"] as string[],
   weekdays: ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"] as string[],
 
+  // Search Results
+  flightsFound: "flights found",
+  noFlightsFound: "No Flights Found",
+  noFlightsDesc: "No flights match your search criteria. Please try different dates or routes.",
+  newSearch: "New Search",
+  searchingFlights: "Searching flights...",
+  allocatingFlight: "Allocating flight...",
+  noFilterResults: "No flights match the selected filters.",
+  clearFilters: "Clear Filters",
+  selectFlight: "Select",
+  moreRules: "more rules",
+
+  // Filters
+  filters: "Filters",
+  clearAll: "Clear",
+  priceRange: "Price Range",
+  directFlightsOnly: "Direct Flights Only",
+  refundableOnly: "Refundable Only",
+  airline: "Airline",
+  cabinClass: "Cabin Class",
+  packageType: "Package Type",
+  departureTime: "Departure Time",
+  nonstop: "Nonstop",
+  openFilters: "Filters",
+  closeFilters: "Close Filters",
+
+  // Sort
+  cheapest: "Cheapest",
+  mostExpensive: "Most Expensive",
+  earliest: "Earliest",
+  latest: "Latest",
+  shortest: "Shortest",
+  fewestStops: "Fewest Stops",
+  byAirline: "Airline",
+
+  // Errors
+  errorOccurred: "An Error Occurred",
+  retryBtn: "Retry",
+  homeBtn: "Home",
+  allocateError: "Allocation Error",
+  selectOther: "Select Another Flight",
+
   // Misc
   menuOpen: "Open menu",
   searchPlaceholder: "Search...",

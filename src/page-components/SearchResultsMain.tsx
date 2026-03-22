@@ -1,11 +1,15 @@
+import { useState, useMemo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import HeaderOne from '../layouts/headers/HeaderOne';
 import FooterOne from '../layouts/footers/FooterOne';
 import FlightCard from '../components/booking/FlightCard';
+import FilterSidebar from '../components/booking/FilterSidebar';
+import SortBar from '../components/booking/SortBar';
 import { searchFlightsThunk, setSelectedFlight, allocateFlightThunk, clearAllocate } from '../redux/features/flightSlice';
+import { filterFlights, sortFlights, INITIAL_FILTERS } from '../utils/flightFilters';
 import type { RootState, AppDispatch } from '../redux/store';
-import type { FlightResult } from '@/types';
+import type { FlightResult, FlightFilters, FlightSortBy } from '@/types';
 
 const SearchResultsMain = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -14,14 +18,23 @@ const SearchResultsMain = () => {
     (state: RootState) => state.flight
   );
 
-  const handleSelectFlight = (flight: FlightResult) => {
+  const [filters, setFilters] = useState<FlightFilters>(INITIAL_FILTERS);
+  const [sortBy, setSortBy] = useState<FlightSortBy>('cheapest');
+  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+
+  // Client-side filtreleme + sıralama — API çağrısı yok
+  const displayedFlights = useMemo(() => {
+    if (!searchResults?.flights) return [];
+    const filtered = filterFlights(searchResults.flights, filters);
+    return sortFlights(filtered, sortBy);
+  }, [searchResults?.flights, filters, sortBy]);
+
+  const handleSelectFlight = (flight: FlightResult, brandedFareItemId?: string | null) => {
     if (allocateLoading || !searchResults) return;
     dispatch(setSelectedFlight(flight));
-    // GÜVENLİ: Sadece searchId + productId gönderiliyor
-    // sessionId/sessionToken server-side'da eklenir
     dispatch(allocateFlightThunk({
       searchId: searchResults.searchId!,
-      productId: flight.productId!,
+      productId: brandedFareItemId ?? flight.productId!,
     })).unwrap()
       .then(() => router.push('/checkout'))
       .catch(() => {});
@@ -143,18 +156,54 @@ const SearchResultsMain = () => {
             </div>
           </div>
         )}
+
         <div className="bb-search-results__header">
           <h1>{searchParams?.origin} → {searchParams?.destination}</h1>
           <p>{searchResults.flights.length} uçuş bulundu</p>
         </div>
-        <div className="bb-search-results__list">
-          {searchResults.flights.map((flight) => (
-            <FlightCard
-              key={flight.productId}
-              flight={flight}
-              onSelect={() => handleSelectFlight(flight)}
+
+        {/* Mobil filtre butonu */}
+        <button
+          className="bb-filter-toggle"
+          onClick={() => setMobileFilterOpen(!mobileFilterOpen)}
+        >
+          {mobileFilterOpen ? 'Filtreleri Kapat' : 'Filtreler'}
+        </button>
+
+        <div className="bb-search-results__layout">
+          {/* Sidebar */}
+          <div className={`bb-search-results__sidebar ${mobileFilterOpen ? 'bb-search-results__sidebar--open' : ''}`}>
+            <FilterSidebar
+              options={searchResults.filterOptions}
+              filters={filters}
+              onChange={setFilters}
+              resultCount={displayedFlights.length}
             />
-          ))}
+          </div>
+
+          {/* Ana içerik */}
+          <div className="bb-search-results__content">
+            <SortBar sortBy={sortBy} onChange={setSortBy} />
+
+            {displayedFlights.length === 0 ? (
+              <div className="bb-search-results__empty">
+                <p>Seçili filtrelere uygun uçuş bulunamadı.</p>
+                <button className="bb-filter-sidebar__reset" onClick={() => setFilters(INITIAL_FILTERS)}>
+                  Filtreleri Temizle
+                </button>
+              </div>
+            ) : (
+              <div className="bb-search-results__list">
+                {displayedFlights.map((flight) => (
+                  <FlightCard
+                    key={flight.productId}
+                    flight={flight}
+                    onSelect={(brandedFareItemId) => handleSelectFlight(flight, brandedFareItemId)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </main>
       <FooterOne />

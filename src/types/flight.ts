@@ -113,6 +113,22 @@ export interface FilterOptions {
   hasRefundableFlights: boolean;
   earliestDeparture: string | null;
   latestDeparture: string | null;
+  cabinClasses: string[];
+  farePackages: string[];
+}
+
+export type FlightSortBy = 'cheapest' | 'expensive' | 'earliest' | 'latest' | 'arrival' | 'shortest' | 'stops' | 'airline';
+
+export interface FlightFilters {
+  directOnly: boolean;
+  refundableOnly: boolean;
+  minPrice: number | null;
+  maxPrice: number | null;
+  airlineCodes: string[];
+  cabinClasses: string[];
+  farePackages: string[];
+  departureTimeFrom: string | null;
+  departureTimeTo: string | null;
 }
 
 export interface AirlineFilterItem {

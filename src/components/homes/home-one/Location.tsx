@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Autoplay, Navigation } from 'swiper/modules';
+import Image from "next/image";
 import Link from "next/link";
 import { useTranslation } from "../../../context/LanguageContext";
 import { getPopularRoutes, type PopularRouteDto } from "../../../api/lookup";
@@ -12,36 +11,15 @@ interface RouteItem {
    to: string;
    toCode: string;
    price: string;
+   img: string;
 }
 
 const staticRoutes: RouteItem[] = [
-   { id: 1, from: "İstanbul", fromCode: "IST", to: "Antalya", toCode: "AYT", price: "899" },
-   { id: 2, from: "İstanbul", fromCode: "IST", to: "İzmir", toCode: "ADB", price: "749" },
-   { id: 3, from: "Ankara", fromCode: "ESB", to: "İstanbul", toCode: "IST", price: "649" },
-   { id: 4, from: "İstanbul", fromCode: "IST", to: "Trabzon", toCode: "TZX", price: "799" },
-   { id: 5, from: "İstanbul", fromCode: "IST", to: "Bodrum", toCode: "BJV", price: "949" },
-   { id: 6, from: "Ankara", fromCode: "ESB", to: "Antalya", toCode: "AYT", price: "849" },
+   { id: 1, from: "İstanbul", fromCode: "IST", to: "Antalya", toCode: "AYT", price: "899", img: "/assets/img/location/su/destination.jpg" },
+   { id: 2, from: "İstanbul", fromCode: "IST", to: "İzmir", toCode: "ADB", price: "749", img: "/assets/img/location/su/destination-2.jpg" },
+   { id: 3, from: "Ankara", fromCode: "ESB", to: "İstanbul", toCode: "IST", price: "649", img: "/assets/img/location/su/destination-3.jpg" },
+   { id: 4, from: "İstanbul", fromCode: "IST", to: "Trabzon", toCode: "TZX", price: "799", img: "/assets/img/location/su/destination-4.jpg" },
 ];
-
-const setting = {
-   slidesPerView: 4,
-   loop: true,
-   spaceBetween: 24,
-   autoplay: {
-      delay: 4000,
-      disableOnInteraction: false,
-   },
-   navigation: {
-      prevEl: ".bb-route-prev",
-      nextEl: ".bb-route-next",
-   },
-   breakpoints: {
-      '1400': { slidesPerView: 4 },
-      '1200': { slidesPerView: 3 },
-      '768': { slidesPerView: 2 },
-      '0': { slidesPerView: 1 },
-   },
-};
 
 /** Havalimanı kodundan şehir ismi bul (API'den gelmezse fallback) */
 const getCityName = (code: string, lang: 'tr' | 'en' = 'tr'): string => {
@@ -60,6 +38,17 @@ const getCityName = (code: string, lang: 'tr' | 'en' = 'tr'): string => {
    return (lang === 'tr' ? fallbackTr[code] : fallbackEn[code]) || code;
 };
 
+/** Varış şehrine göre görsel seç */
+const getRouteImage = (toCode: string, index: number): string => {
+   const images = [
+      '/assets/img/location/su/destination.jpg',
+      '/assets/img/location/su/destination-2.jpg',
+      '/assets/img/location/su/destination-3.jpg',
+      '/assets/img/location/su/destination-4.jpg',
+   ];
+   return images[index % images.length];
+};
+
 /** AtaBilet — Popüler uçuş hatları bölümü. */
 const Location = () => {
    const { t, lang } = useTranslation();
@@ -70,13 +59,14 @@ const Location = () => {
          try {
             const data = await getPopularRoutes();
             if (data.length > 0) {
-               setRoutes(data.map((r: PopularRouteDto, i: number) => ({
+               setRoutes(data.slice(0, 4).map((r: PopularRouteDto, i: number) => ({
                   id: i + 1,
                   from: r.originCity && r.originCity !== r.originCode ? r.originCity : getCityName(r.originCode, lang),
                   fromCode: r.originCode,
                   to: r.destinationCity && r.destinationCity !== r.destinationCode ? r.destinationCity : getCityName(r.destinationCode, lang),
                   toCode: r.destinationCode,
                   price: String(r.displayPrice),
+                  img: getRouteImage(r.destinationCode, i),
                })));
             }
          } catch {
@@ -89,43 +79,38 @@ const Location = () => {
    return (
       <section aria-label={t.popularRoutes} className="tg-location-area p-relative z-index-1 pb-65 pt-120">
          <div className="container">
-            <div className="row align-items-center">
-               <div className="col-lg-9">
-                  <div className="tg-location-section-title mb-30">
-                     <h2 className="tg-section-su-title text-capitalize">{t.popularRoutes}</h2>
-                  </div>
-               </div>
-               <div className="col-lg-3">
-                  <div className="tg-listing-5-slider-navigation tg-location-su-slider-navigation text-end mb-30">
-                     <button className="bb-route-prev" aria-label={t.prev}><i className="fa-solid fa-arrow-left-long"></i></button>
-                     <button className="bb-route-next" aria-label={t.next}><i className="fa-solid fa-arrow-right-long"></i></button>
-                  </div>
-               </div>
+            <div className="text-center mb-40">
+               <h2 className="tg-section-su-title text-capitalize">{t.popularRoutes}</h2>
             </div>
-            <div className="row">
-               <div className="col-12">
-                  <Swiper {...setting} modules={[Autoplay, Navigation]} className="swiper-container">
-                     {routes.map((route) => (
-                        <SwiperSlide key={route.id}>
-                           <Link href={`/?from=${route.fromCode}&to=${route.toCode}`} className="bb-route-card mb-30">
-                              <div className="bb-route-card__inner">
-                                 <div className="bb-route-card__cities">
-                                    <span className="bb-route-card__city">{route.from}</span>
-                                    <i className="fa-solid fa-plane bb-route-card__icon"></i>
-                                    <span className="bb-route-card__city">{route.to}</span>
-                                 </div>
-                                 <div className="bb-route-card__codes">
-                                    {route.fromCode} → {route.toCode}
-                                 </div>
-                                 <div className="bb-route-card__price">
-                                    {t.pricesFrom} <strong>{route.price} TL</strong>{t.pricesFromSuffix}
-                                 </div>
-                              </div>
-                           </Link>
-                        </SwiperSlide>
-                     ))}
-                  </Swiper>
-               </div>
+            <div className="bb-route-grid">
+               {routes.map((route) => (
+                  <Link key={route.id} href={`/?from=${route.fromCode}&to=${route.toCode}`} className="bb-route-card">
+                     <div className="bb-route-card__inner">
+                        <div className="bb-route-card__img-wrap">
+                           <Image
+                              src={route.img}
+                              alt={`${route.from} - ${route.to}`}
+                              className="bb-route-card__img"
+                              width={400}
+                              height={200}
+                           />
+                        </div>
+                        <div className="bb-route-card__body">
+                           <div className="bb-route-card__cities">
+                              <span className="bb-route-card__city">{route.from}</span>
+                              <i className="fa-solid fa-plane bb-route-card__icon"></i>
+                              <span className="bb-route-card__city">{route.to}</span>
+                           </div>
+                           <div className="bb-route-card__codes">
+                              {route.fromCode} → {route.toCode}
+                           </div>
+                           <div className="bb-route-card__price">
+                              {t.pricesFrom} <strong>{route.price} TL</strong>{t.pricesFromSuffix}
+                           </div>
+                        </div>
+                     </div>
+                  </Link>
+               ))}
             </div>
          </div>
       </section>

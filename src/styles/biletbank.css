@@ -7,19 +7,19 @@
 
 /* ── CSS Variables ── */
 :root {
-  /* AtaBilet — Yeni Renk Paleti */
-  --ab-primary: #E30A17;
-  --ab-primary-hover: #C50814;
-  --ab-primary-light: rgba(227, 10, 23, 0.08);
-  --ab-secondary: #0B1F3B;
-  --ab-secondary-light: #132D54;
-  --ab-accent: #C9A227;
-  --ab-accent-light: rgba(201, 162, 39, 0.1);
+  /* AtaBilet — Güven Paleti (Mavi + Lacivert + Amber) */
+  --ab-primary: #1A56DB;
+  --ab-primary-hover: #1444B0;
+  --ab-primary-light: rgba(26, 86, 219, 0.08);
+  --ab-secondary: #0F172A;
+  --ab-secondary-light: #1E293B;
+  --ab-accent: #F59E0B;
+  --ab-accent-light: rgba(245, 158, 11, 0.1);
   --ab-bg: #FFFFFF;
-  --ab-bg-light: #F5F5F5;
-  --ab-text: #1F2937;
-  --ab-text-light: #6B7280;
-  --ab-border: #E5E7EB;
+  --ab-bg-light: #F8FAFC;
+  --ab-text: #1E293B;
+  --ab-text-light: #64748B;
+  --ab-border: #E2E8F0;
   --ab-success: #059669;
   --ab-error: #DC2626;
   --ab-radius-sm: 8px;
@@ -29,17 +29,17 @@
   --ab-radius-full: 9999px;
 
   /* Legacy aliases */
-  --bb-primary: #E30A17;
-  --bb-primary-dark: #C50814;
-  --bb-secondary: #E30A17;
+  --bb-primary: #1A56DB;
+  --bb-primary-dark: #1444B0;
+  --bb-secondary: #1A56DB;
   --bb-white: #fff;
   --bb-black: #020615;
-  --bb-gray-100: #f8f8f8;
-  --bb-gray-200: #e6e6e6;
-  --bb-gray-400: #999;
-  --bb-gray-600: #666;
-  --bb-gray-800: #333;
-  --bb-border: #E5E7EB;
+  --bb-gray-100: #F8FAFC;
+  --bb-gray-200: #E2E8F0;
+  --bb-gray-400: #94A3B8;
+  --bb-gray-600: #64748B;
+  --bb-gray-800: #1E293B;
+  --bb-border: #E2E8F0;
   --bb-error: #DC2626;
   --bb-success: #059669;
   --bb-radius: 12px;
@@ -173,7 +173,7 @@
    1. TRUST BAR
    ══════════════════════════════════════════════════════ */
 .bb-trustbar {
-  background: #E30A17;
+  background: var(--ab-primary);
   color: var(--bb-white);
   height: 36px;
   display: flex;
@@ -211,7 +211,9 @@
    1.5. HEADER OVERRIDES
    ══════════════════════════════════════════════════════ */
 .bb-header-wrap {
-  background-color: var(--ab-secondary);
+  background-color: rgba(15, 23, 42, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   height: 60px;
   display: flex;
   align-items: center;
@@ -575,8 +577,15 @@
   padding-bottom: 20px;
   display: flex;
   align-items: center;
-  background-size: cover;
-  background-position: center;
+  background: linear-gradient(135deg, #1E3A5F 0%, #2454A0 40%, #3B82F6 100%);
+  background-size: 200% 200%;
+  animation: bb-hero-gradient 12s ease infinite;
+  overflow: hidden;
+}
+
+@keyframes bb-hero-gradient {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
 /* Override template tg-hero-content padding */
@@ -587,8 +596,41 @@
 .bb-search-hero__overlay {
   position: absolute;
   inset: 0;
-  background: rgba(2, 6, 21, 0.55);
+  background:
+    radial-gradient(ellipse 70% 60% at 10% 80%, rgba(59, 130, 246, 0.2) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 50% at 85% 20%, rgba(245, 158, 11, 0.08) 0%, transparent 50%);
   z-index: 1;
+}
+
+/* Subtle dot grid pattern */
+.bb-search-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 28px 28px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Soft floating orb */
+.bb-search-hero::after {
+  content: '';
+  position: absolute;
+  width: 350px;
+  height: 350px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.06) 0%, transparent 70%);
+  top: -100px;
+  right: -60px;
+  z-index: 1;
+  pointer-events: none;
+  animation: bb-hero-orb 8s ease-in-out infinite alternate;
+}
+
+@keyframes bb-hero-orb {
+  0% { transform: translate(0, 0) scale(1); opacity: 0.4; }
+  100% { transform: translate(-40px, 30px) scale(1.15); opacity: 0.7; }
 }
 
 .bb-search-hero .container {
@@ -1304,27 +1346,27 @@ select.bb-flight-form__input {
 
 /* Selected day (single mode) */
 .flatpickr-day.selected {
-  background-color: #E30A17 !important;
+  background-color: var(--ab-primary) !important;
   color: #ffffff !important;
-  border-color: #E30A17 !important;
+  border-color: var(--ab-primary) !important;
   border-radius: 50% !important;
   box-shadow: none;
 }
 
 /* Range start (gidiş tarihi) */
 .flatpickr-day.startRange {
-  background-color: #E30A17 !important;
+  background-color: var(--ab-primary) !important;
   color: #ffffff !important;
-  border-color: #E30A17 !important;
+  border-color: var(--ab-primary) !important;
   border-radius: 50% 0 0 50% !important;
   box-shadow: none;
 }
 
 /* Range end (dönüş tarihi) */
 .flatpickr-day.endRange {
-  background-color: #E30A17 !important;
+  background-color: var(--ab-primary) !important;
   color: #ffffff !important;
-  border-color: #E30A17 !important;
+  border-color: var(--ab-primary) !important;
   border-radius: 0 50% 50% 0 !important;
   box-shadow: none;
 }
@@ -1337,42 +1379,42 @@ select.bb-flight-form__input {
 .flatpickr-day.selected:hover,
 .flatpickr-day.startRange:hover,
 .flatpickr-day.endRange:hover {
-  background-color: #C50814 !important;
-  border-color: #C50814 !important;
+  background-color: var(--ab-primary-hover) !important;
+  border-color: var(--ab-primary-hover) !important;
 }
 
 /* Today (not selected) */
 .flatpickr-day.today:not(.selected):not(.startRange):not(.endRange) {
-  border-color: #E30A17;
+  border-color: var(--ab-primary);
   background: transparent;
-  color: #E30A17;
+  color: var(--ab-primary);
 }
 
 .flatpickr-day.today:not(.selected):not(.startRange):not(.endRange):hover {
-  background-color: rgba(227, 10, 23, 0.08);
-  color: #E30A17;
-  border-color: #E30A17;
+  background-color: var(--ab-primary-light);
+  color: var(--ab-primary);
+  border-color: var(--ab-primary);
 }
 
 .flatpickr-day.today.selected {
-  background-color: #E30A17 !important;
+  background-color: var(--ab-primary) !important;
   color: #ffffff !important;
 }
 
 /* Hover */
 .flatpickr-day:hover {
-  background-color: rgba(227, 10, 23, 0.08);
-  border-color: rgba(227, 10, 23, 0.08);
+  background-color: var(--ab-primary-light);
+  border-color: var(--ab-primary-light);
   border-radius: 50%;
 }
 
 /* Range (round trip) — aradaki günler */
 .flatpickr-day.inRange {
-  background-color: rgba(227, 10, 23, 0.08) !important;
-  color: #E30A17 !important;
-  border-color: rgba(227, 10, 23, 0.08) !important;
+  background-color: var(--ab-primary-light) !important;
+  color: var(--ab-primary) !important;
+  border-color: var(--ab-primary-light) !important;
   border-radius: 0 !important;
-  box-shadow: -5px 0 0 rgba(227, 10, 23, 0.08), 5px 0 0 rgba(227, 10, 23, 0.08);
+  box-shadow: -5px 0 0 var(--ab-primary-light), 5px 0 0 var(--ab-primary-light);
 }
 
 /* Disabled / past dates */
@@ -1393,8 +1435,8 @@ select.bb-flight-form__input {
 
 .flatpickr-months .flatpickr-prev-month:hover,
 .flatpickr-months .flatpickr-next-month:hover {
-  color: #E30A17;
-  fill: #E30A17;
+  color: var(--ab-primary);
+  fill: var(--ab-primary);
 }
 
 .flatpickr-current-month {
@@ -1521,12 +1563,12 @@ select.bb-flight-form__input {
 }
 
 .bb-calendar-day:hover:not(.bb-calendar-day--disabled):not(.bb-calendar-day--selected):not(.bb-calendar-day--empty) {
-  background: rgba(227, 10, 23, 0.08);
+  background: var(--ab-primary-light);
   border-radius: 50%;
 }
 
 .bb-calendar-day--selected {
-  background: #E30A17 !important;
+  background: var(--ab-primary) !important;
   color: #fff !important;
   border-radius: 50%;
   font-weight: 600;
@@ -1534,13 +1576,13 @@ select.bb-flight-form__input {
 
 .bb-calendar-day--range-start {
   border-radius: 50% 0 0 50%;
-  background: #E30A17 !important;
+  background: var(--ab-primary) !important;
   color: #fff !important;
 }
 
 .bb-calendar-day--range-end {
   border-radius: 0 50% 50% 0;
-  background: #E30A17 !important;
+  background: var(--ab-primary) !important;
   color: #fff !important;
 }
 
@@ -1549,15 +1591,15 @@ select.bb-flight-form__input {
 }
 
 .bb-calendar-day--in-range {
-  background: rgba(227, 10, 23, 0.08) !important;
-  color: #E30A17 !important;
+  background: var(--ab-primary-light) !important;
+  color: var(--ab-primary) !important;
   border-radius: 0;
 }
 
 .bb-calendar-day--today:not(.bb-calendar-day--selected) {
   font-weight: 700;
-  color: #E30A17;
-  border: 2px solid #E30A17;
+  color: var(--ab-primary);
+  border: 2px solid var(--ab-primary);
   border-radius: 50%;
 }
 
@@ -1596,29 +1638,53 @@ select.bb-flight-form__input {
    4. POPULAR ROUTES
    ══════════════════════════════════════════════════════ */
 
-/* Slider nav buttons */
-.bb-route-prev,
-.bb-route-next {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  border: 1.5px solid var(--bb-border);
-  background: var(--bb-white);
-  color: var(--bb-gray-800);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  transition: all var(--bb-transition);
-  margin-left: 8px;
+/* Section background */
+.tg-location-area {
+  background: var(--ab-bg-light);
 }
 
-.bb-route-prev:hover,
-.bb-route-next:hover {
-  background: var(--bb-primary);
-  border-color: var(--bb-primary);
-  color: var(--bb-white);
+/* Section title */
+.tg-location-area .tg-section-su-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--ab-secondary);
+  position: relative;
+  display: inline-block;
+}
+
+.tg-location-area .tg-section-su-title::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 48px;
+  height: 3px;
+  background: var(--ab-accent);
+  border-radius: 2px;
+}
+
+/* 4-card grid */
+.bb-route-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+@media (max-width: 1199px) {
+  .bb-route-grid {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 600px;
+  }
+}
+
+@media (max-width: 575px) {
+  .bb-route-grid {
+    grid-template-columns: 1fr;
+    max-width: 320px;
+  }
 }
 
 /* Route card */
@@ -1626,7 +1692,6 @@ select.bb-flight-form__input {
   display: block;
   text-decoration: none;
   color: inherit;
-  transition: transform var(--bb-transition), box-shadow var(--bb-transition);
 }
 
 .bb-route-card:hover {
@@ -1638,15 +1703,48 @@ select.bb-flight-form__input {
   background: var(--bb-white);
   border: 1px solid var(--bb-border);
   border-radius: 16px;
-  padding: 24px 20px;
-  text-align: center;
-  transition: transform var(--bb-transition), box-shadow var(--bb-transition);
+  overflow: hidden;
+  transition: box-shadow var(--bb-transition), border-color var(--bb-transition);
 }
 
 .bb-route-card:hover .bb-route-card__inner {
-  transform: translateY(-4px);
-  box-shadow: var(--bb-shadow-lg);
-  border-color: var(--bb-primary);
+  box-shadow: 0 8px 28px rgba(26, 86, 219, 0.12);
+  border-color: var(--ab-primary);
+}
+
+/* City image */
+.bb-route-card__img {
+  width: 100% !important;
+  height: 160px !important;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.5s ease;
+}
+
+.bb-route-card:hover .bb-route-card__img {
+  transform: scale(1.05);
+}
+
+.bb-route-card__img-wrap {
+  overflow: hidden;
+  position: relative;
+}
+
+/* Gradient overlay on image */
+.bb-route-card__img-wrap::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  background: linear-gradient(to top, rgba(255,255,255,0.9), transparent);
+  pointer-events: none;
+}
+
+.bb-route-card__body {
+  padding: 16px 20px 20px;
+  text-align: center;
 }
 
 .bb-route-card__cities {
@@ -1654,30 +1752,40 @@ select.bb-flight-form__input {
   align-items: center;
   justify-content: center;
   gap: 12px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .bb-route-card__city {
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 700;
-  color: var(--bb-black);
+  color: var(--ab-secondary);
 }
 
 .bb-route-card__icon {
-  color: var(--bb-primary);
+  color: var(--ab-primary);
   font-size: 16px;
+  transition: transform 0.4s ease;
+}
+
+.bb-route-card:hover .bb-route-card__icon {
+  transform: translateX(3px);
 }
 
 .bb-route-card__codes {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--bb-gray-400);
-  letter-spacing: 1px;
+  letter-spacing: 1.5px;
   margin-bottom: 12px;
+  text-transform: uppercase;
 }
 
 .bb-route-card__price {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--bb-gray-600);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
 }
 
 .bb-route-card__price strong {
@@ -1863,7 +1971,7 @@ select.bb-flight-form__input {
    7. FOOTER
    ══════════════════════════════════════════════════════ */
 .bb-footer {
-  background: linear-gradient(180deg, #0B1F3B 0%, #091729 100%);
+  background: linear-gradient(180deg, var(--ab-secondary) 0%, #070E1B 100%);
   color: rgba(255, 255, 255, 0.75);
   font-size: 14px;
   line-height: 1.7;
@@ -2590,31 +2698,6 @@ select.bb-flight-form__input {
   gap: 12px;
 }
 
-/* Uçuş kartı */
-.bb-flight-card {
-  background: #fff;
-  border: 1.5px solid var(--ab-border);
-  border-radius: 16px;
-  padding: 20px 24px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  transition: box-shadow 0.2s;
-}
-
-.bb-flight-card:hover {
-  border-color: var(--ab-primary);
-  box-shadow: 0 4px 20px rgba(227, 10, 23, 0.08);
-}
-
-.bb-flight-card__airline {
-  min-width: 100px;
-  font-weight: 600;
-  font-size: 14px;
-  color: #374151;
-}
-
 .bb-flight-card__times {
   display: flex;
   align-items: center;
@@ -2697,20 +2780,448 @@ select.bb-flight-form__input {
   color: var(--ab-primary);
 }
 
-/* Responsive */
+.bb-flight-card__badge--seats {
+  background: #fef3c7;
+  color: #d97706;
+  font-weight: 600;
+}
+
+.bb-flight-card__badge--direct {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.bb-flight-card__badge--stop {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.bb-flight-card__badge--nonrefundable {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+/* Uçuş kartı — yeniden yapılandırılmış */
+.bb-flight-card {
+  background: #fff;
+  border: 1.5px solid var(--ab-border);
+  border-radius: 16px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.2s;
+  overflow: hidden;
+}
+
+.bb-flight-card:hover {
+  border-color: var(--ab-primary);
+  box-shadow: 0 4px 20px rgba(227, 10, 23, 0.08);
+}
+
+.bb-flight-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px 24px;
+  flex-wrap: wrap;
+}
+
+.bb-flight-card__airline {
+  display: flex;
+  flex-direction: column;
+  min-width: 120px;
+}
+
+.bb-flight-card__airline-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: #374151;
+}
+
+.bb-flight-card__flight-number {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.bb-flight-card__meta {
+  flex-shrink: 0;
+}
+
+.bb-flight-card__action {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+/* ══════════════════════════════════════════════════════
+   FARE PACKAGES
+   ══════════════════════════════════════════════════════ */
+.bb-flight-card__packages {
+  display: flex;
+  gap: 0;
+  border-top: 1px solid var(--ab-border);
+}
+
+.bb-fare-package {
+  flex: 1;
+  padding: 16px;
+  border-right: 1px solid var(--ab-border);
+  display: flex;
+  flex-direction: column;
+  transition: background 0.15s;
+}
+
+.bb-fare-package:last-child {
+  border-right: none;
+}
+
+.bb-fare-package:hover {
+  background: #f9fafb;
+}
+
+.bb-fare-package--expanded {
+  background: #f0f5ff;
+}
+
+.bb-fare-package__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  margin-bottom: 12px;
+}
+
+.bb-fare-package__name {
+  font-weight: 700;
+  font-size: 14px;
+  color: #1f2937;
+}
+
+.bb-fare-package__price {
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--ab-primary);
+}
+
+.bb-fare-package__rules {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+  flex: 1;
+}
+
+.bb-fare-package__rule {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #4b5563;
+}
+
+.bb-fare-package__rule-icon {
+  flex-shrink: 0;
+  width: 18px;
+  text-align: center;
+}
+
+.bb-fare-package__rule-text {
+  line-height: 1.3;
+}
+
+.bb-fare-package__more {
+  font-size: 11px;
+  color: #6b7280;
+  cursor: pointer;
+  padding-top: 2px;
+}
+
+.bb-fare-package__select {
+  background: var(--ab-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--ab-radius-md);
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  margin-top: auto;
+  transition: background 0.15s;
+}
+
+.bb-fare-package__select:hover {
+  background: var(--ab-primary-hover);
+}
+
+/* ══════════════════════════════════════════════════════
+   SORT BAR
+   ══════════════════════════════════════════════════════ */
+.bb-sort-bar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--ab-border);
+}
+
+.bb-sort-bar__btn {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1.5px solid var(--ab-border);
+  background: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  color: #4b5563;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.bb-sort-bar__btn:hover {
+  border-color: var(--ab-primary);
+  color: var(--ab-primary);
+}
+
+.bb-sort-bar__btn--active {
+  background: var(--ab-primary);
+  color: #fff;
+  border-color: var(--ab-primary);
+}
+
+.bb-sort-bar__btn--active:hover {
+  background: var(--ab-primary-hover);
+}
+
+/* ══════════════════════════════════════════════════════
+   FILTER SIDEBAR
+   ══════════════════════════════════════════════════════ */
+.bb-search-results__layout {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.bb-search-results__sidebar {
+  width: 280px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 24px;
+}
+
+.bb-search-results__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.bb-filter-sidebar {
+  background: #fff;
+  border: 1.5px solid var(--ab-border);
+  border-radius: 16px;
+  padding: 20px;
+}
+
+.bb-filter-sidebar__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.bb-filter-sidebar__title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+}
+
+.bb-filter-sidebar__reset {
+  background: none;
+  border: none;
+  color: var(--ab-primary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+}
+
+.bb-filter-sidebar__reset:hover {
+  text-decoration: underline;
+}
+
+.bb-filter-sidebar__count {
+  font-size: 13px;
+  color: #6b7280;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--ab-border);
+}
+
+.bb-filter-section {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.bb-filter-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.bb-filter-section__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 10px 0;
+}
+
+.bb-filter-section__price-inputs,
+.bb-filter-section__time-inputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.bb-filter-section__input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid var(--ab-border);
+  border-radius: 8px;
+  font-size: 13px;
+  color: #374151;
+  background: #fff;
+  outline: none;
+}
+
+.bb-filter-section__input:focus {
+  border-color: var(--ab-primary);
+}
+
+.bb-filter-section__separator {
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+.bb-filter-section__range {
+  width: 100%;
+  accent-color: var(--ab-primary);
+}
+
+.bb-filter-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  cursor: pointer;
+  font-size: 13px;
+  color: #374151;
+}
+
+.bb-filter-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--ab-primary);
+  cursor: pointer;
+}
+
+.bb-filter-toggle {
+  display: none;
+  width: 100%;
+  padding: 10px;
+  border: 1.5px solid var(--ab-border);
+  border-radius: 8px;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.bb-search-results__empty {
+  text-align: center;
+  padding: 48px 16px;
+  color: #6b7280;
+}
+
+.bb-search-results__empty p {
+  margin-bottom: 16px;
+  font-size: 15px;
+}
+
+/* ══════════════════════════════════════════════════════
+   RESPONSIVE — SEARCH RESULTS
+   ══════════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .bb-search-results__sidebar {
+    width: 240px;
+  }
+}
+
 @media (max-width: 768px) {
-  .bb-flight-card {
+  .bb-filter-toggle {
+    display: block;
+  }
+
+  .bb-search-results__layout {
+    flex-direction: column;
+  }
+
+  .bb-search-results__sidebar {
+    display: none;
+    width: 100%;
+    position: static;
+  }
+
+  .bb-search-results__sidebar--open {
+    display: block;
+  }
+
+  .bb-flight-card__top {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
+    padding: 16px;
   }
 
-  .bb-flight-card__price {
-    text-align: left;
-  }
-
-  .bb-flight-card__select {
+  .bb-flight-card__action {
     width: 100%;
+    justify-content: space-between;
+  }
+
+  .bb-flight-card__packages {
+    flex-direction: column;
+  }
+
+  .bb-fare-package {
+    border-right: none;
+    border-bottom: 1px solid var(--ab-border);
+  }
+
+  .bb-fare-package:last-child {
+    border-bottom: none;
+  }
+
+  .bb-sort-bar {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 8px;
+  }
+
+  .bb-sort-bar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .bb-sort-bar__btn {
+    white-space: nowrap;
+    flex-shrink: 0;
   }
 }
 
@@ -2802,7 +3313,7 @@ select.bb-flight-form__input {
 .bb-footer,
 footer,
 .tg-footer-area {
-  background: linear-gradient(180deg, #0B1F3B 0%, #091729 100%) !important;
+  background: linear-gradient(180deg, var(--ab-secondary) 0%, #070E1B 100%) !important;
 }
 
 /* Sticky header override */
@@ -2829,7 +3340,7 @@ footer,
   justify-content: center;
   gap: 0;
   padding: 18px 24px;
-  background: #0B1F3B;
+  background: var(--ab-secondary);
   border-radius: 12px;
   margin-bottom: 28px;
 }
@@ -3459,7 +3970,7 @@ footer,
     left: 0;
     right: 0;
     z-index: 100;
-    background: #0B1F3B;
+    background: var(--ab-secondary);
     color: #fff;
     padding: 14px 20px;
     box-shadow: 0 -4px 20px rgba(0,0,0,.15);

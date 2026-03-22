@@ -151,6 +151,48 @@ export const tr = {
   months: ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"] as string[],
   weekdays: ["Pt", "Sa", "Ça", "Pe", "Cu", "Ct", "Pz"] as string[],
 
+  // Search Results
+  flightsFound: "uçuş bulundu",
+  noFlightsFound: "Uçuş Bulunamadı",
+  noFlightsDesc: "Arama kriterlerinize uygun uçuş bulunamadı. Lütfen farklı tarih veya güzergah deneyin.",
+  newSearch: "Yeni Arama Yap",
+  searchingFlights: "Uçuşlar aranıyor...",
+  allocatingFlight: "Uçuş tahsis ediliyor...",
+  noFilterResults: "Seçili filtrelere uygun uçuş bulunamadı.",
+  clearFilters: "Filtreleri Temizle",
+  selectFlight: "Seç",
+  moreRules: "kural daha",
+
+  // Filters
+  filters: "Filtreler",
+  clearAll: "Temizle",
+  priceRange: "Fiyat Aralığı",
+  directFlightsOnly: "Sadece Aktarmasız",
+  refundableOnly: "Sadece İade Edilebilir",
+  airline: "Havayolu",
+  cabinClass: "Kabin Sınıfı",
+  packageType: "Paket Tipi",
+  departureTime: "Kalkış Saati",
+  nonstop: "Aktarmasız",
+  openFilters: "Filtreler",
+  closeFilters: "Filtreleri Kapat",
+
+  // Sort
+  cheapest: "En Ucuz",
+  mostExpensive: "En Pahalı",
+  earliest: "En Erken",
+  latest: "En Geç",
+  shortest: "En Kısa",
+  fewestStops: "En Az Aktarma",
+  byAirline: "Havayolu",
+
+  // Errors
+  errorOccurred: "Hata Oluştu",
+  retryBtn: "Tekrar Dene",
+  homeBtn: "Ana Sayfa",
+  allocateError: "Tahsis Hatası",
+  selectOther: "Başka Uçuş Seç",
+
   // Misc
   menuOpen: "Menüyü aç",
   searchPlaceholder: "Ara...",

@@ -11,7 +11,7 @@ const Banner = () => {
    const [activeTab, setActiveTab] = useState<TabType>("flight");
 
    return (
-      <section aria-label={t.searchFlight} className="bb-search-hero" style={{ backgroundImage: `url(/assets/img/hero/tu/banner.jpg)` }}>
+      <section aria-label={t.searchFlight} className="bb-search-hero">
          <div className="bb-search-hero__overlay"></div>
          <div className="container">
             <div className="row justify-content-center">

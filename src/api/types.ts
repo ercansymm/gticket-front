@@ -29,6 +29,8 @@ export type {
   AllocateBrandedItem,
   AllocateBaggageAllowance,
   PriceItem,
+  FlightSortBy,
+  FlightFilters,
   // Payment & finalize
   RemoveProductClientRequest,
   RemoveProductResponse,

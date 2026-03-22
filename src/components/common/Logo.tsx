@@ -4,7 +4,7 @@ interface LogoProps {
    variant?: "white" | "dark";
 }
 
-/** AtaBilet logo — "Ata" kırmızı (#E30A17), "Bilet" beyaz veya koyu. */
+/** AtaBilet logo — "Ata" kırmızı (#1A56DB), "Bilet" beyaz veya koyu. */
 const Logo = ({ variant = "white" }: LogoProps) => {
    const biletColor = variant === "white" ? "#FFFFFF" : "var(--ab-secondary)";
 
