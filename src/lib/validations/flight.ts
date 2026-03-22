@@ -42,16 +42,24 @@ export const removeProductClientSchema = z.object({
   productId: z.string().min(1).max(200),
 });
 
-// İstemciden gelen make-payment request — kart bilgisi var
-export const makePaymentClientSchema = z.object({
-  searchId: z.string().min(1).max(100),
-  cardHolderName: z.string().min(3).max(100).trim().regex(/^[A-ZÇĞİÖŞÜa-zçğıöşü\s]+$/, 'Geçersiz kart sahibi adı'),
-  cardNumber: z.string().regex(/^\d{15,16}$/, 'Geçersiz kart numarası'),
-  expireMonth: z.string().regex(/^(0[1-9]|1[0-2])$/, 'Geçersiz ay'),
-  expireYear: z.string().regex(/^\d{2,4}$/, 'Geçersiz yıl'),
-  cvv: z.string().regex(/^\d{3,4}$/, 'Geçersiz CVV'),
-  installmentCount: z.number().int().min(1).max(12).optional().default(1),
-});
+// İstemciden gelen make-payment request
+// paymentType: 'RunningAccount' → kart bilgisi gerekmez, 'CreditCard' → kart bilgisi zorunlu
+export const makePaymentClientSchema = z.discriminatedUnion('paymentType', [
+  z.object({
+    paymentType: z.literal('RunningAccount'),
+    searchId: z.string().min(1).max(100),
+  }),
+  z.object({
+    paymentType: z.literal('CreditCard'),
+    searchId: z.string().min(1).max(100),
+    cardHolderName: z.string().min(3).max(100).trim().regex(/^[A-ZÇĞİÖŞÜa-zçğıöşü\s]+$/, 'Geçersiz kart sahibi adı'),
+    cardNumber: z.string().regex(/^\d{15,16}$/, 'Geçersiz kart numarası'),
+    expireMonth: z.string().regex(/^(0[1-9]|1[0-2])$/, 'Geçersiz ay'),
+    expireYear: z.string().regex(/^\d{2,4}$/, 'Geçersiz yıl'),
+    cvv: z.string().regex(/^\d{3,4}$/, 'Geçersiz CVV'),
+    installmentCount: z.number().int().min(1).max(12).optional().default(1),
+  }),
+]);
 
 // searchId-only endpoints (finalize, poke, read, logout)
 export const searchIdOnlySchema = z.object({
@@ -65,6 +73,18 @@ export const bookingIdParamSchema = z.object({
 
 export const pnrParamSchema = z.object({
   pnr: z.string().min(5).max(10).regex(/^[A-Z0-9]+$/i, 'Geçersiz PNR'),
+});
+
+// İstemciden gelen cancel-booking request
+export const cancelBookingClientSchema = z.object({
+  searchId: z.string().min(1).max(100),
+  productId: z.string().min(1).max(200),
+  bookingId: z.string().max(200).optional(),
+});
+
+// Canlı booking status sorgusu
+export const bookingStatusSchema = z.object({
+  bookingId: z.string().min(1).max(200),
 });
 
 export type FlightSearchInput = z.infer<typeof flightSearchSchema>;

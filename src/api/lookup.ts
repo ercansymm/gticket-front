@@ -1,4 +1,5 @@
 import apiClient from './client';
+import { airports as airportFallbackList } from '@/data/AirportData';
 
 // Backend'den gelen ham havalimanı tipi
 interface AirportRaw {
@@ -34,32 +35,9 @@ const isBroken = (str: string | undefined | null): boolean => {
   return str.includes('?') || str.includes('\ufffd');
 };
 
-/** Havalimanı koduna göre bilinen isimler (encoding fallback) */
-const airportNamesFallback: Record<string, { nameTr: string; nameEn: string; cityTr: string; cityEn: string }> = {
-  'IST': { nameTr: 'İstanbul Havalimanı', nameEn: 'Istanbul Airport', cityTr: 'İstanbul', cityEn: 'Istanbul' },
-  'SAW': { nameTr: 'Sabiha Gökçen Havalimanı', nameEn: 'Sabiha Gokcen Airport', cityTr: 'İstanbul', cityEn: 'Istanbul' },
-  'ESB': { nameTr: 'Esenboğa Havalimanı', nameEn: 'Esenboga Airport', cityTr: 'Ankara', cityEn: 'Ankara' },
-  'AYT': { nameTr: 'Antalya Havalimanı', nameEn: 'Antalya Airport', cityTr: 'Antalya', cityEn: 'Antalya' },
-  'ADB': { nameTr: 'Adnan Menderes Havalimanı', nameEn: 'Adnan Menderes Airport', cityTr: 'İzmir', cityEn: 'Izmir' },
-  'TZX': { nameTr: 'Trabzon Havalimanı', nameEn: 'Trabzon Airport', cityTr: 'Trabzon', cityEn: 'Trabzon' },
-  'ADA': { nameTr: 'Adana Havalimanı', nameEn: 'Adana Airport', cityTr: 'Adana', cityEn: 'Adana' },
-  'BJV': { nameTr: 'Milas-Bodrum Havalimanı', nameEn: 'Milas-Bodrum Airport', cityTr: 'Bodrum', cityEn: 'Bodrum' },
-  'DLM': { nameTr: 'Dalaman Havalimanı', nameEn: 'Dalaman Airport', cityTr: 'Dalaman', cityEn: 'Dalaman' },
-  'GZT': { nameTr: 'Gaziantep Havalimanı', nameEn: 'Gaziantep Airport', cityTr: 'Gaziantep', cityEn: 'Gaziantep' },
-  'VAN': { nameTr: 'Van Havalimanı', nameEn: 'Van Airport', cityTr: 'Van', cityEn: 'Van' },
-  'ERZ': { nameTr: 'Erzurum Havalimanı', nameEn: 'Erzurum Airport', cityTr: 'Erzurum', cityEn: 'Erzurum' },
-  'DIY': { nameTr: 'Diyarbakır Havalimanı', nameEn: 'Diyarbakir Airport', cityTr: 'Diyarbakır', cityEn: 'Diyarbakir' },
-  'SZF': { nameTr: 'Samsun Çarşamba Havalimanı', nameEn: 'Samsun Airport', cityTr: 'Samsun', cityEn: 'Samsun' },
-  'KYA': { nameTr: 'Konya Havalimanı', nameEn: 'Konya Airport', cityTr: 'Konya', cityEn: 'Konya' },
-  'EZS': { nameTr: 'Elazığ Havalimanı', nameEn: 'Elazig Airport', cityTr: 'Elazığ', cityEn: 'Elazig' },
-  'MLX': { nameTr: 'Malatya Havalimanı', nameEn: 'Malatya Airport', cityTr: 'Malatya', cityEn: 'Malatya' },
-  'NAV': { nameTr: 'Kapadokya Havalimanı', nameEn: 'Cappadocia Airport', cityTr: 'Nevşehir', cityEn: 'Nevsehir' },
-  'HTY': { nameTr: 'Hatay Havalimanı', nameEn: 'Hatay Airport', cityTr: 'Hatay', cityEn: 'Hatay' },
-};
-
 /** Ham backend verisini dile göre AirportDto'ya dönüştür — bozuk encoding varsa fallback kullan */
 const mapAirport = (a: AirportRaw, lang: 'tr' | 'en' = 'tr'): AirportDto => {
-  const fallback = airportNamesFallback[a.iataCode];
+  const fallback = airportFallbackList.find(f => f.code === a.iataCode);
   const rawName = lang === 'tr' ? a.nameTr : a.nameEn;
   const rawCity = lang === 'tr' ? a.cityTr : a.cityEn;
 

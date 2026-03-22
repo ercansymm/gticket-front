@@ -7,16 +7,18 @@ import { useSession } from 'next-auth/react';
 import HeaderOne from '@/layouts/headers/HeaderOne';
 import FooterOne from '@/layouts/footers/FooterOne';
 import PassengerForm from '@/components/booking/PassengerForm';
-import { updatePassengersThunk } from '@/redux/features/bookingSlice';
+import { updatePassengersThunk, makePreBookingThunk } from '@/redux/features/bookingSlice';
 import { setStep, setPassengers, setContactInfo } from '@/redux/features/bookingSlice';
 import type { RootState, AppDispatch } from '@/redux/store';
 import type { PassengerItem, ContactInfo } from '@/types/booking';
+import { useSessionTimeout } from '@/hooks/UseSessionTimeout';
 
 export default function CheckoutClient() {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const { data: session } = useSession();
   const formRef = useRef<HTMLFormElement | null>(null);
+  const { showWarning: sessionWarning, dismissWarning: dismissSessionWarning } = useSessionTimeout();
 
   const { allocateResult, selectedFlight, searchId } = useSelector(
     (state: RootState) => state.flight
@@ -25,6 +27,11 @@ export default function CheckoutClient() {
     updatePassengersLoading,
     updatePassengersError,
     updatePassengersDone,
+    preBookingResult,
+    preBookingLoading,
+    preBookingError,
+    passengers: savedPassengers,
+    contactInfo: savedContact,
   } = useSelector((state: RootState) => state.booking);
 
   // No allocate → back to home
@@ -41,8 +48,14 @@ export default function CheckoutClient() {
 
   if (!allocateResult || !selectedFlight) return null;
 
-  const { priceSummary, passengers, isPriceChanged } = allocateResult;
+  const { priceSummary, passengers, isPriceChanged, airBookings } = allocateResult;
   if (!priceSummary) return null;
+
+  // Backend'in ihtiyaç duyduğu productId / productItemId / brandedFareItemId
+  const firstBooking = airBookings?.[0];
+  const productId = firstBooking?.productId ?? '';
+  const productItemId = firstBooking?.bookingItems?.[0]?.productItemId ?? '';
+  const brandedFareItemId = firstBooking?.brandedFareItems?.[0]?.brandedFareItemId ?? '';
 
   const paxCounts = passengers.reduce((acc, p) => {
     const t = (p.type ?? 'ADT').toUpperCase();
@@ -70,6 +83,8 @@ export default function CheckoutClient() {
       // Send to API
       dispatch(updatePassengersThunk({
         searchId,
+        productId,
+        productItemId,
         passengers: passengerItems,
         contact,
       }));
@@ -77,13 +92,26 @@ export default function CheckoutClient() {
     [dispatch, searchId]
   );
 
-  /* ── After successful update, navigate to next step ── */
+  /* ── After successful passenger update, auto call prebooking ── */
   useEffect(() => {
-    if (updatePassengersDone) {
-      dispatch(setStep('summary'));
-      // TODO: Navigate to payment/summary page when ready
+    if (updatePassengersDone && searchId && !preBookingResult && !preBookingLoading && savedPassengers.length > 0 && savedContact) {
+      dispatch(makePreBookingThunk({
+        searchId,
+        productId,
+        brandedFareItemId,
+        passengers: savedPassengers,
+        contact: savedContact,
+      }));
     }
-  }, [updatePassengersDone, dispatch]);
+  }, [updatePassengersDone, searchId, preBookingResult, preBookingLoading, savedPassengers, savedContact, dispatch]);
+
+  /* ── After successful prebooking, navigate to payment ── */
+  useEffect(() => {
+    if (preBookingResult && !preBookingResult.hasError) {
+      dispatch(setStep('payment'));
+      router.push('/checkout/payment');
+    }
+  }, [preBookingResult, dispatch, router]);
 
   return (
     <>
@@ -106,6 +134,14 @@ export default function CheckoutClient() {
               </div>
             )}
 
+            {/* Session timeout warning */}
+            {sessionWarning && (
+              <div className="bb-checkout__price-warning" style={{ background: '#fef3c7', border: '1px solid #f59e0b', color: '#92400e', marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>⏱ Oturumunuz sona ermek üzere. Lütfen işleminizi tamamlayın.</span>
+                <button type="button" onClick={dismissSessionWarning} style={{ background: 'none', border: 'none', fontWeight: 700, cursor: 'pointer', color: '#92400e' }}>✕</button>
+              </div>
+            )}
+
             {/* Price changed warning */}
             {isPriceChanged && (
               <div className="bb-checkout__price-warning">
@@ -117,6 +153,23 @@ export default function CheckoutClient() {
             {updatePassengersError && (
               <div className="bb-checkout__price-warning">
                 {updatePassengersError}
+              </div>
+            )}
+
+            {/* PreBooking loading */}
+            {preBookingLoading && (
+              <div className="bb-spinner-overlay" style={{ position: 'relative', minHeight: 120 }}>
+                <div className="bb-spinner-wrapper">
+                  <div className="bb-spinner bb-spinner--large"></div>
+                  <p className="bb-spinner-text">Ön rezervasyon oluşturuluyor...</p>
+                </div>
+              </div>
+            )}
+
+            {/* PreBooking error */}
+            {preBookingError && (
+              <div className="bb-checkout__price-warning">
+                {preBookingError}
               </div>
             )}
 
@@ -139,14 +192,14 @@ export default function CheckoutClient() {
               <button
                 type="submit"
                 className="bb-checkout__btn bb-checkout__btn--next"
-                disabled={updatePassengersLoading}
+                disabled={updatePassengersLoading || preBookingLoading}
                 onClick={() => {
                   // Trigger form submit via the PassengerForm's form element
                   const form = document.querySelector('.bb-passenger-form') as HTMLFormElement;
                   form?.requestSubmit();
                 }}
               >
-                {updatePassengersLoading ? 'Kaydediliyor...' : 'Devam Et'}
+                {updatePassengersLoading ? 'Kaydediliyor...' : preBookingLoading ? 'Rezervasyon oluşturuluyor...' : 'Devam Et'}
               </button>
             </div>
           </div>
@@ -223,13 +276,13 @@ export default function CheckoutClient() {
           </div>
           <button
             className="bb-checkout__bottom-bar-btn"
-            disabled={updatePassengersLoading}
+            disabled={updatePassengersLoading || preBookingLoading}
             onClick={() => {
               const form = document.querySelector('.bb-passenger-form') as HTMLFormElement;
               form?.requestSubmit();
             }}
           >
-            {updatePassengersLoading ? 'Kaydediliyor...' : 'Devam'}
+            {updatePassengersLoading ? 'Kaydediliyor...' : preBookingLoading ? 'Rezervasyon...' : 'Devam'}
           </button>
         </div>
       </main>

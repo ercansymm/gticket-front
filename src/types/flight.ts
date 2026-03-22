@@ -78,6 +78,41 @@ export interface FlightResult {
   segments: FlightSegmentResult[];
   brandedFareItems: BrandedFareItem[];
   freeBaggageAllowances: FreeBaggageAllowance[];
+  farePackages: FarePackage[];
+  baggageInfo: BaggageInfo | null;
+  cabinClass: string | null;
+  cabinClassName: string | null;
+  customerCommissionMin: number;
+  customerCommissionMax: number;
+  customerCommissionValue: number;
+}
+
+export interface FarePackage {
+  brandedFareItemId: string | null;
+  brandCode: string | null;
+  brandName: string | null;
+  totalFare: number;
+  totalTaxes: number;
+  currency: string | null;
+  totalFareFormatted: string | null;
+  cabinClass: string | null;
+  bookingClass: string | null;
+  rules: FarePackageRule[];
+}
+
+export interface FarePackageRule {
+  description: string | null;
+  isIncluded: boolean;
+  isChargeable: boolean;
+  serviceGroup: string | null;
+  application: string | null;
+}
+
+export interface BaggageInfo {
+  allowance: string | null;
+  unit: string | null;
+  displayText: string | null;
+  category: string | null;
 }
 
 export interface FlightSegmentResult {
@@ -312,7 +347,9 @@ export interface BookingItem {
   baseFare: number;
   taxes: number;
   totalFare: number;
+  netFare: number;
   serviceFee: number;
+  systemServiceFee: number;
   baggage: string | null;
   paxType: string | null;
   paxSequenceNo: number;
@@ -428,24 +465,35 @@ export interface RemoveProductResponse {
 
 // ========== MAKE PAYMENT ==========
 
-// İstemciden gelen — session bilgisi YOK, kart bilgisi var
-export interface MakePaymentClientRequest {
-  searchId: string;
-  cardHolderName: string;
-  cardNumber: string;
-  expireMonth: string;
-  expireYear: string;
-  cvv: string;
-  installmentCount?: number;
-}
+// İstemciden gelen — RunningAccount veya CreditCard
+export type MakePaymentClientRequest =
+  | {
+      paymentType: 'RunningAccount';
+      searchId: string;
+    }
+  | {
+      paymentType: 'CreditCard';
+      searchId: string;
+      cardHolderName: string;
+      cardNumber: string;
+      expireMonth: string;
+      expireYear: string;
+      cvv: string;
+      installmentCount?: number;
+    };
 
 // Server-side'da backend'e gönderilen tam request
 export interface MakePaymentBackendRequest {
   sessionId: string;
   sessionToken: string;
   shoppingFileId: string;
-  creditCard: CreditCardInfo;
+  productId: string;
+  amount: number;
+  currency: string;
+  paymentType: 'RunningAccount' | 'CreditCard';
+  creditCard: CreditCardInfo | null;
   installmentCount: number;
+  bookingId?: string | null;
 }
 
 export interface CreditCardInfo {
@@ -492,10 +540,15 @@ export interface FinalizeShoppingResponse {
 
 export interface TicketInfo {
   ticketNumber: string | null;
-  passengerName: string | null;
-  passengerType: string | null;
-  segmentInfo: string | null;
-  status: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  paxType: string | null;
+  sequenceNo: number | null;
+  // Eski alanlar (BFF backward compat)
+  passengerName?: string | null;
+  passengerType?: string | null;
+  segmentInfo?: string | null;
+  status?: string | null;
 }
 
 // ========== POKE SHOPPING FILE ==========
@@ -594,13 +647,104 @@ export interface BookingDetailResponse {
   bookingCode: string | null;
   pnr: string | null;
   status: string | null;
+  grandTotal: number;
   totalFare: number;
   baseFare: number;
   taxes: number;
   serviceFee: number;
   currency: string | null;
   createdAt: string | null;
+  isFinalized: boolean;
+  isGuest: boolean;
   passengers: ReadShoppingPassenger[];
   segments: AllocateSegment[];
   tickets: TicketInfo[];
+}
+
+// ========== CANCEL BOOKING ==========
+
+export interface CancelBookingClientRequest {
+  searchId: string;
+  productId: string;
+  bookingId?: string;
+}
+
+export interface CancelBookingBackendRequest {
+  sessionId: string;
+  sessionToken: string;
+  productId: string;
+  bookingId?: string;
+}
+
+export interface CancelBookingResponse {
+  hasError: boolean;
+  errorMessage: string | null;
+  status: string | null;
+  bookingId: string | null;
+}
+
+// ========== BOOKING STATUS ==========
+
+export type BookingStatus = 'PreBooked' | 'Reserved' | 'Confirmed' | 'Paid' | 'Ticketed' | 'Cancelled' | 'Failed';
+
+export interface BookingStatusRequest {
+  bookingId: string;
+}
+
+export interface BookingStatusResponse {
+  hasError: boolean;
+  errorMessage: string | null;
+  id: string | null;
+  pnr: string | null;
+  dbStatus: string | null;
+  liveStatus: string | null;
+  grandTotal: number;
+  currency: string | null;
+  isFinalized: boolean;
+  paidAt: string | null;
+  ticketedAt: string | null;
+  cancelledAt: string | null;
+  isReservationCancelled: boolean;
+  isPriceChanged: boolean;
+  remainingSum: number;
+  passengers: ReadShoppingPassenger[];
+}
+
+// ========== MY BOOKINGS ==========
+
+// Backend doğrudan dizi döndürüyor
+export type MyBookingsResponse = MyBookingSummary[];
+
+export interface MyBookingSummary {
+  id: string | null;
+  pnr: string | null;
+  status: string | null;
+  grandTotal: number;
+  currency: string | null;
+  origin: string | null;
+  destination: string | null;
+  airlineCode: string | null;
+  flightNumber: string | null;
+  isFinalized: boolean;
+  adultCount: number;
+  childCount: number;
+  infantCount: number;
+  createdAt: string | null;
+  bookedAt: string | null;
+  paidAt: string | null;
+  ticketedAt: string | null;
+  cancelledAt: string | null;
+  isGuest: boolean;
+  passengerCount: number;
+  firstPassenger: { firstName: string | null; lastName: string | null; ticketNumber: string | null } | null;
+  segments: MyBookingSegment[];
+}
+
+export interface MyBookingSegment {
+  marketingAirline: string | null;
+  flightNumber: string | null;
+  originCode: string | null;
+  destinationCode: string | null;
+  departureDate: string | null;
+  departureTime: string | null;
 }

@@ -2,11 +2,12 @@
 
 export interface Airport {
   code: string;
-  name: string;
-  city: string;
-  country: string;
-  isCity?: boolean;
-  countryCode?: string;
+  nameTr: string;
+  nameEn: string;
+  cityTr: string;
+  cityEn: string;
+  countryCode: string;
+  isDomestic: boolean;
 }
 
 export interface PopularRoute {

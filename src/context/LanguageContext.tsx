@@ -21,16 +21,10 @@ const LanguageContext = createContext<LanguageContextValue>({
 
 const STORAGE_KEY = "bb_lang";
 
-function getInitialLang(): Lang {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored === "en" || stored === "tr") return stored;
-  } catch { /* ignore */ }
-  return "tr";
-}
+const DEFAULT_LANG: Lang = "tr";
 
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
-  const [lang, setLangState] = useState<Lang>(getInitialLang);
+  const [lang, setLangState] = useState<Lang>(DEFAULT_LANG);
   const [announcement, setAnnouncement] = useState("");
   const isFirstRender = useRef(true);
 
@@ -39,6 +33,17 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     try { localStorage.setItem(STORAGE_KEY, newLang); } catch { /* ignore */ }
     document.documentElement.lang = newLang;
     setAnnouncement(newLang === "tr" ? "Dil Türkçe olarak değiştirildi" : "Language changed to English");
+  }, []);
+
+  // Client tarafında localStorage'dan dili yükle (hydration sonrası)
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored === "en" || stored === "tr") {
+        setLangState(stored);
+        document.documentElement.lang = stored;
+      }
+    } catch { /* ignore */ }
   }, []);
 
   useEffect(() => {

@@ -51,6 +51,15 @@ export type {
   LogoutResponse,
   // Booking query
   BookingDetailResponse,
+  // Cancel & status
+  CancelBookingClientRequest,
+  CancelBookingResponse,
+  BookingStatus,
+  BookingStatusRequest,
+  BookingStatusResponse,
+  MyBookingsResponse,
+  MyBookingSummary,
+  MyBookingSegment,
 } from '../types/flight';
 
 export type {

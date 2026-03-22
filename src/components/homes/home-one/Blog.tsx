@@ -8,14 +8,10 @@ const Blog = ({ style: _style }: { style?: boolean }) => {
    const latestPosts = blogPosts.slice(0, 3);
 
    return (
-      <section aria-label={t.travelGuide} className="tg-blog-area pt-130 p-relative z-index-1 tg-blog-space-2 tg-blog-su-wrapper">
+      <section aria-label={t.travelGuide} className="bb-section">
          <div className="container">
-            <div className="row justify-content-center">
-               <div className="col-lg-6 col-md-8">
-                  <div className="tg-location-section-title text-center mb-30">
-                     <h2 className="tg-section-su-title text-capitalize mb-15">{t.travelGuide}</h2>
-                  </div>
-               </div>
+            <div className="text-center mb-40">
+               <h2 className="bb-section-title">{t.travelGuide}</h2>
             </div>
             <div className="row">
                {latestPosts.map((post) => (

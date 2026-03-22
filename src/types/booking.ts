@@ -3,6 +3,8 @@
 // İstemciden gelen — session bilgisi YOK
 export interface UpdatePassengersClientRequest {
   searchId: string;
+  productId: string;
+  productItemId: string;
   passengers: PassengerItem[];
   contact: ContactInfo;
 }
@@ -48,6 +50,8 @@ export interface UpdatePassengersResponse {
 // İstemciden gelen — session bilgisi YOK
 export interface MakePreBookingClientRequest {
   searchId: string;
+  productId: string;
+  brandedFareItemId: string;
   passengers: PassengerItem[];
   contact: ContactInfo;
 }

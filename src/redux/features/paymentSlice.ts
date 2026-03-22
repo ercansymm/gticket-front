@@ -9,6 +9,8 @@ import {
   logoutSession,
   getBookingById,
   getBookingByPnr,
+  cancelBooking,
+  getBookingStatus,
 } from '../../api/flight';
 import type {
   MakePaymentClientRequest, MakePaymentResponse,
@@ -18,7 +20,19 @@ import type {
   RemoveProductClientRequest, RemoveProductResponse,
   LogoutClientRequest, LogoutResponse,
   BookingDetailResponse,
+  CancelBookingClientRequest, CancelBookingResponse,
+  BookingStatusRequest, BookingStatusResponse,
 } from '@/types/flight';
+
+/** Backend'den gelen 4 farklı hata formatını tek mesaja çevirir */
+function extractErrorMessage(error: any, fallback: string): string {
+  return error.userMessage
+    || error.response?.data?.errorMessage
+    || error.response?.data?.error
+    || (typeof error.response?.data?.error === 'object' ? error.response?.data?.error?.message : undefined)
+    || error.message
+    || fallback;
+}
 
 interface PaymentState {
   // Ödeme
@@ -51,6 +65,15 @@ interface PaymentState {
   bookingDetail: BookingDetailResponse | null;
   bookingDetailLoading: boolean;
   bookingDetailError: string | null;
+
+  // Cancel booking
+  cancelLoading: boolean;
+  cancelError: string | null;
+  cancelResult: CancelBookingResponse | null;
+
+  // Booking status
+  bookingStatusResult: BookingStatusResponse | null;
+  bookingStatusLoading: boolean;
 }
 
 const initialState: PaymentState = {
@@ -71,6 +94,11 @@ const initialState: PaymentState = {
   bookingDetail: null,
   bookingDetailLoading: false,
   bookingDetailError: null,
+  cancelLoading: false,
+  cancelError: null,
+  cancelResult: null,
+  bookingStatusResult: null,
+  bookingStatusLoading: false,
 };
 
 export const makePaymentThunk = createAsyncThunk(
@@ -83,7 +111,7 @@ export const makePaymentThunk = createAsyncThunk(
       }
       return result;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.errorMessage || error.message || 'Ödeme başarısız');
+      return rejectWithValue(extractErrorMessage(error, 'Ödeme başarısız'));
     }
   },
 );
@@ -98,7 +126,7 @@ export const finalizeShoppingThunk = createAsyncThunk(
       }
       return result;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.errorMessage || error.message || 'Biletleme başarısız');
+      return rejectWithValue(extractErrorMessage(error, 'Biletleme başarısız'));
     }
   },
 );
@@ -137,7 +165,7 @@ export const removeProductThunk = createAsyncThunk(
       }
       return result;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.errorMessage || error.message || 'Ürün kaldırma başarısız');
+      return rejectWithValue(extractErrorMessage(error, 'Ürün kaldırma başarısız'));
     }
   },
 );
@@ -164,7 +192,7 @@ export const getBookingByIdThunk = createAsyncThunk(
       }
       return result;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.errorMessage || error.message || 'Booking sorgulama başarısız');
+      return rejectWithValue(extractErrorMessage(error, 'Booking bulunamadı'));
     }
   },
 );
@@ -179,7 +207,37 @@ export const getBookingByPnrThunk = createAsyncThunk(
       }
       return result;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.errorMessage || error.message || 'PNR sorgulama başarısız');
+      return rejectWithValue(extractErrorMessage(error, 'PNR bulunamadı'));
+    }
+  },
+);
+
+export const cancelBookingThunk = createAsyncThunk(
+  'payment/cancelBooking',
+  async (params: CancelBookingClientRequest, { rejectWithValue }) => {
+    try {
+      const result = await cancelBooking(params);
+      if (result.hasError) {
+        return rejectWithValue(result.errorMessage || 'İptal başarısız');
+      }
+      return result;
+    } catch (error: any) {
+      return rejectWithValue(extractErrorMessage(error, 'İptal başarısız'));
+    }
+  },
+);
+
+export const getBookingStatusThunk = createAsyncThunk(
+  'payment/getBookingStatus',
+  async (params: BookingStatusRequest, { rejectWithValue }) => {
+    try {
+      const result = await getBookingStatus(params);
+      if (result.hasError) {
+        return rejectWithValue(result.errorMessage || 'Durum sorgulama başarısız');
+      }
+      return result;
+    } catch (error: any) {
+      return rejectWithValue(extractErrorMessage(error, 'Durum sorgulama başarısız'));
     }
   },
 );
@@ -291,6 +349,32 @@ const paymentSlice = createSlice({
     builder.addCase(getBookingByPnrThunk.rejected, (state, action) => {
       state.bookingDetailLoading = false;
       state.bookingDetailError = action.payload as string;
+    });
+
+    // Cancel Booking
+    builder.addCase(cancelBookingThunk.pending, (state) => {
+      state.cancelLoading = true;
+      state.cancelError = null;
+    });
+    builder.addCase(cancelBookingThunk.fulfilled, (state, action) => {
+      state.cancelLoading = false;
+      state.cancelResult = action.payload;
+    });
+    builder.addCase(cancelBookingThunk.rejected, (state, action) => {
+      state.cancelLoading = false;
+      state.cancelError = action.payload as string;
+    });
+
+    // Booking Status
+    builder.addCase(getBookingStatusThunk.pending, (state) => {
+      state.bookingStatusLoading = true;
+    });
+    builder.addCase(getBookingStatusThunk.fulfilled, (state, action) => {
+      state.bookingStatusLoading = false;
+      state.bookingStatusResult = action.payload;
+    });
+    builder.addCase(getBookingStatusThunk.rejected, (state) => {
+      state.bookingStatusLoading = false;
     });
   },
 });

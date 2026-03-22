@@ -17,7 +17,8 @@ export async function POST(request: NextRequest) {
     const validation = validateBody(makePaymentClientSchema, parsed.data);
     if (!validation.success) return validation.response;
 
-    const { searchId, cardHolderName, cardNumber, expireMonth, expireYear, cvv, installmentCount } = validation.data;
+    const { searchId, ...rest } = validation.data;
+    const paymentType = rest.paymentType;
 
     // Server-side'da session bilgisini al
     const sessionRes = await fetch(`${API_BASE}/api/flight/session/${encodeURIComponent(searchId)}`, {
@@ -41,19 +42,28 @@ export async function POST(request: NextRequest) {
     }
 
     // GÜVENLİK: Kart bilgisi sadece backend'e gönderilir, asla loglanmaz
-    const backendBody = {
+    const backendBody: Record<string, unknown> = {
       sessionId: sessionData.sessionId,
       sessionToken: sessionData.sessionToken,
       shoppingFileId: sessionData.shoppingFileId,
-      creditCard: {
-        cardHolderName,
-        cardNumber,
-        expireMonth,
-        expireYear,
-        cvv,
-      },
-      installmentCount: installmentCount ?? 1,
+      productId: sessionData.productId || '',
+      amount: sessionData.grandTotal || 0,
+      currency: sessionData.currency || 'TRY',
+      paymentType: paymentType,
+      bookingId: sessionData.bookingId || null,
     };
+
+    if (paymentType === 'CreditCard') {
+      const { cardHolderName, cardNumber, expireMonth, expireYear, cvv, installmentCount } = rest as {
+        cardHolderName: string; cardNumber: string; expireMonth: string;
+        expireYear: string; cvv: string; installmentCount?: number;
+      };
+      backendBody.creditCard = { cardHolderName, cardNumber, expireMonth, expireYear, cvv };
+      backendBody.installmentCount = installmentCount ?? 1;
+    } else {
+      backendBody.creditCard = null;
+      backendBody.installmentCount = 1;
+    }
 
     const { signal, clear } = withTimeout(60_000);
     const res = await fetch(`${API_BASE}/api/flight/make-payment`, {

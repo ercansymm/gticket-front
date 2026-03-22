@@ -56,6 +56,25 @@ function turkishToUpper(s: string): string {
     .toUpperCase();
 }
 
+/** TC Kimlik No algoritma kontrolü */
+function isValidTCKimlik(tc: string): boolean {
+  if (!/^\d{11}$/.test(tc)) return false;
+  if (tc[0] === '0') return false;
+
+  const digits = tc.split('').map(Number);
+
+  // 10. hane kontrolü: ((d1+d3+d5+d7+d9)*7 - (d2+d4+d6+d8)) % 10 === d10
+  const oddSum = digits[0] + digits[2] + digits[4] + digits[6] + digits[8];
+  const evenSum = digits[1] + digits[3] + digits[5] + digits[7];
+  if ((oddSum * 7 - evenSum) % 10 !== digits[9]) return false;
+
+  // 11. hane kontrolü: (d1+d2+d3+...+d10) % 10 === d11
+  const total = digits.slice(0, 10).reduce((a, b) => a + b, 0);
+  if (total % 10 !== digits[10]) return false;
+
+  return true;
+}
+
 /* ───────── types ───────── */
 
 interface PassengerFormData {
@@ -152,8 +171,8 @@ export default function PassengerForm({ passengers, onSubmit, loading, disabled 
       }
     }
     if (form.isTurkishCitizen) {
-      if (paxType !== 'INF' && (!form.citizenNo || !/^\d{11}$/.test(form.citizenNo))) {
-        e.citizenNo = 'Geçerli TC kimlik no giriniz (11 hane)';
+      if (paxType !== 'INF' && (!form.citizenNo || !isValidTCKimlik(form.citizenNo))) {
+        e.citizenNo = 'Geçerli TC kimlik no giriniz (11 hane, algoritma kontrolü)';
       }
     } else {
       if (!form.passportNo || form.passportNo.trim().length < 5) {
@@ -450,7 +469,7 @@ export default function PassengerForm({ passengers, onSubmit, loading, disabled 
             {/* Miles&Smiles hint (visual only) */}
             <div className="bb-pax-panel__miles-hint">
               <span className="bb-pax-panel__miles-icon">✈</span>
-              <span>Miles&amp;Smiles numaranızı girerek Mil kazanın.</span>
+              <span>ATA&amp;Bilet numaranızı girerek Mil kazanın.</span>
               <span className="bb-pax-panel__chevron">▾</span>
             </div>
           </div>

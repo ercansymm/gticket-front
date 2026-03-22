@@ -9,6 +9,9 @@ import type {
   ReadShoppingFileClientRequest, ReadShoppingFileResponse,
   LogoutClientRequest, LogoutResponse,
   BookingDetailResponse,
+  CancelBookingClientRequest, CancelBookingResponse,
+  BookingStatusRequest, BookingStatusResponse,
+  MyBookingsResponse,
 } from '@/types/flight';
 import type {
   UpdatePassengersClientRequest, UpdatePassengersResponse,
@@ -85,5 +88,29 @@ export const getBookingById = async (bookingId: string): Promise<BookingDetailRe
 // PNR ile booking sorgulama (DB)
 export const getBookingByPnr = async (pnr: string): Promise<BookingDetailResponse> => {
   const response = await apiClient.get<BookingDetailResponse>(`/flight/booking/pnr/${encodeURIComponent(pnr)}`);
+  return response.data;
+};
+
+// Rezervasyon iptali
+export const cancelBooking = async (params: CancelBookingClientRequest): Promise<CancelBookingResponse> => {
+  const response = await apiClient.post<CancelBookingResponse>('/flight/cancel-booking', params);
+  return response.data;
+};
+
+// Canlı booking status
+export const getBookingStatus = async (params: BookingStatusRequest): Promise<BookingStatusResponse> => {
+  const response = await apiClient.post<BookingStatusResponse>('/flight/booking-status', params);
+  return response.data;
+};
+
+// Kullanıcı booking listesi
+export const getMyBookingsByUser = async (userId: string): Promise<MyBookingsResponse> => {
+  const response = await apiClient.get<MyBookingsResponse>(`/flight/my-bookings/user/${encodeURIComponent(userId)}`);
+  return response.data;
+};
+
+// Email ile booking listesi
+export const getMyBookingsByEmail = async (email: string): Promise<MyBookingsResponse> => {
+  const response = await apiClient.get<MyBookingsResponse>(`/flight/my-bookings/email/${encodeURIComponent(email)}`);
   return response.data;
 };

@@ -7,6 +7,16 @@ import type {
   MakePreBookingClientRequest, MakePreBookingResponse,
 } from '@/types/booking';
 
+/** Backend'den gelen 4 farklı hata formatını tek mesaja çevirir */
+function extractErrorMessage(error: any, fallback: string): string {
+  return error.userMessage
+    || error.response?.data?.errorMessage
+    || error.response?.data?.error
+    || (typeof error.response?.data?.error === 'object' ? error.response?.data?.error?.message : undefined)
+    || error.message
+    || fallback;
+}
+
 type BookingStep = 'search' | 'select' | 'passenger' | 'summary' | 'payment' | 'confirmation';
 
 interface BookingState {
@@ -45,7 +55,7 @@ export const updatePassengersThunk = createAsyncThunk(
       }
       return result;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.errorMessage || error.message || 'Yolcu bilgileri güncellenemedi');
+      return rejectWithValue(extractErrorMessage(error, 'Yolcu bilgileri güncellenemedi'));
     }
   }
 );
@@ -60,7 +70,7 @@ export const makePreBookingThunk = createAsyncThunk(
       }
       return result;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.errorMessage || error.message || 'Ön rezervasyon oluşturulamadı');
+      return rejectWithValue(extractErrorMessage(error, 'Ön rezervasyon oluşturulamadı'));
     }
   }
 );

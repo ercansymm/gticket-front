@@ -7,6 +7,16 @@ import type {
   FlightResult
 } from '@/types';
 
+/** Backend'den gelen 4 farklı hata formatını tek mesaja çevirir */
+function extractErrorMessage(error: any, fallback: string): string {
+  return error.userMessage
+    || error.response?.data?.errorMessage
+    || error.response?.data?.error
+    || (typeof error.response?.data?.error === 'object' ? error.response?.data?.error?.message : undefined)
+    || error.message
+    || fallback;
+}
+
 interface FlightState {
   // Arama
   searchParams: FlightSearchRequest | null;
@@ -24,6 +34,9 @@ interface FlightState {
 
   // Allocate sonrası tutulan searchId
   searchId: string | null;
+
+  // Session timeout takibi (backend 20dk)
+  sessionStartedAt: number | null;
 }
 
 const initialState: FlightState = {
@@ -36,6 +49,7 @@ const initialState: FlightState = {
   allocateLoading: false,
   allocateError: null,
   searchId: null,
+  sessionStartedAt: null,
 };
 
 // Uçuş arama
@@ -46,10 +60,7 @@ export const searchFlightsThunk = createAsyncThunk(
       const result = await searchFlights(params);
       return result;
     } catch (error: any) {
-      const message = error.response?.data?.errorMessage
-        || error.message
-        || 'Uçuş araması başarısız';
-      return rejectWithValue(message);
+      return rejectWithValue(extractErrorMessage(error, 'Uçuş araması başarısız'));
     }
   }
 );
@@ -62,10 +73,7 @@ export const allocateFlightThunk = createAsyncThunk(
       const result = await allocateFlight(params);
       return result;
     } catch (error: any) {
-      const message = error.response?.data?.errorMessage
-        || error.message
-        || 'Uçuş tahsisi başarısız';
-      return rejectWithValue(message);
+      return rejectWithValue(extractErrorMessage(error, 'Uçuş tahsisi başarısız'));
     }
   }
 );
@@ -86,6 +94,7 @@ const flightSlice = createSlice({
       state.selectedFlight = null;
       state.allocateResult = null;
       state.searchId = null;
+      state.sessionStartedAt = null;
     },
     clearAllocate: (state) => {
       state.allocateResult = null;
@@ -102,6 +111,7 @@ const flightSlice = createSlice({
     builder.addCase(searchFlightsThunk.fulfilled, (state, action) => {
       state.searchLoading = false;
       state.searchResults = action.payload;
+      state.sessionStartedAt = Date.now();
     });
     builder.addCase(searchFlightsThunk.rejected, (state, action) => {
       state.searchLoading = false;

@@ -6,15 +6,17 @@ import { useTranslation } from "../../../context/LanguageContext";
 import { airports as staticAirports } from "../../../data/AirportData";
 import { getAllAirports, type AirportDto } from "../../../api/lookup";
 import { searchFlightsThunk, setSearchParams } from "../../../redux/features/flightSlice";
-import type { FlightSearchRequest } from "@/types";
+import type { FlightSearchRequest, Airport } from "@/types";
 import type { AppDispatch } from "../../../redux/store";
 
 /** Statik havalimanını AirportDto formatına dönüştür */
-const toAirportDto = (a: { code: string; name: string; city: string; country: string }): AirportDto => ({
-   iataCode: a.code, name: a.name, city: a.city, countryCode: a.country, isDomestic: true,
+const toAirportDto = (a: Airport, lang: 'tr' | 'en' = 'tr'): AirportDto => ({
+   iataCode: a.code,
+   name: lang === 'tr' ? a.nameTr : a.nameEn,
+   city: lang === 'tr' ? a.cityTr : a.cityEn,
+   countryCode: a.countryCode,
+   isDomestic: a.isDomestic,
 });
-
-const staticFallback: AirportDto[] = staticAirports.map(toAirportDto);
 
 interface PassengerCounts {
    adult: number;
@@ -45,6 +47,8 @@ const BannerFormOne = () => {
    const router = useRouter();
    const dispatch = useDispatch<AppDispatch>();
    const { t, lang } = useTranslation();
+
+   const staticFallback = useMemo(() => staticAirports.map(a => toAirportDto(a, lang)), [lang]);
 
    const [tripType, setTripType] = useState<TripType>("oneway");
    const [from, setFrom] = useState("");
@@ -109,11 +113,13 @@ const BannerFormOne = () => {
          try {
             const data = await getAllAirports(lang);
             if (data.length > 0) setAllAirports(data);
+            else setAllAirports(staticFallback);
          } catch {
-            // Fallback — statik liste zaten yüklü
+            setAllAirports(staticFallback);
          }
       };
       fetchAirports();
+   // eslint-disable-next-line react-hooks/exhaustive-deps
    }, [lang]);
 
    // URL parametrelerinden form alanlarını doldur
@@ -784,19 +790,28 @@ function renderTripToggle(
    setType: (t: TripType) => void,
    t: ReturnType<typeof import("../../../context/LanguageContext").useTranslation>["t"],
 ) {
-   const types: { value: TripType; label: string; icon?: string }[] = [
+   const types: { value: TripType; label: string; icon?: string; disabled?: boolean; badge?: string }[] = [
       { value: "oneway", label: t.oneWay },
       { value: "roundtrip", label: t.roundTrip },
-      { value: "multicity", label: t.multiCity },
+      { value: "multicity", label: t.multiCity, disabled: true, badge: "Yakında" },
       { value: "group", label: t.group, icon: "fa-solid fa-users" },
    ];
 
    return (
       <>
-         {types.map(({ value, label, icon }) => (
-            <label key={value} className={`bb-trip-radio ${active === value ? "bb-trip-radio--active" : ""} ${value === "group" ? "bb-trip-radio--group" : ""}`}>
-               <input type="radio" name="tripType" value={value} checked={active === value} onChange={() => setType(value)} />
+         {types.map(({ value, label, icon, disabled, badge }) => (
+            <label
+               key={value}
+               className={`bb-trip-radio ${active === value ? "bb-trip-radio--active" : ""} ${value === "group" ? "bb-trip-radio--group" : ""} ${disabled ? "bb-trip-radio--disabled" : ""}`}
+               style={disabled ? { opacity: 0.5, cursor: 'not-allowed', position: 'relative' } : undefined}
+            >
+               <input type="radio" name="tripType" value={value} checked={active === value} onChange={() => !disabled && setType(value)} disabled={disabled} />
                {icon && <i className={icon}></i>} {label}
+               {badge && (
+                  <span style={{ fontSize: 10, background: '#eab308', color: '#fff', borderRadius: 8, padding: '1px 6px', marginLeft: 6, fontWeight: 600 }}>
+                     {badge}
+                  </span>
+               )}
             </label>
          ))}
       </>

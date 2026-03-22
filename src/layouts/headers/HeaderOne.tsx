@@ -26,7 +26,7 @@ const HeaderOne = () => {
             <div className="container">
                <div className="bb-header-inner">
                   <div className="bb-header-left">
-                     <Logo variant="white" />
+                     <Logo variant="dark" />
                      <ul className="bb-nav-links d-none d-lg-flex">
                         <li><Link href="/">{t.flights}</Link></li>
                         <li><Link href="/hotel-grid">{t.hotels}</Link></li>

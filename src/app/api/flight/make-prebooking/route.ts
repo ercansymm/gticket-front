@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     const validation = validateBody(makePreBookingClientSchema, parsed.data);
     if (!validation.success) return validation.response;
 
-    const { searchId, passengers, contact } = validation.data;
+    const { searchId, productId, brandedFareItemId, passengers, contact } = validation.data;
 
     // 1. Server-side'da session bilgisini al
     const sessionRes = await fetch(`${API_BASE}/api/flight/session/${encodeURIComponent(searchId)}`, {
@@ -39,12 +39,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // TODO: Backend session endpoint genişletilince productId/brandedFareItemId doldurulacak
     const backendBody = {
       sessionId: sessionData.sessionId,
       sessionToken: sessionData.sessionToken,
-      productId: sessionData.productId || '',
-      brandedFareItemId: sessionData.brandedFareItemId || '',
+      productId,
+      brandedFareItemId: brandedFareItemId || '',
       shoppingFileId: sessionData.shoppingFileId,
       userId: null,
       passengers,

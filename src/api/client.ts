@@ -21,10 +21,10 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor — hasError kontrolü ekle
+// Response interceptor — hasError kontrolü + hata formatı standardizasyonu
 apiClient.interceptors.response.use(
   (response) => {
-    // API 200 dönse bile hasError: true olabilir
+    // API 200 dönse bile hasError: true olabilir (BiletBank hata formatı)
     if (response.data?.hasError) {
       return Promise.reject({
         response: {
@@ -37,6 +37,29 @@ apiClient.interceptors.response.use(
     return response;
   },
   (error) => {
+    // Hata response'undan kullanıcı-dostu mesaj çıkar
+    // Backend 4 farklı format kullanıyor:
+    // 1. { error: "string" }             — 400 validation
+    // 2. { error: "string", inner: "..." } — 500 server
+    // 3. { hasError: true, errorMessage: "..." } — 200 BiletBank (yukarıda yakalanır)
+    // 4. { success: false, error: { code: "RATE_LIMIT_EXCEEDED", message: "..." } } — 429
+    if (error.response?.data) {
+      const data = error.response.data;
+      let msg: string | undefined;
+
+      if (typeof data.error === 'string') {
+        msg = data.error;
+      } else if (typeof data.error === 'object' && data.error?.message) {
+        msg = data.error.message;
+      } else if (data.errorMessage) {
+        msg = data.errorMessage;
+      }
+
+      if (msg) {
+        error.userMessage = msg;
+      }
+    }
+
     // Intentionally not logging PII — only error type
     if (process.env.NODE_ENV === 'development') {
       if (error.code === 'ECONNABORTED') {

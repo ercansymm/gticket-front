@@ -1,24 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { updatePassengersClientSchema, validateBody, parseBody } from '@/lib/validations';
+import { cancelBookingClientSchema, validateBody, parseBody } from '@/lib/validations';
 import { filterSensitiveFields, withTimeout, checkRateLimit } from '@/lib/api-helpers';
 import { logger } from '@/lib/logger';
 
 const API_BASE = process.env.API_BASE_URL;
 
 export async function POST(request: NextRequest) {
-  const rateLimitResponse = checkRateLimit(request, 10, 60_000);
+  const rateLimitResponse = checkRateLimit(request, 5, 60_000);
   if (rateLimitResponse) return rateLimitResponse;
 
   try {
     const parsed = await parseBody(request);
     if ('error' in parsed) return parsed.error;
 
-    const validation = validateBody(updatePassengersClientSchema, parsed.data);
+    const validation = validateBody(cancelBookingClientSchema, parsed.data);
     if (!validation.success) return validation.response;
 
-    const { searchId, productId, productItemId, passengers, contact } = validation.data;
+    const { searchId, productId, bookingId } = validation.data;
 
-    // 1. Server-side'da session + allocate bilgilerini al
+    // Server-side'da session bilgisini al
     const sessionRes = await fetch(`${API_BASE}/api/flight/session/${encodeURIComponent(searchId)}`, {
       headers: { 'Accept': 'application/json; charset=utf-8' },
     });
@@ -39,19 +39,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 2. Backend'e tam request gönder (session server-side'da eklendi)
-    const backendBody = {
+    const backendBody: Record<string, unknown> = {
       sessionId: sessionData.sessionId,
       sessionToken: sessionData.sessionToken,
-      shoppingFileId: sessionData.shoppingFileId,
       productId,
-      productItemId,
-      passengers,
-      contact,
     };
+    if (bookingId) backendBody.bookingId = bookingId;
 
     const { signal, clear } = withTimeout(30_000);
-    const res = await fetch(`${API_BASE}/api/flight/update-passengers`, {
+    const res = await fetch(`${API_BASE}/api/flight/cancel-booking`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json; charset=utf-8',
@@ -67,11 +63,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(filterSensitiveFields(data), { status: res.status });
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {
-      logger.error('Backend timeout', error, 'api/flight/update-passengers');
+      logger.error('Backend timeout', error, 'api/flight/cancel-booking');
       return NextResponse.json({ error: 'Request timeout' }, { status: 504 });
     }
-    // GÜVENLİK: PII loglanmaz — sadece error tipi
-    logger.error('Update passengers failed', error, 'api/flight/update-passengers');
+    logger.error('Cancel booking failed', error, 'api/flight/cancel-booking');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

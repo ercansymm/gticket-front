@@ -23,6 +23,8 @@ const contactSchema = z.object({
 // İstemciden gelen — session bilgisi YOK
 export const updatePassengersClientSchema = z.object({
   searchId: z.string().min(1).max(100),
+  productId: z.string().min(1).max(200),
+  productItemId: z.string().min(1).max(200),
   passengers: z.array(passengerItemSchema).min(1).max(9),
   contact: contactSchema,
 });
@@ -30,6 +32,8 @@ export const updatePassengersClientSchema = z.object({
 // İstemciden gelen — session bilgisi YOK
 export const makePreBookingClientSchema = z.object({
   searchId: z.string().min(1).max(100),
+  productId: z.string().min(1).max(200),
+  brandedFareItemId: z.string().max(200).optional().default(''),
   passengers: z.array(passengerItemSchema).min(1).max(9),
   contact: contactSchema,
 });

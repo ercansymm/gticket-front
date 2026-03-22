@@ -18,14 +18,10 @@ const Process = () => {
    const { t } = useTranslation();
 
    return (
-      <section aria-label={t.howItWorks} className="tg-chose-area tg-chose-su-wrap pt-100 pb-105 p-relative z-index-9">
+      <section aria-label={t.howItWorks} className="bb-section">
          <div className="container">
-            <div className="row justify-content-center">
-               <div className="col-lg-6 col-md-8">
-                  <div className="tg-chose-section-title text-center mb-40">
-                     <h2 className="tg-section-su-title text-capitalize mb-15">{t.howItWorks}</h2>
-                  </div>
-               </div>
+            <div className="text-center mb-40">
+                     <h2 className="bb-section-title">{t.howItWorks}</h2>
             </div>
             <div className="row">
                <div className="col-12">
