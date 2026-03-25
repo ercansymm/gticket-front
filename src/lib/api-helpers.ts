@@ -13,6 +13,10 @@ const SENSITIVE_KEYS = [
   'netFare',
   'systemServiceFee',
   'lastSellerCommission',
+  // Sağlayıcı/acente bilgileri
+  'providerId',
+  'businessId',
+  'businessName',
   // Debug/SOAP bilgileri
   'rawSoapResponse',
   'debugInfo',

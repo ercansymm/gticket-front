@@ -5,6 +5,20 @@
    Responsive: Desktop 1200+, Tablet 768-1199, Mobile <768
    ===================================================== */
 
+/* ── Global overflow guard ── */
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+img, video, iframe, table {
+  max-width: 100%;
+}
+
 /* ── CSS Variables ── */
 :root {
   /* AtaBilet — Güven Paleti (Mavi + Lacivert + Amber) */
@@ -528,10 +542,7 @@
 
 .tgmobile__menu-backdrop {
   position: fixed;
-  right: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   z-index: 800;
   opacity: 0;
   visibility: hidden;
@@ -896,7 +907,8 @@ select.bb-flight-form__input {
   border-bottom: none;
 }
 
-.bb-flight-form__dropdown li:hover {
+.bb-flight-form__dropdown li:hover,
+.bb-flight-form__dropdown li.bb-dropdown-highlighted {
   background: var(--ab-primary-light);
 }
 
@@ -1052,6 +1064,12 @@ select.bb-flight-form__input {
 
 .bb-flight-form__submit:active {
   transform: translateY(0);
+}
+
+.bb-flight-form__submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 /* ── Swap button ── */
@@ -1481,19 +1499,19 @@ select.bb-flight-form__input {
 .bb-calendar {
   position: absolute;
   top: 100%;
-  left: 0;
+  right: 0;
   z-index: 100;
   background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
   padding: 16px;
-  display: flex;
-  gap: 24px;
+  width: 320px;
+  max-width: calc(100vw - 24px);
 }
 
 .bb-calendar-month {
-  min-width: 280px;
+  width: 100%;
 }
 
 .bb-calendar-header {
@@ -1509,7 +1527,7 @@ select.bb-flight-form__input {
 
 .bb-calendar-nav {
   background: none;
-  border: 1px solid #e5e7eb;
+  border: none;
   border-radius: 50%;
   width: 32px;
   height: 32px;
@@ -1517,9 +1535,9 @@ select.bb-flight-form__input {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
   color: #374151;
   transition: background 0.15s, color 0.15s;
+  padding: 0;
 }
 
 .bb-calendar-nav:hover:not(:disabled) {
@@ -1534,7 +1552,7 @@ select.bb-flight-form__input {
 
 .bb-calendar-weekdays {
   display: grid;
-  grid-template-columns: repeat(7, 40px);
+  grid-template-columns: repeat(7, 1fr);
   text-align: center;
   font-size: 12px;
   color: #9ca3af;
@@ -1544,13 +1562,13 @@ select.bb-flight-form__input {
 
 .bb-calendar-days {
   display: grid;
-  grid-template-columns: repeat(7, 40px);
+  grid-template-columns: repeat(7, 1fr);
   gap: 2px;
 }
 
 .bb-calendar-day {
-  width: 40px;
-  height: 40px;
+  width: 100%;
+  aspect-ratio: 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1617,35 +1635,65 @@ select.bb-flight-form__input {
 }
 
 @media (max-width: 768px) {
+  /* Calendar overlay */
+  .bb-calendar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1099;
+    animation: bb-fade-in 0.2s ease-out;
+  }
+
+  @keyframes bb-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
   .bb-calendar {
     position: fixed;
     top: auto;
     bottom: 0;
     left: 0;
     right: 0;
+    width: 100%;
     max-width: 100%;
-    max-height: 80vh;
+    max-height: 85vh;
     overflow-y: auto;
     border-radius: 16px 16px 0 0;
     box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
     z-index: 1100;
-    flex-direction: column;
-    gap: 16px;
+    padding: 16px 16px 24px;
+    animation: bb-slide-up 0.3s ease-out;
   }
 
-  .bb-calendar-month {
-    min-width: auto;
+  @keyframes bb-slide-up {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
   }
 
-  .bb-calendar-weekdays,
-  .bb-calendar-days {
-    grid-template-columns: repeat(7, 1fr);
+  /* Drag handle */
+  .bb-calendar-drag-handle {
+    display: block;
+    width: 40px;
+    height: 4px;
+    background: #d1d5db;
+    border-radius: 2px;
+    margin: 0 auto 12px;
   }
 
   .bb-calendar-day {
-    width: 36px;
-    height: 36px;
-    font-size: 13px;
+    font-size: 14px;
+    min-height: 44px;
+  }
+
+  .bb-calendar-header {
+    padding: 4px 0 12px;
+    font-size: 16px;
+  }
+
+  .bb-calendar-nav {
+    width: 44px;
+    height: 44px;
   }
 
   /* Flatpickr: bottom sheet on mobile */
@@ -1659,6 +1707,16 @@ select.bb-flight-form__input {
     border-radius: 16px 16px 0 0 !important;
     box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15) !important;
     z-index: 1100 !important;
+  }
+}
+
+/* Desktop: hide elements mobile-only */
+@media (min-width: 769px) {
+  .bb-calendar-overlay {
+    display: none;
+  }
+  .bb-calendar-drag-handle {
+    display: none;
   }
 }
 
@@ -1922,8 +1980,179 @@ select.bb-flight-form__input {
 }
 
 /* ══════════════════════════════════════════════════════
-   6. BLOG PREVIEW
+   6. BLOG PREVIEW (Homepage)
    ══════════════════════════════════════════════════════ */
+
+/* Section */
+.bb-blog-section {
+  background: var(--ab-bg-light);
+}
+
+.bb-blog-section__header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 32px;
+}
+
+.bb-blog-section__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ab-primary);
+  background: var(--ab-primary-light);
+  padding: 4px 12px;
+  border-radius: var(--ab-radius-full);
+  margin-bottom: 8px;
+}
+
+.bb-blog-section__subtitle {
+  font-size: 15px;
+  color: var(--bb-gray-600);
+  margin: 4px 0 0;
+  max-width: 480px;
+}
+
+.bb-blog-section__all-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ab-primary);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: gap var(--bb-transition), color var(--bb-transition);
+}
+
+.bb-blog-section__all-link:hover {
+  gap: 10px;
+  color: var(--ab-primary-hover);
+}
+
+/* Grid */
+.bb-blog-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+/* Card */
+.bb-blog-card {
+  background: var(--ab-bg);
+  border-radius: var(--ab-radius-md);
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.bb-blog-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.bb-blog-card__img-wrap {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  aspect-ratio: 16 / 10;
+}
+
+.bb-blog-card__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.bb-blog-card:hover .bb-blog-card__img {
+  transform: scale(1.05);
+}
+
+.bb-blog-card__tag {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: var(--ab-primary);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: var(--ab-radius-full);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.bb-blog-card__body {
+  padding: 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.bb-blog-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 13px;
+  color: var(--bb-gray-400);
+  margin-bottom: 10px;
+}
+
+.bb-blog-card__meta i {
+  margin-right: 4px;
+}
+
+.bb-blog-card__title {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.4;
+  margin: 0 0 8px;
+}
+
+.bb-blog-card__title a {
+  color: var(--ab-text);
+  text-decoration: none;
+  transition: color var(--bb-transition);
+}
+
+.bb-blog-card__title a:hover {
+  color: var(--ab-primary);
+}
+
+.bb-blog-card__summary {
+  font-size: 14px;
+  color: var(--bb-gray-600);
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0 0 auto;
+}
+
+.bb-blog-card__read-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ab-primary);
+  text-decoration: none;
+  margin-top: 16px;
+  transition: gap var(--bb-transition), color var(--bb-transition);
+}
+
+.bb-blog-card__read-more:hover {
+  gap: 10px;
+  color: var(--ab-primary-hover);
+}
+
+/* Legacy */
 .bb-blog-summary {
   font-size: 14px;
   color: var(--bb-gray-600);
@@ -1953,47 +2182,116 @@ select.bb-flight-form__input {
 /* ══════════════════════════════════════════════════════
    6b. BLOG DETAIL PAGE
    ══════════════════════════════════════════════════════ */
+
+/* Page wrapper */
+.bb-blog-detail-page {
+  padding-bottom: 60px;
+}
+
+/* Hero */
+.bb-blog-detail__hero {
+  background: linear-gradient(135deg, #1E3A5F 0%, #2454A0 40%, #3B82F6 100%);
+  color: #fff;
+  padding: 32px 0 40px;
+}
+
+.bb-blog-detail__breadcrumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  margin-bottom: 16px;
+  transition: color var(--bb-transition);
+}
+
+.bb-blog-detail__breadcrumb:hover {
+  color: #fff;
+}
+
+.bb-blog-detail__hero-content {
+  max-width: 720px;
+}
+
 .bb-blog-detail__tag {
   display: inline-block;
-  background: var(--bb-primary);
+  background: rgba(255, 255, 255, 0.15);
   color: #fff;
   font-size: 12px;
   font-weight: 600;
   padding: 4px 12px;
-  border-radius: var(--bb-radius);
-  margin-bottom: 10px;
+  border-radius: var(--ab-radius-full);
+  margin-bottom: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  backdrop-filter: blur(4px);
 }
 
 .bb-blog-detail__title {
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--bb-dark);
+  font-size: 32px;
+  font-weight: 800;
+  color: #fff;
   line-height: 1.3;
-  margin-bottom: 12px;
+  margin: 0 0 16px;
 }
 
 .bb-blog-detail__meta {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 20px;
   font-size: 14px;
-  color: var(--bb-gray-600);
-  margin-bottom: 24px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.bb-blog-detail__meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bb-blog-detail__meta-item i {
+  font-size: 13px;
+}
+
+/* Layout: article + sidebar */
+.bb-blog-detail__layout {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 40px;
+  margin-top: -20px;
+  position: relative;
+  z-index: 2;
+}
+
+/* Article */
+.bb-blog-detail__article {
+  background: var(--ab-bg);
+  border-radius: var(--ab-radius-md);
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
+  padding: 32px;
+  overflow: hidden;
+}
+
+.bb-blog-detail__img-wrap {
+  margin: -32px -32px 28px;
+  overflow: hidden;
 }
 
 .bb-blog-detail__image {
   width: 100%;
-  border-radius: var(--bb-radius);
-  margin-bottom: 24px;
+  height: auto;
+  display: block;
 }
 
 .bb-blog-detail__content h2 {
   font-size: 22px;
-  font-weight: 600;
-  color: var(--bb-dark);
-  margin: 28px 0 12px;
+  font-weight: 700;
+  color: var(--ab-text);
+  margin: 32px 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--ab-primary-light);
 }
 
 .bb-blog-detail__content p {
@@ -2003,28 +2301,125 @@ select.bb-flight-form__input {
   margin-bottom: 16px;
 }
 
+.bb-blog-detail__content ul,
+.bb-blog-detail__content ol {
+  padding-left: 24px;
+  margin-bottom: 16px;
+}
+
+.bb-blog-detail__content li {
+  font-size: 16px;
+  line-height: 1.8;
+  color: var(--bb-gray-600);
+  margin-bottom: 4px;
+}
+
+/* Footer */
 .bb-blog-detail__footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding-top: 20px;
-  border-top: 1px solid var(--bb-gray-200, #e5e7eb);
+  border-top: 1px solid var(--ab-border);
   margin-top: 32px;
 }
 
-.bb-blog-detail__back {
+.bb-blog-detail__footer-tags {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--bb-gray-600);
+}
+
+.bb-blog-detail__footer-tags span {
+  background: var(--ab-primary-light);
+  color: var(--ab-primary);
+  padding: 3px 10px;
+  border-radius: var(--ab-radius-full);
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.bb-blog-detail__back-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   font-size: 14px;
   font-weight: 600;
-  color: var(--bb-primary);
+  color: var(--ab-primary);
   text-decoration: none;
-  transition: gap var(--bb-transition);
+  transition: gap var(--bb-transition), color var(--bb-transition);
 }
 
-.bb-blog-detail__back:hover {
+.bb-blog-detail__back-btn:hover {
   gap: 10px;
+  color: var(--ab-primary-hover);
+}
+
+/* Sidebar */
+.bb-blog-detail__sidebar {
+  margin-top: -20px;
+}
+
+.bb-blog-sidebar__card {
+  background: var(--ab-bg);
+  border-radius: var(--ab-radius-md);
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
+  padding: 20px;
+  position: sticky;
+  top: 80px;
+}
+
+.bb-blog-sidebar__title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ab-text);
+  margin: 0 0 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--ab-primary);
+}
+
+.bb-blog-sidebar__item {
+  display: flex;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--ab-border);
+  text-decoration: none;
+  transition: background var(--bb-transition);
+}
+
+.bb-blog-sidebar__item:last-child {
+  border-bottom: none;
+}
+
+.bb-blog-sidebar__item:hover {
+  opacity: 0.85;
+}
+
+.bb-blog-sidebar__thumb {
+  width: 80px;
+  height: 56px;
+  border-radius: var(--ab-radius-sm);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.bb-blog-sidebar__item-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ab-text);
+  line-height: 1.4;
+  margin: 0 0 4px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.bb-blog-sidebar__item-date {
+  font-size: 12px;
+  color: var(--bb-gray-400);
 }
 
 /* ══════════════════════════════════════════════════════
@@ -2382,6 +2777,33 @@ select.bb-flight-form__input {
     height: auto;
     padding: 6px 0;
   }
+
+  /* Blog grid: 2 columns on tablet */
+  .bb-blog-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .bb-blog-grid .bb-blog-card:last-child {
+    display: none;
+  }
+
+  /* Blog detail: sidebar below article */
+  .bb-blog-detail__layout {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .bb-blog-detail__sidebar {
+    margin-top: 0;
+  }
+
+  .bb-blog-sidebar__card {
+    position: static;
+  }
+
+  .bb-blog-detail__title {
+    font-size: 26px;
+  }
 }
 
 /* ══════════════════════════════════════════════════════
@@ -2520,9 +2942,9 @@ select.bb-flight-form__input {
     align-items: flex-start;
   }
 
-  /* Calendar: bottom sheet on mobile (overridden in 768px block) */
+  /* Calendar: constrain width on mobile */
   .flatpickr-calendar.open {
-    max-width: 100%;
+    max-width: calc(100vw - 24px);
   }
 
   /* Passenger dropdown: full width on mobile */
@@ -2595,6 +3017,53 @@ select.bb-flight-form__input {
 
   .bb-cookie-consent__accept {
     flex: 1;
+  }
+
+  /* Blog grid: 1 column on mobile */
+  .bb-blog-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .bb-blog-grid .bb-blog-card:last-child {
+    display: block;
+  }
+
+  .bb-blog-section__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .bb-blog-section__all-link {
+    align-self: flex-start;
+  }
+
+  /* Blog detail: mobile */
+  .bb-blog-detail__hero {
+    padding: 20px 0 28px;
+  }
+
+  .bb-blog-detail__title {
+    font-size: 22px;
+  }
+
+  .bb-blog-detail__meta {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .bb-blog-detail__article {
+    padding: 20px;
+  }
+
+  .bb-blog-detail__img-wrap {
+    margin: -20px -20px 20px;
+  }
+
+  .bb-blog-detail__footer {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
   }
 }
 
@@ -2851,16 +3320,22 @@ select.bb-flight-form__input {
 }
 
 .bb-flight-card__badge {
-  font-size: 11px;
-  padding: 2px 8px;
-  border-radius: 4px;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 12px;
   background: #f3f4f6;
   color: #6b7280;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  line-height: 1.3;
 }
 
 .bb-flight-card__badge--refundable {
   background: #ecfdf5;
   color: #059669;
+  font-weight: 600;
 }
 
 .bb-flight-card__badge--baggage {
@@ -2869,24 +3344,42 @@ select.bb-flight-form__input {
 }
 
 .bb-flight-card__badge--seats {
-  background: #fef3c7;
-  color: #d97706;
-  font-weight: 600;
+  background: #fef2f2;
+  color: #dc2626;
+  font-weight: 700;
+  animation: bb-pulse-badge 2s ease-in-out infinite;
+}
+
+@keyframes bb-pulse-badge {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
 }
 
 .bb-flight-card__badge--direct {
-  background: #ecfdf5;
-  color: #059669;
+  background: var(--ab-primary-light);
+  color: var(--ab-primary);
+  font-weight: 600;
+}
+
+.bb-flight-card__badge--direct i {
+  font-size: 10px;
 }
 
 .bb-flight-card__badge--stop {
   background: #fef3c7;
   color: #d97706;
+  font-weight: 600;
 }
 
 .bb-flight-card__badge--nonrefundable {
   background: #fef2f2;
   color: #dc2626;
+}
+
+.bb-flight-card__badge--cabin {
+  background: #eff6ff;
+  color: var(--ab-primary);
+  border: 1px solid var(--ab-primary-light);
 }
 
 /* Uçuş kartı — yeniden yapılandırılmış */
@@ -3252,34 +3745,42 @@ select.bb-flight-form__input {
 }
 
 @media (max-width: 768px) {
+  /* Hide old filter toggle — replaced by mobile filter bar */
   .bb-filter-toggle {
-    display: block;
+    display: none;
   }
 
   .bb-search-results__layout {
     flex-direction: column;
   }
 
+  /* Hide sidebar entirely on mobile — replaced by drawer */
   .bb-search-results__sidebar {
-    display: none;
-    width: 100%;
-    position: static;
+    display: none !important;
   }
 
-  .bb-search-results__sidebar--open {
-    display: block;
+  /* Add bottom padding for the fixed mobile filter bar */
+  .bb-search-results__content {
+    padding-bottom: 72px;
   }
 
   .bb-flight-card__top {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
     gap: 12px;
-    padding: 16px;
+    padding: 14px;
   }
 
   .bb-flight-card__action {
     width: 100%;
     justify-content: space-between;
+    align-items: center;
+  }
+
+  .bb-flight-card__select-btn {
+    min-height: 44px;
+    padding: 10px 20px;
+    font-size: 14px;
   }
 
   .bb-flight-card__packages {
@@ -3311,6 +3812,239 @@ select.bb-flight-form__input {
     white-space: nowrap;
     flex-shrink: 0;
   }
+
+  /* Flight card badges */
+  .bb-flight-card__badges-row {
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 0 14px 12px;
+  }
+
+  /* Search summary mobile */
+  .bb-search-summary {
+    border-radius: 0;
+    margin-bottom: 16px;
+  }
+}
+
+/* ── MOBILE FILTER BAR (Enuygun/Ucuzabilet pattern) ── */
+.bb-mobile-filter-bar {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .bb-mobile-filter-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    z-index: 100;
+    background: #fff;
+    border-top: 1px solid #e5e7eb;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.08);
+    padding: 8px 12px;
+    padding-bottom: calc(8px + env(safe-area-inset-bottom));
+    gap: 8px;
+  }
+}
+
+.bb-mobile-filter-bar__btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  min-height: 44px;
+  cursor: pointer;
+  transition: background 0.15s;
+  font-family: inherit;
+}
+
+.bb-mobile-filter-bar__btn:active {
+  background: #f3f4f6;
+}
+
+.bb-mobile-filter-bar__btn svg {
+  flex-shrink: 0;
+}
+
+/* ── MOBILE FILTER DRAWER ── */
+.bb-mobile-filter-drawer {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: #fff;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 60px 16px 100px;
+  transform: translateY(100%);
+  transition: transform 0.3s ease-out;
+}
+
+.bb-mobile-filter-drawer.is-open {
+  transform: translateY(0);
+}
+
+.bb-mobile-filter-drawer__header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+  z-index: 1;
+}
+
+.bb-mobile-filter-drawer__title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+}
+
+.bb-mobile-filter-drawer__close {
+  font-size: 20px;
+  background: none;
+  border: none;
+  padding: 8px;
+  min-height: 44px;
+  min-width: 44px;
+  cursor: pointer;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+}
+
+.bb-mobile-filter-drawer__close:active {
+  background: #f3f4f6;
+}
+
+.bb-mobile-filter-drawer__footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 12px 16px;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  background: #fff;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  gap: 10px;
+  z-index: 1;
+}
+
+.bb-mobile-filter-drawer__reset {
+  flex: 0 0 auto;
+  padding: 12px 20px;
+  background: #fff;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  min-height: 48px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.bb-mobile-filter-drawer__apply {
+  flex: 1;
+  padding: 12px 20px;
+  background: var(--ab-primary);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  min-height: 48px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.bb-mobile-filter-drawer__apply:active {
+  background: var(--ab-primary-hover);
+}
+
+/* ── MOBILE SORT DRAWER ── */
+.bb-mobile-sort-drawer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: #fff;
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+  padding: 16px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  transform: translateY(100%);
+  transition: transform 0.3s ease-out;
+}
+
+.bb-mobile-sort-drawer.is-open {
+  transform: translateY(0);
+}
+
+.bb-mobile-sort-drawer__overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+}
+
+.bb-mobile-sort-drawer__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.bb-mobile-sort-drawer__title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+}
+
+.bb-mobile-sort-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 12px;
+  border: none;
+  background: none;
+  width: 100%;
+  font-size: 15px;
+  color: #374151;
+  cursor: pointer;
+  border-radius: 8px;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.bb-mobile-sort-option:active {
+  background: #f3f4f6;
+}
+
+.bb-mobile-sort-option--active {
+  color: var(--ab-primary);
+  font-weight: 600;
+  background: var(--ab-primary-light);
 }
 
 /* ══════════════════════════════════════════════════════
@@ -4089,5 +4823,1283 @@ footer,
   }
   .bb-checkout {
     padding-bottom: 100px;
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   SEARCH SUMMARY BAR (enuygun-style top bar)
+   ══════════════════════════════════════════════════════ */
+.bb-search-summary {
+  background: var(--ab-secondary);
+  color: #fff;
+  padding: 14px 0;
+  margin-bottom: 24px;
+  border-radius: 12px;
+}
+
+.bb-search-summary__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.bb-search-summary__route {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.bb-search-summary__city {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.bb-search-summary__arrow {
+  font-size: 14px;
+  opacity: 0.6;
+}
+
+.bb-search-summary__meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 13px;
+  color: rgba(255,255,255,.8);
+}
+
+.bb-search-summary__meta-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.bb-search-summary__meta-item i {
+  font-size: 14px;
+  opacity: 0.7;
+}
+
+.bb-search-summary__count {
+  background: rgba(255,255,255,.12);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.bb-search-summary__edit {
+  background: rgba(255,255,255,.12);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,.2);
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.bb-search-summary__edit:hover {
+  background: rgba(255,255,255,.2);
+  border-color: rgba(255,255,255,.3);
+}
+
+@media (max-width: 768px) {
+  .bb-search-summary__inner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 0 16px;
+  }
+  .bb-search-summary__city {
+    font-size: 15px;
+  }
+  .bb-search-summary__meta {
+    gap: 10px;
+    font-size: 12px;
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   FLIGHT CARD v2 (enuygun/ucuzabilet inspired)
+   ══════════════════════════════════════════════════════ */
+
+/* Airline logo circle */
+.bb-flight-card__airline-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: var(--ab-bg-light);
+  border: 1px solid var(--ab-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ab-secondary);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.bb-flight-card__airline-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.bb-flight-card__airline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 140px;
+}
+
+.bb-flight-card__airline-info {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Time track visual (departure ——→ arrival) */
+.bb-flight-card__track {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex: 1;
+  min-width: 200px;
+}
+
+.bb-flight-card__track-endpoint {
+  text-align: center;
+  min-width: 60px;
+}
+
+.bb-flight-card__track-time {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1f2937;
+  line-height: 1.2;
+}
+
+.bb-flight-card__track-code {
+  font-size: 12px;
+  color: #9ca3af;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.bb-flight-card__track-line {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 12px;
+  position: relative;
+}
+
+.bb-flight-card__track-duration {
+  font-size: 11px;
+  color: #9ca3af;
+  font-weight: 500;
+  margin-bottom: 4px;
+  white-space: nowrap;
+}
+
+.bb-flight-card__track-bar {
+  flex: 1;
+  height: 2px;
+  background: #d1d5db;
+  border-radius: 2px;
+  position: relative;
+}
+
+.bb-flight-card__track-bar-wrap {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  position: relative;
+}
+
+.bb-flight-card__track-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ab-primary);
+  flex-shrink: 0;
+  z-index: 1;
+}
+
+.bb-flight-card__track-stop-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f59e0b;
+  border: 2px solid #fff;
+  flex-shrink: 0;
+  z-index: 1;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.bb-flight-card__track-plane {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  color: var(--ab-primary);
+  z-index: 2;
+}
+
+.bb-flight-card__track-stops {
+  font-size: 10px;
+  color: #f59e0b;
+  font-weight: 600;
+  margin-top: 4px;
+  white-space: nowrap;
+}
+
+.bb-flight-card__track-direct {
+  font-size: 10px;
+  color: #059669;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+/* Stop dot on track bar */
+.bb-flight-card__track-bar--stops {
+  background: linear-gradient(90deg, #d1d5db 0%, #fbbf24 50%, #d1d5db 100%);
+}
+
+/* Price section */
+.bb-flight-card__price-section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: 130px;
+  gap: 4px;
+}
+
+.bb-flight-card__price-amount {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--ab-primary);
+  line-height: 1;
+}
+
+.bb-flight-card__price-note {
+  font-size: 11px;
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+.bb-flight-card__select-btn {
+  background: var(--ab-primary);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 28px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  font-family: inherit;
+}
+
+.bb-flight-card__select-btn:hover {
+  background: var(--ab-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(26,86,219,.25);
+}
+
+/* Badges row */
+.bb-flight-card__badges-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 24px 14px;
+  flex-wrap: wrap;
+}
+
+/* Date badge */
+.bb-flight-card__date {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+/* Per-person label */
+.bb-flight-card__per-pax {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+@media (max-width: 768px) {
+  .bb-flight-card__top {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    padding: 16px;
+  }
+
+  .bb-flight-card__track {
+    min-width: unset;
+  }
+
+  .bb-flight-card__track-time {
+    font-size: 18px;
+  }
+
+  .bb-flight-card__price-section {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-width: unset;
+  }
+
+  .bb-flight-card__price-amount {
+    font-size: 20px;
+  }
+
+  .bb-flight-card__badges-row {
+    padding: 0 16px 12px;
+  }
+
+  .bb-flight-card__airline-logo {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   EMPTY STATE & ERROR IMPROVEMENTS
+   ══════════════════════════════════════════════════════ */
+.bb-empty-state {
+  text-align: center;
+  padding: 64px 24px;
+}
+
+.bb-empty-state__icon {
+  font-size: 56px;
+  margin-bottom: 16px;
+  opacity: 0.4;
+}
+
+.bb-empty-state__title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 8px;
+}
+
+.bb-empty-state__text {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0 0 24px;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.6;
+}
+
+.bb-empty-state__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--ab-primary);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 28px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+
+.bb-empty-state__btn:hover {
+  background: var(--ab-primary-hover);
+}
+
+/* ══════════════════════════════════════════════════════
+   PAYMENT PAGE SIDEBAR & ENHANCEMENTS
+   ══════════════════════════════════════════════════════ */
+.bb-payment-layout {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.bb-payment-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.bb-payment-sidebar {
+  flex: 0 0 360px;
+  position: sticky;
+  top: 100px;
+}
+
+@media (max-width: 1024px) {
+  .bb-payment-layout {
+    flex-direction: column;
+  }
+  .bb-payment-sidebar {
+    flex: none;
+    width: 100%;
+    position: static;
+    order: -1;
+  }
+}
+
+/* Payment method cards */
+.bb-payment-method {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 20px;
+  border: 2px solid var(--ab-border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-bottom: 12px;
+  background: #fff;
+}
+
+.bb-payment-method:hover {
+  border-color: #bfdbfe;
+  background: #f8faff;
+}
+
+.bb-payment-method--active {
+  border-color: var(--ab-primary);
+  background: rgba(26,86,219,.03);
+  box-shadow: 0 0 0 3px rgba(26,86,219,.08);
+}
+
+.bb-payment-method--disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.bb-payment-method__radio {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid #d1d5db;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: border-color 0.15s;
+}
+
+.bb-payment-method--active .bb-payment-method__radio {
+  border-color: var(--ab-primary);
+}
+
+.bb-payment-method--active .bb-payment-method__radio::after {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--ab-primary);
+}
+
+.bb-payment-method__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: var(--ab-bg-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.bb-payment-method__info {
+  flex: 1;
+}
+
+.bb-payment-method__name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.bb-payment-method__desc {
+  font-size: 12px;
+  color: #9ca3af;
+  margin: 2px 0 0;
+}
+
+/* Reservation countdown timer */
+.bb-countdown {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  padding: 10px 16px;
+  margin-bottom: 16px;
+}
+
+.bb-countdown__icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.bb-countdown__text {
+  font-size: 13px;
+  color: #92400e;
+  font-weight: 500;
+  flex: 1;
+}
+
+.bb-countdown__time {
+  font-size: 16px;
+  font-weight: 700;
+  color: #b45309;
+  font-family: 'Courier New', Courier, monospace;
+  letter-spacing: 1px;
+}
+
+.bb-countdown--urgent {
+  background: #fef2f2;
+  border-color: #fca5a5;
+}
+
+.bb-countdown--urgent .bb-countdown__text {
+  color: #991b1b;
+}
+
+.bb-countdown--urgent .bb-countdown__time {
+  color: #dc2626;
+}
+
+.bb-countdown--expired {
+  background: #fef2f2;
+  border-color: #fca5a5;
+}
+
+.bb-countdown--expired .bb-countdown__text {
+  color: #991b1b;
+  font-weight: 600;
+}
+
+/* ══════════════════════════════════════════════════════
+   MODAL (Fiyat Değişikliği, Bildirimler, vb.)
+   ══════════════════════════════════════════════════════ */
+.bb-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 16px;
+}
+
+.bb-modal {
+  background: var(--bb-white);
+  border-radius: var(--ab-radius-md);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  max-width: 480px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.bb-modal__header {
+  padding: 20px 24px 12px;
+  border-bottom: 1px solid var(--bb-border);
+}
+
+.bb-modal__title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ab-text);
+  margin: 0;
+}
+
+.bb-modal__body {
+  padding: 20px 24px;
+}
+
+.bb-modal__body p {
+  font-size: 14px;
+  color: var(--ab-text-light);
+  margin: 0 0 16px;
+}
+
+.bb-modal__price-compare {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 16px;
+  background: var(--ab-bg-light);
+  border-radius: var(--ab-radius-sm);
+}
+
+.bb-modal__price-old,
+.bb-modal__price-new {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.bb-modal__price-label {
+  font-size: 12px;
+  color: var(--ab-text-light);
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.bb-modal__price-amount {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.bb-modal__price-amount--old {
+  color: var(--ab-text-light);
+  text-decoration: line-through;
+}
+
+.bb-modal__price-amount--new {
+  color: var(--ab-primary);
+}
+
+.bb-modal__price-arrow {
+  font-size: 20px;
+  color: var(--ab-text-light);
+}
+
+.bb-modal__footer {
+  display: flex;
+  gap: 8px;
+  padding: 16px 24px 20px;
+  justify-content: flex-end;
+}
+
+.bb-modal__btn {
+  padding: 10px 20px;
+  border-radius: var(--ab-radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all var(--bb-transition);
+}
+
+.bb-modal__btn--primary {
+  background: var(--ab-primary);
+  color: var(--bb-white);
+}
+
+.bb-modal__btn--primary:hover {
+  background: var(--ab-primary-hover);
+}
+
+.bb-modal__btn--secondary {
+  background: var(--ab-bg-light);
+  color: var(--ab-text);
+  border: 1px solid var(--bb-border);
+}
+
+.bb-modal__btn--secondary:hover {
+  background: var(--bb-border);
+}
+
+@media (max-width: 480px) {
+  .bb-modal__footer {
+    flex-direction: column;
+  }
+  .bb-modal__price-compare {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .bb-modal__price-arrow {
+    transform: rotate(90deg);
+  }
+}
+
+/* Agreement checkbox */
+.bb-agreement {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 16px;
+  background: var(--ab-bg-light);
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.bb-agreement__checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--ab-primary);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.bb-agreement__text {
+  font-size: 13px;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+.bb-agreement__link {
+  color: var(--ab-primary);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* ══════════════════════════════════════════════════════
+   SUCCESS PAGE — TICKET CARD (Professional)
+   ══════════════════════════════════════════════════════ */
+.bb-success {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 40px 16px;
+}
+
+.bb-success__header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.bb-success__icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  box-shadow: 0 8px 24px rgba(34,197,94,.25);
+}
+
+.bb-success__icon svg,
+.bb-success__icon-check {
+  font-size: 36px;
+  color: #fff;
+}
+
+.bb-success__title {
+  font-size: 26px;
+  font-weight: 800;
+  color: #1f2937;
+  margin: 0 0 8px;
+}
+
+.bb-success__subtitle {
+  font-size: 15px;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* PNR Card */
+.bb-success__pnr-card {
+  background: linear-gradient(135deg, var(--ab-secondary) 0%, #1e3a5f 100%);
+  color: #fff;
+  border-radius: 16px;
+  padding: 28px 32px;
+  text-align: center;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.bb-success__pnr-card::before {
+  content: '';
+  position: absolute;
+  top: -30px;
+  right: -30px;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.05);
+}
+
+.bb-success__pnr-label {
+  font-size: 13px;
+  color: rgba(255,255,255,.7);
+  font-weight: 500;
+  margin: 0 0 8px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.bb-success__pnr-code {
+  font-size: 36px;
+  font-weight: 800;
+  letter-spacing: 6px;
+  margin: 0 0 8px;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.bb-success__pnr-hint {
+  font-size: 12px;
+  color: rgba(255,255,255,.6);
+  margin: 0;
+}
+
+/* Ticket list */
+.bb-success__tickets {
+  background: #fff;
+  border: 1px solid var(--ab-border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.bb-success__tickets-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1f2937;
+  padding: 16px 20px;
+  margin: 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.bb-success__ticket-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid #f8f9fa;
+  gap: 12px;
+}
+
+.bb-success__ticket-row:last-child {
+  border-bottom: none;
+}
+
+.bb-success__ticket-pax {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bb-success__ticket-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.bb-success__ticket-type {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.bb-success__ticket-number {
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Courier New', Courier, monospace;
+  color: var(--ab-primary);
+  letter-spacing: 1px;
+}
+
+/* Flight detail card */
+.bb-success__flight-card {
+  background: #fff;
+  border: 1px solid var(--ab-border);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.bb-success__flight-card-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.bb-success__segment {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f8f9fa;
+}
+
+.bb-success__segment:last-child {
+  border-bottom: none;
+}
+
+.bb-success__segment-route {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1f2937;
+  min-width: 100px;
+}
+
+.bb-success__segment-detail {
+  flex: 1;
+}
+
+.bb-success__segment-datetime {
+  font-size: 13px;
+  color: #4b5563;
+}
+
+.bb-success__segment-airline {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 2px;
+}
+
+/* Price total line */
+.bb-success__total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: var(--ab-bg-light);
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+
+.bb-success__total-label {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.bb-success__total-amount {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--ab-primary);
+}
+
+/* Action buttons */
+.bb-success__actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.bb-success__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 28px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+  border: none;
+}
+
+.bb-success__btn--primary {
+  background: var(--ab-primary);
+  color: #fff;
+}
+
+.bb-success__btn--primary:hover {
+  background: var(--ab-primary-hover);
+}
+
+.bb-success__btn--secondary {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid var(--ab-border);
+}
+
+.bb-success__btn--secondary:hover {
+  background: #e2e8f0;
+}
+
+@media (max-width: 768px) {
+  .bb-success {
+    padding: 24px 12px;
+  }
+  .bb-success__pnr-code {
+    font-size: 26px;
+    letter-spacing: 3px;
+  }
+  .bb-success__title {
+    font-size: 22px;
+  }
+  .bb-success__ticket-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   LOADING STATE IMPROVEMENTS
+   ══════════════════════════════════════════════════════ */
+.bb-loading-skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: bb-shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+@keyframes bb-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.bb-skeleton-card {
+  height: 120px;
+  margin-bottom: 12px;
+  border-radius: 16px;
+}
+
+.bb-skeleton-sidebar {
+  height: 400px;
+  border-radius: 16px;
+}
+
+/* ══════════════════════════════════════════════════════
+   COMPREHENSIVE MOBILE IMPROVEMENTS
+   ══════════════════════════════════════════════════════ */
+
+/* ── Safe area for notched devices ── */
+@supports (padding: env(safe-area-inset-top)) {
+  body {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* ── iOS text size adjust prevention ── */
+@media (max-width: 768px) {
+  body {
+    -webkit-text-size-adjust: 100%;
+    font-size: 14px;
+  }
+
+  /* Touch targets: minimum 44px for interactive elements */
+  .bb-flight-form__input,
+  .bb-flight-form__select,
+  .bb-flight-form__submit {
+    min-height: 48px;
+    font-size: 16px; /* prevents iOS auto-zoom on focus */
+  }
+
+  /* Airport autocomplete suggestions */
+  .bb-airport-suggestions__item {
+    min-height: 44px;
+    padding: 12px 14px;
+  }
+
+  /* Passenger dropdown items */
+  .bb-pax-row__btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* Route nav arrows — bigger touch targets */
+  .bb-route-nav button {
+    width: 44px;
+    height: 44px;
+  }
+
+  /* Popular routes: hide nav arrows, users swipe */
+  .bb-route-nav {
+    display: none;
+  }
+
+  /* Route cards — constrain properly */
+  .bb-route-card {
+    width: 100%;
+  }
+
+  .bb-route-card__img-wrap {
+    border-radius: 10px;
+  }
+
+  /* Header phone hidden on mobile (already via d-xl-flex) */
+  .bb-support-phone {
+    display: none !important;
+  }
+
+  /* Trustbar: scrollable single row on small screens */
+  .bb-trustbar {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .bb-trustbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Flight card mobile compact improvements */
+  .bb-flight-card {
+    border-radius: 12px;
+    margin-bottom: 10px;
+  }
+
+  .bb-flight-card__price-section {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-width: unset;
+    padding-top: 10px;
+    border-top: 1px solid #f3f4f6;
+  }
+
+  .bb-flight-card__track {
+    min-width: unset;
+  }
+
+  .bb-flight-card__track-time {
+    font-size: 18px;
+  }
+
+  .bb-flight-card__price-amount {
+    font-size: 20px;
+  }
+
+  .bb-flight-card__airline-logo {
+    width: 32px;
+    height: 32px;
+  }
+
+  /* Cookie consent mobile */
+  .bb-cookie-consent {
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  }
+
+  /* Footer: reduce padding */
+  .bb-footer__main {
+    padding: 32px 0 20px;
+  }
+
+  /* Blog grid spacing */
+  .bb-blog-card {
+    margin-bottom: 16px;
+  }
+
+  /* Modal mobile */
+  .bb-modal {
+    width: 95%;
+    max-width: 95%;
+  }
+
+  .bb-modal__footer {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .bb-modal__btn {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  /* Contact form */
+  .bb-contact-form__row {
+    flex-direction: column;
+  }
+
+  /* FAQ */
+  .bb-faq__title {
+    font-size: 22px;
+  }
+
+  /* Fix any container overflow */
+  .container {
+    padding-left: 12px;
+    padding-right: 12px;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  /* Sort bar: hide on mobile (replaced by mobile sort drawer) */
+  .bb-sort-bar {
+    display: none;
+  }
+}
+
+/* ── Small mobile (<480px) enhancements ── */
+@media (max-width: 479px) {
+  .bb-flight-card__top {
+    padding: 12px;
+  }
+
+  .bb-flight-card__track-time {
+    font-size: 16px;
+  }
+
+  .bb-search-summary__city {
+    font-size: 14px;
+  }
+
+  .bb-search-summary__meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    font-size: 11px;
+  }
+
+  /* Trust bar single column */
+  .bb-trustbar__inner {
+    grid-template-columns: 1fr;
+  }
+
+  /* Full-width buttons */
+  .bb-empty-state__btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   PRINT STYLES
+   ══════════════════════════════════════════════════════ */
+@media print {
+  .bb-header-wrap,
+  .bb-trustbar,
+  .bb-footer,
+  .tg-footer-area,
+  .bb-stepper,
+  .bb-checkout__actions,
+  .bb-success__actions,
+  .bb-checkout__bottom-bar {
+    display: none !important;
+  }
+
+  .bb-success__pnr-card {
+    background: #1e3a5f !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .bb-success {
+    max-width: 100%;
+    padding: 0;
+  }
+
+  body {
+    font-size: 12pt;
   }
 }

@@ -51,6 +51,10 @@ export default function SuccessClient() {
     router.push('/');
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   if (!finalizeResult) return null;
 
   const pnr = finalizeResult.pnr ?? finalizeResult.bookingCode ?? preBookingResult?.bookingCode ?? '—';
@@ -59,47 +63,49 @@ export default function SuccessClient() {
   return (
     <>
       <HeaderOne />
-      <main className="bb-checkout" style={{ minHeight: '60vh' }}>
-        <div style={{ maxWidth: 700, margin: '0 auto', padding: '40px 16px' }}>
+      <main className="bb-checkout">
+        <div className="bb-success">
           {/* Success header */}
-          <div style={{ textAlign: 'center', marginBottom: 40 }}>
-            <div style={{ fontSize: 64, marginBottom: 16 }}>✅</div>
-            <h1 style={{ fontSize: 28, fontWeight: 700, color: '#22c55e', marginBottom: 8 }}>
-              Biletiniz Kesildi!
-            </h1>
-            <p style={{ color: '#6b7280', fontSize: 16 }}>
-              Rezervasyonunuz onaylanmış ve biletleriniz oluşturulmuştur.
+          <div className="bb-success__header">
+            <div className="bb-success__icon">
+              <span className="bb-success__icon-check">✓</span>
+            </div>
+            <h1 className="bb-success__title">Biletiniz Kesildi!</h1>
+            <p className="bb-success__subtitle">
+              Rezervasyonunuz onaylanmış ve biletleriniz başarıyla oluşturulmuştur.
             </p>
           </div>
 
           {/* PNR Card */}
-          <div className="bb-checkout__card" style={{ marginBottom: 24, textAlign: 'center' }}>
-            <h3 className="bb-checkout__card-title">PNR Kodunuz</h3>
-            <div style={{ fontSize: 32, fontWeight: 700, letterSpacing: 4, color: '#1d4ed8', padding: '16px 0' }}>
-              {pnr}
-            </div>
-            <p style={{ fontSize: 13, color: '#6b7280' }}>
-              Bu kodu saklayınız. Bilet sorgulama ve işlemler için gereklidir.
+          <div className="bb-success__pnr-card">
+            <p className="bb-success__pnr-label">PNR Kodunuz</p>
+            <p className="bb-success__pnr-code">{pnr}</p>
+            <p className="bb-success__pnr-hint">
+              Bu kodu saklayınız. Bilet sorgulama ve değişiklik işlemleri için gereklidir.
             </p>
           </div>
 
           {/* E-Ticket numbers */}
           {tickets.length > 0 && (
-            <div className="bb-checkout__card" style={{ marginBottom: 24 }}>
-              <h3 className="bb-checkout__card-title">E-Bilet Numaraları</h3>
+            <div className="bb-success__tickets">
+              <h3 className="bb-success__tickets-title">E-Bilet Numaraları</h3>
               {tickets.map((ticket, idx) => (
-                <div key={idx} className="bb-checkout__price-row" style={{ borderBottom: '1px solid #f3f4f6', paddingBottom: 8, marginBottom: 8 }}>
-                  <div>
-                    <div style={{ fontWeight: 600 }}>
+                <div key={idx} className="bb-success__ticket-row">
+                  <div className="bb-success__ticket-pax">
+                    <span className="bb-success__ticket-name">
                       {ticket.firstName ?? ''} {ticket.lastName ?? ticket.passengerName ?? ''}
-                    </div>
-                    <div style={{ fontSize: 12, color: '#6b7280' }}>
-                      {ticket.paxType ?? ticket.passengerType ?? ''}{ticket.segmentInfo ? ` — ${ticket.segmentInfo}` : ''}
-                    </div>
+                    </span>
+                    <span className="bb-success__ticket-type">
+                      {ticket.paxType === 'ADT' ? 'Yetişkin' :
+                       ticket.paxType === 'CHD' ? 'Çocuk' :
+                       ticket.paxType === 'INF' ? 'Bebek' :
+                       ticket.paxType ?? ticket.passengerType ?? ''}
+                      {ticket.segmentInfo ? ` — ${ticket.segmentInfo}` : ''}
+                    </span>
                   </div>
-                  <div style={{ fontWeight: 600, fontFamily: 'monospace' }}>
+                  <span className="bb-success__ticket-number">
                     {ticket.ticketNumber ?? '—'}
-                  </div>
+                  </span>
                 </div>
               ))}
             </div>
@@ -107,7 +113,7 @@ export default function SuccessClient() {
 
           {/* Full details from readShoppingFile */}
           {readLoading && (
-            <div className="bb-spinner-overlay" style={{ position: 'relative', minHeight: 80 }}>
+            <div className="bb-spinner-overlay" style={{ position: 'relative', minHeight: 80, borderRadius: 12 }}>
               <div className="bb-spinner-wrapper">
                 <div className="bb-spinner"></div>
                 <p className="bb-spinner-text">Detaylar yükleniyor...</p>
@@ -116,52 +122,62 @@ export default function SuccessClient() {
           )}
 
           {readResult && (
-            <div className="bb-checkout__card" style={{ marginBottom: 24 }}>
-              <h3 className="bb-checkout__card-title">Uçuş Detayları</h3>
-              {readResult.segments?.map((seg, idx) => (
-                <div key={idx} className="bb-checkout__price-row" style={{ borderBottom: '1px solid #f3f4f6', paddingBottom: 8, marginBottom: 8 }}>
-                  <div>
-                    <div style={{ fontWeight: 600 }}>
-                      {seg.originCode} → {seg.destinationCode}
+            <>
+              {/* Flight segments */}
+              {readResult.segments && readResult.segments.length > 0 && (
+                <div className="bb-success__flight-card">
+                  <h3 className="bb-success__flight-card-title">Uçuş Detayları</h3>
+                  {readResult.segments.map((seg, idx) => (
+                    <div key={idx} className="bb-success__segment">
+                      <span className="bb-success__segment-route">
+                        {seg.originCode} → {seg.destinationCode}
+                      </span>
+                      <div className="bb-success__segment-detail">
+                        <div className="bb-success__segment-datetime">
+                          {seg.departureDay} {seg.departureTime} — {seg.arrivalDay} {seg.arrivalTime}
+                        </div>
+                        <div className="bb-success__segment-airline">
+                          {seg.marketingAirline} {seg.flightNumber}
+                        </div>
+                      </div>
                     </div>
-                    <div style={{ fontSize: 13, color: '#6b7280' }}>
-                      {seg.departureDay} {seg.departureTime} — {seg.arrivalDay} {seg.arrivalTime}
-                    </div>
-                    <div style={{ fontSize: 12, color: '#6b7280' }}>
-                      {seg.marketingAirline} {seg.flightNumber}
-                    </div>
-                  </div>
+                  ))}
                 </div>
-              ))}
+              )}
 
               {/* Passenger summary */}
-              {readResult.passengers?.map((pax, idx) => (
-                <div key={idx} className="bb-checkout__price-row">
-                  <span>{pax.firstName} {pax.lastName}</span>
-                  <span style={{ fontFamily: 'monospace', fontSize: 13 }}>{pax.ticketNumber ?? '—'}</span>
+              {readResult.passengers && readResult.passengers.length > 0 && (
+                <div className="bb-success__tickets">
+                  <h3 className="bb-success__tickets-title">Yolcu Bilgileri</h3>
+                  {readResult.passengers.map((pax, idx) => (
+                    <div key={idx} className="bb-success__ticket-row">
+                      <span className="bb-success__ticket-name">{pax.firstName} {pax.lastName}</span>
+                      <span className="bb-success__ticket-number">{pax.ticketNumber ?? '—'}</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
 
-              <div className="bb-checkout__price-row bb-checkout__price-row--total" style={{ marginTop: 12 }}>
-                <span>Toplam Tutar</span>
-                <span>{readResult.totalFare?.toFixed(2)} {readResult.currency}</span>
+              {/* Total */}
+              <div className="bb-success__total">
+                <span className="bb-success__total-label">Toplam Tutar</span>
+                <span className="bb-success__total-amount">
+                  {readResult.totalFare?.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} {readResult.currency}
+                </span>
               </div>
-            </div>
+            </>
           )}
 
           {/* Actions */}
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button
-              className="bb-checkout__btn bb-checkout__btn--next"
-              onClick={handleNewSearch}
-            >
-              Yeni Arama Yap
+          <div className="bb-success__actions">
+            <button className="bb-success__btn bb-success__btn--primary" onClick={handleNewSearch}>
+              ✈️ Yeni Arama Yap
             </button>
-            <button
-              className="bb-checkout__btn bb-checkout__btn--back"
-              onClick={() => router.push('/bilet-sorgula')}
-            >
-              Bilet Sorgula
+            <button className="bb-success__btn bb-success__btn--secondary" onClick={() => router.push('/bilet-sorgula')}>
+              🔍 Bilet Sorgula
+            </button>
+            <button className="bb-success__btn bb-success__btn--secondary" onClick={handlePrint}>
+              🖨️ Yazdır
             </button>
           </div>
         </div>

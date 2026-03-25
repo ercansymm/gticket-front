@@ -7,9 +7,10 @@ interface FilterSidebarProps {
   filters: FlightFilters;
   onChange: (filters: FlightFilters) => void;
   resultCount: number;
+  totalCount: number;
 }
 
-const FilterSidebar = ({ options, filters, onChange, resultCount }: FilterSidebarProps) => {
+const FilterSidebar = ({ options, filters, onChange, resultCount, totalCount }: FilterSidebarProps) => {
   const [priceRange, setPriceRange] = useState<[number, number]>([
     options?.minPrice ?? 0,
     options?.maxPrice ?? 10000,
@@ -61,7 +62,9 @@ const FilterSidebar = ({ options, filters, onChange, resultCount }: FilterSideba
       </div>
 
       <div className="bb-filter-sidebar__count">
-        {resultCount} uçuş bulundu
+        {resultCount === totalCount
+          ? `${totalCount} uçuş bulundu`
+          : `${resultCount} / ${totalCount} uçuş`}
       </div>
 
       {/* Fiyat aralığı */}
@@ -141,8 +144,8 @@ const FilterSidebar = ({ options, filters, onChange, resultCount }: FilterSideba
         </div>
       )}
 
-      {/* Kabin sınıfı */}
-      {options.cabinClasses && options.cabinClasses.length > 0 && (
+      {/* Kabin sınıfı — tek sınıf varsa gizle */}
+      {options.cabinClasses && options.cabinClasses.length > 1 && (
         <div className="bb-filter-section">
           <h4 className="bb-filter-section__title">Kabin Sınıfı</h4>
           {options.cabinClasses.map(cls => (

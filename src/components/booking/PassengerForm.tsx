@@ -23,7 +23,12 @@ function normalizePaxType(type: string | null): 'ADT' | 'CHD' | 'INF' {
 /** Generate age limits for date pickers based on pax type */
 function getDateLimits(paxType: 'ADT' | 'CHD' | 'INF'): { min: string; max: string } {
   const today = new Date();
-  const yyyy = (d: Date) => d.toISOString().slice(0, 10);
+  const yyyy = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
   if (paxType === 'INF') {
     const min = new Date(today);
     min.setFullYear(min.getFullYear() - 2);
@@ -217,6 +222,13 @@ export default function PassengerForm({ passengers, onSubmit, loading, disabled 
       // focus first error section
       const firstErrorIdx = newErrors.findIndex(e => Object.keys(e).length > 0);
       if (firstErrorIdx >= 0) setExpandedPax(firstErrorIdx);
+      // Scroll to the first error element after state update
+      setTimeout(() => {
+        const errorEl = document.querySelector('.bb-pax-panel--error') || document.querySelector('.bb-pax-panel__error');
+        if (errorEl) {
+          errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
       return;
     }
 

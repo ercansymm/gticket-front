@@ -5,6 +5,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import HeaderOne from '@/layouts/headers/HeaderOne';
 import FooterOne from '@/layouts/footers/FooterOne';
+import CountdownTimer from '@/components/booking/CountdownTimer';
 import { makePaymentThunk, finalizeShoppingThunk } from '@/redux/features/paymentSlice';
 import { setStep } from '@/redux/features/bookingSlice';
 import type { RootState, AppDispatch } from '@/redux/store';
@@ -25,13 +26,14 @@ export default function PaymentClient() {
   const router = useRouter();
 
   const { searchId, allocateResult, selectedFlight } = useSelector((state: RootState) => state.flight);
-  const { preBookingResult } = useSelector((state: RootState) => state.booking);
+  const { preBookingResult, passengers } = useSelector((state: RootState) => state.booking);
   const {
     paymentResult, paymentLoading, paymentError,
     finalizeResult, finalizeLoading, finalizeError,
   } = useSelector((state: RootState) => state.payment);
 
   const [paymentMethod, setPaymentMethod] = useState<'running_account' | 'credit_card'>('running_account');
+  const [agreed, setAgreed] = useState(false);
   const hasFinalized = useRef(false);
   const { showWarning: sessionWarning, dismissWarning: dismissSessionWarning } = useSessionTimeout();
 
@@ -63,163 +65,187 @@ export default function PaymentClient() {
   }, [finalizeResult, dispatch, router]);
 
   const handlePayment = useCallback(() => {
-    if (!searchId || paymentLoading) return;
+    if (!searchId || paymentLoading || !agreed) return;
 
-    // RunningAccount: Only send searchId and paymentType
     dispatch(makePaymentThunk({
       searchId,
       paymentType: 'RunningAccount',
     }));
-  }, [dispatch, searchId, paymentLoading]);
+  }, [dispatch, searchId, paymentLoading, agreed]);
+
+  const handleCountdownExpired = useCallback(() => {
+    router.push('/');
+  }, [router]);
 
   if (!preBookingResult || !allocateResult) return null;
 
-  const priceSummary = allocateResult.priceSummary;
+  const airBookings = allocateResult.airBookings;
+  const firstBooking = airBookings?.[0];
+
+  // Fiyat hesaplaması — priceSummary 0 gelirse airBookings'ten hesapla
+  const priceSummary = (() => {
+    const ps = allocateResult.priceSummary;
+    if (ps && ps.totalBaseFare > 0) return ps;
+
+    const totals = (airBookings ?? []).reduce(
+      (acc, ab) => ({
+        baseFare: acc.baseFare + (ab.baseFare ?? 0),
+        taxes: acc.taxes + (ab.taxes ?? 0),
+        serviceFee: acc.serviceFee + (ab.serviceFee ?? 0),
+        totalFare: acc.totalFare + (ab.totalFare ?? 0),
+      }),
+      { baseFare: 0, taxes: 0, serviceFee: 0, totalFare: 0 }
+    );
+
+    return {
+      grandTotal: ps?.grandTotal ?? totals.totalFare,
+      totalBaseFare: totals.baseFare,
+      totalTaxes: totals.taxes,
+      totalServiceFee: totals.serviceFee,
+      currency: ps?.currency ?? firstBooking?.currency ?? 'TRY',
+      priceItems: ps?.priceItems ?? [],
+    };
+  })();
+
   const statusInfo = BOOKING_STATUS_LABELS[preBookingResult.status ?? ''];
+
+  /* Yolcu özeti */
+  const paxCounts = (allocateResult.passengers ?? []).reduce((acc, p) => {
+    const t = (p.type ?? 'ADT').toUpperCase();
+    if (t === 'CHD' || t === 'CHILD') acc.child++;
+    else if (t === 'INF' || t === 'INFANT') acc.infant++;
+    else acc.adult++;
+    return acc;
+  }, { adult: 0, child: 0, infant: 0 });
 
   return (
     <>
       <HeaderOne />
       <main className="bb-checkout">
-        <div className="bb-checkout__layout">
+        {/* Stepper */}
+        <div className="bb-stepper">
+          <div className="bb-stepper__step bb-stepper__step--done">
+            <span className="bb-stepper__icon">✓</span>
+            <span className="bb-stepper__text">Uçuş Seçimi</span>
+          </div>
+          <div className="bb-stepper__connector bb-stepper__connector--done" />
+          <div className="bb-stepper__step bb-stepper__step--done">
+            <span className="bb-stepper__icon">✓</span>
+            <span className="bb-stepper__text">Yolcu Bilgileri</span>
+          </div>
+          <div className="bb-stepper__connector bb-stepper__connector--done" />
+          <div className="bb-stepper__step bb-stepper__step--done">
+            <span className="bb-stepper__icon">✓</span>
+            <span className="bb-stepper__text">Ön Rezervasyon</span>
+          </div>
+          <div className="bb-stepper__connector bb-stepper__connector--done" />
+          <div className="bb-stepper__step bb-stepper__step--active">
+            <span className="bb-stepper__icon">4</span>
+            <span className="bb-stepper__text">Ödeme</span>
+          </div>
+        </div>
+
+        {/* Session timeout warning */}
+        {sessionWarning && (
+          <div className="bb-countdown bb-countdown--urgent">
+            <span className="bb-countdown__icon">⏱</span>
+            <span className="bb-countdown__text">Oturumunuz sona ermek üzere. Lütfen ödemeyi tamamlayın.</span>
+            <button type="button" onClick={dismissSessionWarning} style={{ background: 'none', border: 'none', fontWeight: 700, cursor: 'pointer', color: '#991b1b', fontSize: 16 }}>✕</button>
+          </div>
+        )}
+
+        {/* Prebooking countdown timer */}
+        <CountdownTimer
+          expiresAt={preBookingResult.prebookingExpiresAt}
+          onExpired={handleCountdownExpired}
+        />
+
+        <div className="bb-payment-layout">
           {/* LEFT: Payment form */}
-          <div className="bb-checkout__main">
-            {/* Stepper */}
-            <div className="bb-stepper">
-              <div className="bb-stepper__step bb-stepper__step--done">
-                <span className="bb-stepper__icon">✓</span>
-                <span className="bb-stepper__text">Uçuş seçimi</span>
-              </div>
-              <div className="bb-stepper__connector bb-stepper__connector--done" />
-              <div className="bb-stepper__step bb-stepper__step--done">
-                <span className="bb-stepper__icon">✓</span>
-                <span className="bb-stepper__text">Yolcu bilgileri</span>
-              </div>
-              <div className="bb-stepper__connector bb-stepper__connector--done" />
-              <div className="bb-stepper__step bb-stepper__step--done">
-                <span className="bb-stepper__icon">✓</span>
-                <span className="bb-stepper__text">Ön rezervasyon</span>
-              </div>
-              <div className="bb-stepper__connector bb-stepper__connector--done" />
-              <div className="bb-stepper__step bb-stepper__step--active">
-                <span className="bb-stepper__icon">4</span>
-                <span className="bb-stepper__text">Ödeme</span>
-              </div>
-            </div>
-
-            {/* Session timeout warning */}
-            {sessionWarning && (
-              <div className="bb-checkout__price-warning" style={{ background: '#fef3c7', border: '1px solid #f59e0b', color: '#92400e', marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>⏱ Oturumunuz sona ermek üzere. Lütfen ödemeyi tamamlayın.</span>
-                <button type="button" onClick={dismissSessionWarning} style={{ background: 'none', border: 'none', fontWeight: 700, cursor: 'pointer', color: '#92400e' }}>✕</button>
-              </div>
-            )}
-
+          <div className="bb-payment-main">
             {/* Prebooking info */}
-            <div className="bb-checkout__card" style={{ marginBottom: 24 }}>
+            <div className="bb-checkout__card" style={{ marginBottom: 20 }}>
               <h3 className="bb-checkout__card-title">Rezervasyon Bilgileri</h3>
               <div className="bb-checkout__price-row">
                 <span>PNR Kodu</span>
-                <span style={{ fontWeight: 700, fontSize: 18, letterSpacing: 2 }}>
+                <span style={{ fontWeight: 700, fontSize: 18, letterSpacing: 2, fontFamily: "'Courier New', monospace" }}>
                   {preBookingResult.bookingCode}
                 </span>
               </div>
               {statusInfo && (
                 <div className="bb-checkout__price-row">
                   <span>Durum</span>
-                  <span style={{ color: statusInfo.color, fontWeight: 600 }}>{statusInfo.label}</span>
+                  <span style={{ color: statusInfo.color, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: statusInfo.color, display: 'inline-block' }} />
+                    {statusInfo.label}
+                  </span>
                 </div>
               )}
               {preBookingResult.isPriceChanged && (
-                <div className="bb-checkout__price-warning">
+                <div className="bb-checkout__price-warning" style={{ marginTop: 12, marginBottom: 0 }}>
                   ⚠ Fiyat güncellenmiştir. Lütfen yeni tutarı kontrol ediniz.
                 </div>
               )}
             </div>
 
             {/* Payment method selection */}
-            <div className="bb-checkout__card" style={{ marginBottom: 24 }}>
-              <h3 className="bb-checkout__card-title">Ödeme Yöntemi</h3>
+            <div className="bb-checkout__card" style={{ marginBottom: 20 }}>
+              <h3 className="bb-checkout__card-title">Ödeme Yöntemi Seçin</h3>
 
               {/* Running Account */}
-              <label
-                className={`bb-pax-panel__gender-btn ${paymentMethod === 'running_account' ? 'bb-pax-panel__gender-btn--active' : ''}`}
-                style={{ display: 'block', marginBottom: 12, padding: '16px 20px', cursor: 'pointer' }}
+              <div
+                className={`bb-payment-method ${paymentMethod === 'running_account' ? 'bb-payment-method--active' : ''}`}
+                onClick={() => setPaymentMethod('running_account')}
               >
-                <input
-                  type="radio"
-                  name="paymentMethod"
-                  value="running_account"
-                  checked={paymentMethod === 'running_account'}
-                  onChange={() => setPaymentMethod('running_account')}
-                  style={{ marginRight: 12 }}
-                />
-                Cari Hesap ile Ödeme
-              </label>
-
-              {/* Credit Card — Disabled */}
-              <label
-                className="bb-pax-panel__gender-btn"
-                style={{ display: 'block', padding: '16px 20px', opacity: 0.5, cursor: 'not-allowed' }}
-              >
-                <input
-                  type="radio"
-                  name="paymentMethod"
-                  value="credit_card"
-                  disabled
-                  style={{ marginRight: 12 }}
-                />
-                Kredi Kartı ile Ödeme
-                <span style={{ display: 'block', fontSize: 12, color: '#6b7280', marginTop: 4 }}>
-                  Kredi kartı ile ödeme yakında aktif olacaktır
-                </span>
-              </label>
-            </div>
-
-            {/* Credit card form placeholder — disabled */}
-            {paymentMethod === 'credit_card' && (
-              <div className="bb-checkout__card" style={{ marginBottom: 24, opacity: 0.4, pointerEvents: 'none' }}>
-                <h3 className="bb-checkout__card-title">Kart Bilgileri</h3>
-                <div className="bb-pax-panel__row">
-                  <div className="bb-pax-panel__field">
-                    <label className="bb-pax-panel__label">Kart Üzerindeki Ad</label>
-                    <input type="text" className="bb-pax-panel__input" placeholder="Ad Soyad" disabled />
-                  </div>
-                </div>
-                <div className="bb-pax-panel__row">
-                  <div className="bb-pax-panel__field">
-                    <label className="bb-pax-panel__label">Kart Numarası</label>
-                    <input type="text" className="bb-pax-panel__input" placeholder="•••• •••• •••• ••••" disabled />
-                  </div>
-                </div>
-                <div className="bb-pax-panel__row">
-                  <div className="bb-pax-panel__field">
-                    <label className="bb-pax-panel__label">Son Kullanma</label>
-                    <input type="text" className="bb-pax-panel__input" placeholder="AA/YY" disabled />
-                  </div>
-                  <div className="bb-pax-panel__field">
-                    <label className="bb-pax-panel__label">CVV</label>
-                    <input type="text" className="bb-pax-panel__input" placeholder="•••" disabled />
-                  </div>
+                <div className="bb-payment-method__radio" />
+                <div className="bb-payment-method__icon">🏦</div>
+                <div className="bb-payment-method__info">
+                  <p className="bb-payment-method__name">Cari Hesap ile Ödeme</p>
+                  <p className="bb-payment-method__desc">Acente cari hesabınızdan tahsil edilir</p>
                 </div>
               </div>
-            )}
+
+              {/* Credit Card — Disabled */}
+              <div className="bb-payment-method bb-payment-method--disabled">
+                <div className="bb-payment-method__radio" />
+                <div className="bb-payment-method__icon">💳</div>
+                <div className="bb-payment-method__info">
+                  <p className="bb-payment-method__name">Kredi Kartı ile Ödeme</p>
+                  <p className="bb-payment-method__desc">Yakında aktif olacaktır</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Agreement */}
+            <div className="bb-agreement">
+              <input
+                type="checkbox"
+                className="bb-agreement__checkbox"
+                id="paymentAgreement"
+                checked={agreed}
+                onChange={(e) => setAgreed(e.target.checked)}
+              />
+              <label htmlFor="paymentAgreement" className="bb-agreement__text">
+                Satış koşullarını ve <span className="bb-agreement__link">mesafeli satış sözleşmesini</span> okudum, kabul ediyorum.
+                Yolcu bilgilerinin doğruluğunu onaylıyorum.
+              </label>
+            </div>
 
             {/* Errors */}
             {paymentError && (
               <div className="bb-checkout__price-warning" style={{ marginBottom: 16 }}>
-                {paymentError}
+                ❌ {paymentError}
               </div>
             )}
             {finalizeError && (
               <div className="bb-checkout__price-warning" style={{ marginBottom: 16 }}>
-                {finalizeError}
+                ❌ {finalizeError}
               </div>
             )}
 
             {/* Loading states */}
             {(paymentLoading || finalizeLoading) && (
-              <div className="bb-spinner-overlay" style={{ position: 'relative', minHeight: 120 }}>
+              <div className="bb-spinner-overlay" style={{ position: 'relative', minHeight: 120, borderRadius: 12 }}>
                 <div className="bb-spinner-wrapper">
                   <div className="bb-spinner bb-spinner--large"></div>
                   <p className="bb-spinner-text">
@@ -237,21 +263,21 @@ export default function PaymentClient() {
                 onClick={() => router.push('/checkout')}
                 disabled={paymentLoading || finalizeLoading}
               >
-                Geri Dön
+                ← Geri Dön
               </button>
               <button
                 type="button"
                 className="bb-checkout__btn bb-checkout__btn--next"
                 onClick={handlePayment}
-                disabled={paymentLoading || finalizeLoading || paymentMethod !== 'running_account'}
+                disabled={paymentLoading || finalizeLoading || !agreed || paymentMethod !== 'running_account'}
               >
-                {paymentLoading ? 'Ödeme Yapılıyor...' : finalizeLoading ? 'Biletleniyor...' : 'Ödemeyi Tamamla'}
+                {paymentLoading ? 'Ödeme Yapılıyor...' : finalizeLoading ? 'Biletleniyor...' : '🔒 Ödemeyi Tamamla'}
               </button>
             </div>
           </div>
 
           {/* RIGHT: Sidebar */}
-          <aside className="bb-checkout__sidebar">
+          <aside className="bb-payment-sidebar">
             {/* Flight summary */}
             {selectedFlight && (
               <div className="bb-checkout__card">
@@ -275,29 +301,58 @@ export default function PaymentClient() {
                     <div className="bb-checkout__flight-mini-detail">
                       {selectedFlight.departureDate}
                     </div>
+                    {selectedFlight.isDirect ? (
+                      <span style={{ fontSize: 12, color: '#22c55e', fontWeight: 500 }}>Direkt Uçuş</span>
+                    ) : (
+                      <span style={{ fontSize: 12, color: '#f59e0b', fontWeight: 500 }}>{selectedFlight.stopText}</span>
+                    )}
                   </div>
                 </div>
               </div>
             )}
 
+            {/* Passenger summary */}
+            <div className="bb-checkout__card">
+              <h3 className="bb-checkout__card-title">Yolcular</h3>
+              {passengers.map((pax, idx) => (
+                <div key={idx} className="bb-checkout__price-row" style={{ fontSize: 13 }}>
+                  <span style={{ fontWeight: 500 }}>
+                    {pax.firstName} {pax.lastName}
+                  </span>
+                  <span style={{ color: '#6b7280' }}>
+                    {pax.paxType === 'ADT' ? 'Yetişkin' : pax.paxType === 'CHD' ? 'Çocuk' : pax.paxType === 'INF' ? 'Bebek' : pax.paxType}
+                  </span>
+                </div>
+              ))}
+              {passengers.length === 0 && (
+                <div style={{ fontSize: 13, color: '#6b7280' }}>
+                  {paxCounts.adult > 0 && `${paxCounts.adult} Yetişkin`}
+                  {paxCounts.child > 0 && `, ${paxCounts.child} Çocuk`}
+                  {paxCounts.infant > 0 && `, ${paxCounts.infant} Bebek`}
+                </div>
+              )}
+            </div>
+
             {/* Price summary */}
             {priceSummary && (
               <div className="bb-checkout__card">
-                <h3 className="bb-checkout__card-title">Fiyat Özeti</h3>
+                <h3 className="bb-checkout__card-title">Fiyat Detayı</h3>
                 <div className="bb-checkout__price-row">
                   <span>Bilet Ücreti</span>
                   <span>{priceSummary.totalBaseFare.toFixed(2)} {priceSummary.currency}</span>
                 </div>
                 <div className="bb-checkout__price-row">
-                  <span>Vergiler</span>
+                  <span>Vergiler &amp; Harçlar</span>
                   <span>{priceSummary.totalTaxes.toFixed(2)} {priceSummary.currency}</span>
                 </div>
-                <div className="bb-checkout__price-row">
-                  <span>Hizmet Bedeli</span>
-                  <span>{priceSummary.totalServiceFee.toFixed(2)} {priceSummary.currency}</span>
-                </div>
+                {priceSummary.totalServiceFee > 0 && (
+                  <div className="bb-checkout__price-row">
+                    <span>Hizmet Bedeli</span>
+                    <span>{priceSummary.totalServiceFee.toFixed(2)} {priceSummary.currency}</span>
+                  </div>
+                )}
                 <div className="bb-checkout__price-row bb-checkout__price-row--total">
-                  <span>Toplam</span>
+                  <span>Genel Toplam</span>
                   <span>{priceSummary.grandTotal.toFixed(2)} {priceSummary.currency}</span>
                 </div>
               </div>

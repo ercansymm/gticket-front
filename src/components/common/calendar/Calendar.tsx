@@ -58,14 +58,6 @@ const Calendar = ({
     return new Date(ref.getFullYear(), ref.getMonth(), 1);
   });
 
-  // Mobile detection
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  useEffect(() => {
-    const onResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
-
   // Close on outside click
   useEffect(() => {
     if (!isOpen) return;
@@ -139,75 +131,64 @@ const Calendar = ({
 
   if (!isOpen) return null;
 
-  const monthsToShow = isMobile ? 1 : 2;
+  const month = new Date(baseMonth.getFullYear(), baseMonth.getMonth(), 1);
 
   return (
-    <div className="bb-calendar" ref={calRef}>
-      {Array.from({ length: monthsToShow }).map((_, mIdx) => {
-        const month = new Date(
-          baseMonth.getFullYear(),
-          baseMonth.getMonth() + mIdx,
-          1,
-        );
-        return (
-          <div className="bb-calendar-month" key={mIdx}>
-            {/* Header */}
-            <div className="bb-calendar-header">
-              {mIdx === 0 ? (
-                <button
-                  type="button"
-                  className="bb-calendar-nav"
-                  onClick={prevMonth}
-                  disabled={!canGoPrev}
-                  aria-label="Previous month"
-                >
-                  ◀
-                </button>
-              ) : (
-                <span style={{ width: 32 }} />
-              )}
-              <span>
-                {t.months[month.getMonth()]} {month.getFullYear()}
-              </span>
-              {mIdx === monthsToShow - 1 ? (
-                <button
-                  type="button"
-                  className="bb-calendar-nav"
-                  onClick={nextMonth}
-                  aria-label="Next month"
-                >
-                  ▶
-                </button>
-              ) : (
-                <span style={{ width: 32 }} />
-              )}
-            </div>
+    <>
+      {/* Mobile overlay */}
+      <div className="bb-calendar-overlay" onClick={onClose} />
+      <div className="bb-calendar" ref={calRef}>
+        {/* Mobile drag handle */}
+        <div className="bb-calendar-drag-handle" />
+        <div className="bb-calendar-month">
+        {/* Header */}
+        <div className="bb-calendar-header">
+          <button
+            type="button"
+            className="bb-calendar-nav"
+            onClick={prevMonth}
+            disabled={!canGoPrev}
+            aria-label="Previous month"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+          </button>
+          <span>
+            {t.months[month.getMonth()]} {month.getFullYear()}
+          </span>
+          <button
+            type="button"
+            className="bb-calendar-nav"
+            onClick={nextMonth}
+            aria-label="Next month"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+          </button>
+        </div>
 
-            {/* Weekday headers */}
-            <div className="bb-calendar-weekdays">
-              {t.weekdays.map((wd) => (
-                <span key={wd}>{wd}</span>
-              ))}
-            </div>
+        {/* Weekday headers */}
+        <div className="bb-calendar-weekdays">
+          {t.weekdays.map((wd) => (
+            <span key={wd}>{wd}</span>
+          ))}
+        </div>
 
-            {/* Days grid */}
-            <div className="bb-calendar-days">
-              {renderMonth(
-                month,
-                today,
-                effectiveMin,
-                selectedDate,
-                mode === "range" ? internalStart : null,
-                mode === "range" ? internalEnd : null,
-                hoverDate,
-                handleDayClick,
-                setHoverDate,
-              )}
-            </div>
-          </div>
-        );
-      })}
+        {/* Days grid */}
+        <div className="bb-calendar-days">
+          {renderMonth(
+            month,
+            today,
+            effectiveMin,
+            selectedDate,
+            mode === "range" ? internalStart : null,
+            mode === "range" ? internalEnd : null,
+            hoverDate,
+            handleDayClick,
+            setHoverDate,
+          )}
+        </div>
+      </div>
     </div>
+    </>
   );
 };
 

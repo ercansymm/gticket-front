@@ -21,12 +21,12 @@ interface RouteItem {
 }
 
 const staticRoutes: RouteItem[] = [
-   { id: 1, from: "İstanbul", fromCode: "IST", to: "Antalya", toCode: "AYT", price: "899", img: "/assets/img/location/su/destination.jpg" },
-   { id: 2, from: "İstanbul", fromCode: "IST", to: "İzmir", toCode: "ADB", price: "749", img: "/assets/img/location/su/destination-2.jpg" },
-   { id: 3, from: "Ankara", fromCode: "ESB", to: "İstanbul", toCode: "IST", price: "649", img: "/assets/img/location/su/destination-3.jpg" },
-   { id: 4, from: "İstanbul", fromCode: "IST", to: "Trabzon", toCode: "TZX", price: "799", img: "/assets/img/location/su/destination-4.jpg" },
-   { id: 5, from: "İstanbul", fromCode: "IST", to: "Bodrum", toCode: "BJV", price: "949", img: "/assets/img/location/su/destination.jpg" },
-   { id: 6, from: "Ankara", fromCode: "ESB", to: "Antalya", toCode: "AYT", price: "849", img: "/assets/img/location/su/destination-2.jpg" },
+   { id: 1, from: "İstanbul", fromCode: "IST", to: "Antalya", toCode: "AYT", price: "899", img: "/assets/img/cities/antalya.jpg" },
+   { id: 2, from: "İstanbul", fromCode: "IST", to: "İzmir", toCode: "ADB", price: "749", img: "/assets/img/cities/izmir.jpg" },
+   { id: 3, from: "Ankara", fromCode: "ESB", to: "İstanbul", toCode: "IST", price: "649", img: "/assets/img/cities/istanbul.jpg" },
+   { id: 4, from: "İstanbul", fromCode: "IST", to: "Trabzon", toCode: "TZX", price: "799", img: "/assets/img/cities/trabzon.jpg" },
+   { id: 5, from: "İstanbul", fromCode: "IST", to: "Bodrum", toCode: "BJV", price: "949", img: "/assets/img/cities/bodrum.jpg" },
+   { id: 6, from: "Ankara", fromCode: "ESB", to: "Antalya", toCode: "AYT", price: "849", img: "/assets/img/cities/antalya.jpg" },
 ];
 
 const swiperSettings = {
@@ -56,15 +56,26 @@ const getCityName = (code: string, lang: 'tr' | 'en' = 'tr'): string => {
    return lang === 'tr' ? airport.cityTr : airport.cityEn;
 };
 
-/** Varış şehrine göre görsel seç */
+/** Varış şehrine göre görsel seç — şehir kodu eşleşmezse fallback döner */
+const cityImageMap: Record<string, string> = {
+   AYT: '/assets/img/cities/antalya.jpg',
+   ADB: '/assets/img/cities/izmir.jpg',
+   IST: '/assets/img/cities/istanbul.jpg',
+   SAW: '/assets/img/cities/istanbul.jpg',
+   TZX: '/assets/img/cities/trabzon.jpg',
+   BJV: '/assets/img/cities/bodrum.jpg',
+   ESB: '/assets/img/cities/ankara.jpg',
+};
+
+const fallbackImages = [
+   '/assets/img/cities/istanbul.jpg',
+   '/assets/img/cities/antalya.jpg',
+   '/assets/img/cities/izmir.jpg',
+   '/assets/img/cities/bodrum.jpg',
+];
+
 const getRouteImage = (toCode: string, index: number): string => {
-   const images = [
-      '/assets/img/location/su/destination.jpg',
-      '/assets/img/location/su/destination-2.jpg',
-      '/assets/img/location/su/destination-3.jpg',
-      '/assets/img/location/su/destination-4.jpg',
-   ];
-   return images[index % images.length];
+   return cityImageMap[toCode] || fallbackImages[index % fallbackImages.length];
 };
 
 /** AtaBilet — Popüler uçuş hatları bölümü. */

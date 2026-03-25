@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import Calendar, { formatDate } from "../calendar/Calendar";
 import { useTranslation } from "../../../context/LanguageContext";
 import { airports as staticAirports } from "../../../data/AirportData";
 import { getAllAirports, type AirportDto } from "../../../api/lookup";
 import { searchFlightsThunk, setSearchParams } from "../../../redux/features/flightSlice";
 import type { FlightSearchRequest, Airport } from "@/types";
-import type { AppDispatch } from "../../../redux/store";
+import type { AppDispatch, RootState } from "../../../redux/store";
 
 /** Statik havalimanını AirportDto formatına dönüştür */
 const toAirportDto = (a: Airport, lang: 'tr' | 'en' = 'tr'): AirportDto => ({
@@ -47,6 +47,7 @@ const BannerFormOne = () => {
    const router = useRouter();
    const dispatch = useDispatch<AppDispatch>();
    const { t, lang } = useTranslation();
+   const searchLoading = useSelector((state: RootState) => state.flight.searchLoading);
 
    const staticFallback = useMemo(() => staticAirports.map(a => toAirportDto(a, lang)), [lang]);
 
@@ -88,12 +89,13 @@ const BannerFormOne = () => {
    const [groupCalOpen, setGroupCalOpen] = useState(false);
    const [groupCalTarget, setGroupCalTarget] = useState<"depart" | "return">("depart");
 
-   // Advanced search
-   const [advancedOpen, setAdvancedOpen] = useState(false);
-   const [airlines, setAirlines] = useState<string[]>([]);
-   const [directOnly, setDirectOnly] = useState(false);
-   const [flexibleDates, setFlexibleDates] = useState(false);
+   // Advanced search (kept for API — controlled via baggage toggle only)
    const [baggageOnly, setBaggageOnly] = useState(false);
+   const [directOnly] = useState(false);
+   const [airlines] = useState<string[]>([]);
+
+   const [fromHighlight, setFromHighlight] = useState(-1);
+   const [toHighlight, setToHighlight] = useState(-1);
 
    const fromRef = useRef<HTMLDivElement>(null);
    const toRef = useRef<HTMLDivElement>(null);
@@ -134,7 +136,8 @@ const BannerFormOne = () => {
       if (urlFrom) setFrom(urlFrom.toUpperCase());
       if (urlTo) setTo(urlTo.toUpperCase());
       if (urlDate) {
-         const d = new Date(urlDate);
+         // T00:00:00 ekleyerek lokal saat diliminde parse et (UTC kaymasını önler)
+         const d = new Date(urlDate.includes('T') ? urlDate : urlDate + 'T00:00:00');
          if (!isNaN(d.getTime())) setDepartDate(d);
       }
       if (urlPax) {
@@ -269,10 +272,6 @@ const BannerFormOne = () => {
       if (segments.length > 2) setSegments(prev => prev.filter((_, i) => i !== idx));
    };
 
-   const toggleAirline = (code: string) => {
-      setAirlines(prev => prev.includes(code) ? prev.filter(a => a !== code) : [...prev, code]);
-   };
-
    const validate = (): boolean => {
       const errs: Record<string, string> = {};
 
@@ -325,8 +324,13 @@ const BannerFormOne = () => {
          return;
       }
 
-      // Tarih formatı: YYYY-MM-DD
-      const formatDateForApi = (d: Date): string => d.toISOString().split("T")[0];
+      // Tarih formatı: YYYY-MM-DD (lokal saat dilimi — UTC kaymasını önler)
+      const formatDateForApi = (d: Date): string => {
+         const yyyy = d.getFullYear();
+         const mm = String(d.getMonth() + 1).padStart(2, '0');
+         const dd = String(d.getDate()).padStart(2, '0');
+         return `${yyyy}-${mm}-${dd}`;
+      };
 
       // Form verilerini API formatına dönüştür
       const searchRequest: FlightSearchRequest = {
@@ -362,10 +366,11 @@ const BannerFormOne = () => {
    const renderAirportDropdown = (
       list: AirportDto[],
       onSelect: (airport: AirportDto) => void,
+      highlightedIndex: number,
    ) => (
       <ul className="bb-flight-form__dropdown" role="listbox">
-         {list.map(a => (
-            <li key={a.iataCode} role="option" onClick={() => onSelect(a)}>
+         {list.map((a, i) => (
+            <li key={a.iataCode} role="option" aria-selected={i === highlightedIndex} className={i === highlightedIndex ? 'bb-dropdown-highlighted' : ''} onClick={() => onSelect(a)}>
                <strong>{a.city}</strong> <span className="bb-airport-code">{a.iataCode}</span>
                <small>{a.name}</small>
             </li>
@@ -373,6 +378,32 @@ const BannerFormOne = () => {
          {list.length === 0 && <li className="bb-flight-form__no-result">{t.noResult}</li>}
       </ul>
    );
+
+   /** Keyboard handler for airport input fields */
+   const handleAirportKeyDown = (
+      e: React.KeyboardEvent<HTMLInputElement>,
+      suggestions: AirportDto[],
+      highlightedIndex: number,
+      setHighlight: (i: number) => void,
+      onSelect: (airport: AirportDto) => void,
+      setOpen: (open: boolean) => void,
+   ) => {
+      if (!suggestions.length) return;
+      if (e.key === 'ArrowDown') {
+         e.preventDefault();
+         setHighlight(highlightedIndex < suggestions.length - 1 ? highlightedIndex + 1 : 0);
+      } else if (e.key === 'ArrowUp') {
+         e.preventDefault();
+         setHighlight(highlightedIndex > 0 ? highlightedIndex - 1 : suggestions.length - 1);
+      } else if (e.key === 'Enter' && highlightedIndex >= 0) {
+         e.preventDefault();
+         onSelect(suggestions[highlightedIndex]);
+         setHighlight(-1);
+      } else if (e.key === 'Escape') {
+         setOpen(false);
+         setHighlight(-1);
+      }
+   };
 
    // ── GROUP FORM ──
    if (tripType === "group") {
@@ -472,6 +503,7 @@ const BannerFormOne = () => {
                                     setErrors(prev => { const next = { ...prev }; delete next[`seg${idx}to`]; return next; });
                                  }
                               },
+                              -1,
                            )}
                         </div>
                         <div className="bb-flight-form__field bb-flight-form__field--airport">
@@ -497,6 +529,7 @@ const BannerFormOne = () => {
                                     setErrors(prev => { const next = { ...prev }; delete next[`seg${idx}to`]; return next; });
                                  }
                               },
+                              -1,
                            )}
                         </div>
                         <div className="bb-flight-form__field bb-calendar-wrapper">
@@ -607,15 +640,24 @@ const BannerFormOne = () => {
                   className={`bb-flight-form__input ${errors.from ? "bb-flight-form__input--error" : ""}`}
                   placeholder={t.cityOrAirport}
                   value={fromOpen ? fromSearch : getAirportLabel(from)}
-                  onChange={(e) => { setFromSearch(e.target.value); setFromOpen(true); setFromSuggestions(filterAirports(e.target.value, to)); }}
+                  onChange={(e) => { setFromSearch(e.target.value); setFromOpen(true); setFromHighlight(-1); setFromSuggestions(filterAirports(e.target.value, to)); }}
                   onFocus={() => {
-                     setFromOpen(true); setFromSearch("");
+                     setFromOpen(true); setFromSearch(""); setFromHighlight(-1);
                      setFromSuggestions(allAirports.slice(0, 8));
                   }}
+                  onKeyDown={(e) => handleAirportKeyDown(e, fromSuggestions, fromHighlight, setFromHighlight, (airport) => {
+                     setFrom(airport.iataCode); setFromCity(airport.city); setFromOpen(false); setFromSearch(""); setFromSuggestions([]);
+                     if (toCity && isSameCity(airport.city, toCity)) {
+                        setErrors(prev => ({ ...prev, to: t.sameCityError }));
+                     } else {
+                        setErrors(prev => ({ ...prev, from: '', to: prev.to === t.sameCityError ? '' : prev.to }));
+                     }
+                  }, setFromOpen)}
                   autoComplete="off"
                   role="combobox"
                   aria-expanded={fromOpen}
                   aria-autocomplete="list"
+                  aria-activedescendant={fromHighlight >= 0 && fromSuggestions[fromHighlight] ? `from-option-${fromSuggestions[fromHighlight].iataCode}` : undefined}
                />
                {errors.from && <span className="bb-flight-form__error">{errors.from}</span>}
                {fromOpen && fromSuggestions.length > 0 && renderAirportDropdown(fromSuggestions, (airport) => {
@@ -625,7 +667,7 @@ const BannerFormOne = () => {
                   } else {
                      setErrors(prev => ({ ...prev, from: '', to: prev.to === t.sameCityError ? '' : prev.to }));
                   }
-               })}
+               }, fromHighlight)}
             </div>
 
             {/* Swap button */}
@@ -641,15 +683,24 @@ const BannerFormOne = () => {
                   className={`bb-flight-form__input ${errors.to ? "bb-flight-form__input--error" : ""}`}
                   placeholder={t.cityOrAirport}
                   value={toOpen ? toSearch : getAirportLabel(to)}
-                  onChange={(e) => { setToSearch(e.target.value); setToOpen(true); setToSuggestions(filterAirports(e.target.value, from)); }}
+                  onChange={(e) => { setToSearch(e.target.value); setToOpen(true); setToHighlight(-1); setToSuggestions(filterAirports(e.target.value, from)); }}
                   onFocus={() => {
-                     setToOpen(true); setToSearch("");
+                     setToOpen(true); setToSearch(""); setToHighlight(-1);
                      setToSuggestions(allAirports.slice(0, 8));
                   }}
+                  onKeyDown={(e) => handleAirportKeyDown(e, toSuggestions, toHighlight, setToHighlight, (airport) => {
+                     setTo(airport.iataCode); setToCity(airport.city); setToOpen(false); setToSearch(""); setToSuggestions([]);
+                     if (fromCity && isSameCity(fromCity, airport.city)) {
+                        setErrors(prev => ({ ...prev, to: t.sameCityError }));
+                     } else {
+                        setErrors(prev => ({ ...prev, to: '' }));
+                     }
+                  }, setToOpen)}
                   autoComplete="off"
                   role="combobox"
                   aria-expanded={toOpen}
                   aria-autocomplete="list"
+                  aria-activedescendant={toHighlight >= 0 && toSuggestions[toHighlight] ? `to-option-${toSuggestions[toHighlight].iataCode}` : undefined}
                />
                {errors.to && <span className="bb-flight-form__error">{errors.to}</span>}
                {toOpen && toSuggestions.length > 0 && renderAirportDropdown(toSuggestions, (airport) => {
@@ -659,7 +710,7 @@ const BannerFormOne = () => {
                   } else {
                      setErrors(prev => ({ ...prev, to: '' }));
                   }
-               })}
+               }, toHighlight)}
             </div>
 
             {/* Gidiş Tarihi */}
@@ -734,13 +785,17 @@ const BannerFormOne = () => {
 
             {/* Ara butonu */}
             <div className="bb-flight-form__field bb-flight-form__field--submit">
-               <button type="submit" className="bb-flight-form__submit" data-event="flight_search" data-action="click">
-                  <i className="fa-solid fa-magnifying-glass"></i> {t.searchFlight}
+               <button type="submit" className="bb-flight-form__submit" data-event="flight_search" data-action="click" disabled={searchLoading}>
+                  {searchLoading ? (
+                     <><i className="fa-solid fa-spinner fa-spin"></i> {t.searchingFlights}</>
+                  ) : (
+                     <><i className="fa-solid fa-magnifying-glass"></i> {t.searchFlight}</>
+                  )}
                </button>
             </div>
          </div>
 
-         {/* Detaylı Arama & Bagajlı Arama */}
+         {/* Bagajlı Arama */}
          <div className="bb-advanced-toggle mt-10">
             <div className="bb-baggage-toggle">
                <span>{t.baggageIncluded}</span>
@@ -751,35 +806,7 @@ const BannerFormOne = () => {
                   aria-checked={baggageOnly}
                />
             </div>
-            <button type="button" className="bb-advanced-btn" onClick={() => setAdvancedOpen(p => !p)} aria-expanded={advancedOpen}>
-               {t.advancedSearch} <i className={`fa-solid fa-chevron-${advancedOpen ? "up" : "down"}`}></i>
-            </button>
          </div>
-         {advancedOpen && (
-            <div className="bb-advanced-panel mt-10">
-               <div className="bb-advanced-panel__section">
-                  <span className="bb-advanced-panel__label">{t.airlinePreference}:</span>
-                  <div className="bb-advanced-panel__checks">
-                     {["THY", "Pegasus", "AnadoluJet", "SunExpress"].map(al => (
-                        <label key={al} className="bb-toggle-check">
-                           <input type="checkbox" checked={airlines.includes(al)} onChange={() => toggleAirline(al)} />
-                           <span>{al}</span>
-                        </label>
-                     ))}
-                  </div>
-               </div>
-               <div className="bb-advanced-panel__section">
-                  <label className="bb-toggle-check">
-                     <input type="checkbox" checked={directOnly} onChange={e => setDirectOnly(e.target.checked)} />
-                     <span>{t.directOnly}</span>
-                  </label>
-                  <label className="bb-toggle-check">
-                     <input type="checkbox" checked={flexibleDates} onChange={e => setFlexibleDates(e.target.checked)} />
-                     <span>{t.flexibleDates}</span>
-                  </label>
-               </div>
-            </div>
-         )}
       </form>
    );
 };

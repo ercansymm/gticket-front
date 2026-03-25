@@ -82,9 +82,7 @@ export interface FlightResult {
   baggageInfo: BaggageInfo | null;
   cabinClass: string | null;
   cabinClassName: string | null;
-  customerCommissionMin: number;
-  customerCommissionMax: number;
-  customerCommissionValue: number;
+  // NOT: customerCommission* alanları güvenlik gereği backend tarafından filtrelenir, frontend tipinde tutulmaz
 }
 
 export interface FarePackage {
@@ -323,7 +321,7 @@ export interface AllocateResponse {
 export interface AirBooking {
   productId: string | null;
   pnr: string | null;
-  providerId: string | null;
+  // NOT: providerId güvenlik gereği backend tarafından filtrelenir
   status: string | null;
   currency: string | null;
   totalFare: number;
@@ -347,9 +345,8 @@ export interface BookingItem {
   baseFare: number;
   taxes: number;
   totalFare: number;
-  netFare: number;
+  // NOT: netFare ve systemServiceFee güvenlik gereği backend tarafından filtrelenir
   serviceFee: number;
-  systemServiceFee: number;
   baggage: string | null;
   paxType: string | null;
   paxSequenceNo: number;

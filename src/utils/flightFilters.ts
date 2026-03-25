@@ -39,7 +39,7 @@ export function filterFlights(flights: FlightResult[], filters: FlightFilters): 
 
   if (filters.cabinClasses.length > 0) {
     result = result.filter(f =>
-      f.bookingClassName != null && filters.cabinClasses.includes(f.bookingClassName)
+      f.cabinClassName != null && filters.cabinClasses.includes(f.cabinClassName)
     );
   }
 
