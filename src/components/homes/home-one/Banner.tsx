@@ -1,6 +1,5 @@
 import { useState } from "react";
 import BannerFormOne from "../../common/banner-form/BannerFormOne";
-import HotelSearchForm from "../../common/banner-form/HotelSearchForm";
 import { useTranslation } from "../../../context/LanguageContext";
 
 type TabType = "flight" | "hotel";
@@ -41,7 +40,12 @@ const Banner = () => {
                         </div>
                         <div className="bb-search-tabs__content" role="tabpanel">
                            {activeTab === "flight" && <BannerFormOne />}
-                           {activeTab === "hotel" && <HotelSearchForm />}
+                           {activeTab === "hotel" && (
+                              <div className="bb-coming-soon">
+                                 <i className="fa-solid fa-hotel"></i>
+                                 <h3>Çok Yakında Hizmetinizde</h3>
+                              </div>
+                           )}
                         </div>
                      </div>
                   </div>

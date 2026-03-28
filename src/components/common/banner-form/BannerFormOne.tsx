@@ -783,6 +783,19 @@ const BannerFormOne = () => {
                {passengerOpen && renderPaxDropdown()}
             </div>
 
+            {/* Bagajlı Arama */}
+            <div className="bb-flight-form__field bb-flight-form__field--baggage">
+               <div className="bb-baggage-toggle">
+                  <span>{t.baggageIncluded}</span>
+                  <div
+                     className={`bb-baggage-switch ${baggageOnly ? 'active' : ''}`}
+                     onClick={() => setBaggageOnly(!baggageOnly)}
+                     role="switch"
+                     aria-checked={baggageOnly}
+                  />
+               </div>
+            </div>
+
             {/* Ara butonu */}
             <div className="bb-flight-form__field bb-flight-form__field--submit">
                <button type="submit" className="bb-flight-form__submit" data-event="flight_search" data-action="click" disabled={searchLoading}>
@@ -792,19 +805,6 @@ const BannerFormOne = () => {
                      <><i className="fa-solid fa-magnifying-glass"></i> {t.searchFlight}</>
                   )}
                </button>
-            </div>
-         </div>
-
-         {/* Bagajlı Arama */}
-         <div className="bb-advanced-toggle mt-10">
-            <div className="bb-baggage-toggle">
-               <span>{t.baggageIncluded}</span>
-               <div
-                  className={`bb-baggage-switch ${baggageOnly ? 'active' : ''}`}
-                  onClick={() => setBaggageOnly(!baggageOnly)}
-                  role="switch"
-                  aria-checked={baggageOnly}
-               />
             </div>
          </div>
       </form>
@@ -821,7 +821,6 @@ function renderTripToggle(
       { value: "oneway", label: t.oneWay },
       { value: "roundtrip", label: t.roundTrip },
       { value: "multicity", label: t.multiCity, disabled: true, badge: "Yakında" },
-      { value: "group", label: t.group, icon: "fa-solid fa-users" },
    ];
 
    return (

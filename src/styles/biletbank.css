@@ -714,6 +714,38 @@ img, video, iframe, table {
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
 }
 
+/* Coming Soon (Otel modülü) */
+.bb-coming-soon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 48px 20px;
+  color: var(--bb-gray-600);
+}
+
+.bb-coming-soon i {
+  font-size: 48px;
+  color: var(--ab-primary);
+  margin-bottom: 16px;
+  opacity: 0.7;
+}
+
+.bb-coming-soon h3 {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ab-primary);
+  margin: 0 0 8px;
+}
+
+.bb-coming-soon p {
+  font-size: 14px;
+  color: var(--bb-gray-500);
+  margin: 0;
+  max-width: 400px;
+}
+
 /* ══════════════════════════════════════════════════════
    3. FLIGHT / HOTEL / PNR FORM
    ══════════════════════════════════════════════════════ */
@@ -792,6 +824,15 @@ img, video, iframe, table {
   min-width: 140px;
   order: 11;
   flex: 0 0 250px;
+}
+
+.bb-flight-form__field--baggage {
+  display: flex;
+  justify-content: center;
+  order: 11;
+  flex: 0 0 auto;
+  min-height: 72px;
+  padding-top: 22px;
 }
 
 .bb-flight-form__field--submit {
@@ -2875,6 +2916,12 @@ select.bb-flight-form__input {
     flex: 1 1 100%;
     order: unset;
     margin-left: 0;
+  }
+
+  .bb-flight-form__field--baggage {
+    order: unset;
+    flex: 1 1 100%;
+    margin-top: 0;
   }
 
   .bb-flight-form__fields--pnr .bb-flight-form__field {
