@@ -14,9 +14,18 @@ export const en = {
   happyPassengers: "100,000+ Happy Passengers",
 
   // SearchHero
-  heroTitle: "Find the Best Flight and Hotel Deals",
-  flight: "Flight",
-  hotel: "Hotel",
+  heroTitle: "Turkey's Trusted Flight Platform",
+  heroSubtitle: "Compare domestic and international flights, find the best deals.",
+  flight: "Flights",
+  hotel: "Hotels",
+  bus: "Bus",
+  ferry: "Ferry",
+  carRental: "Car",
+  event: "Events",
+  transfer: "Transfer",
+  istanbulkart: "Istanbulkart",
+  comingSoon: "Coming Soon",
+  comingSoonDesc: "This service will be available soon.",
   bookingCheck: "Check Booking",
 
   // Flight Form

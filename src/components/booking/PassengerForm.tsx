@@ -6,10 +6,10 @@ import type { AllocatePassenger } from '@/types/flight';
 
 /* ───────── helpers ───────── */
 
-const PAX_LABELS: Record<string, { tr: string; icon: string }> = {
-  ADT: { tr: 'Yetişkin', icon: '👤' },
-  CHD: { tr: 'Çocuk', icon: '🧒' },
-  INF: { tr: 'Bebek', icon: '👶' },
+const PAX_LABELS: Record<string, { tr: string }> = {
+  ADT: { tr: 'Yetişkin' },
+  CHD: { tr: 'Çocuk' },
+  INF: { tr: 'Bebek' },
 };
 
 /** Convert pax type from allocate ("ADT"/"CHD"/"INF") */
@@ -133,9 +133,11 @@ export default function PassengerForm({ passengers, onSubmit, loading, disabled 
     }))
   );
 
-  const [contact, setContact] = useState<{ email: string; phone: string }>({
+  const [contact, setContact] = useState<{ email: string; phone: string; phoneCode: string }>(
+    {
     email: '',
     phone: '',
+    phoneCode: '+90',
   });
 
   const [errors, setErrors] = useState<FormErrors[]>(() =>
@@ -236,25 +238,29 @@ export default function PassengerForm({ passengers, onSubmit, loading, disabled 
     const passengerItems: PassengerItem[] = sortedPassengers.map((pax, i) => {
       const form = forms[i];
       const paxType = normalizePaxType(pax.type);
-      return {
+      const item: PassengerItem = {
         paxType,
         sequenceNo: pax.sequenceNo,
         firstName: turkishToUpper(form.firstName.trim()),
         lastName: turkishToUpper(form.lastName.trim()),
         gender: form.gender as 'M' | 'F',
         birthDate: form.birthDate,
-        citizenNo: form.isTurkishCitizen ? form.citizenNo : null,
-        passportNo: !form.isTurkishCitizen ? form.passportNo.toUpperCase() : null,
-        passportCountry: !form.isTurkishCitizen ? form.passportCountry.toUpperCase() : null,
         nationality: form.nationality.toUpperCase() || 'TR',
         tempTag: pax.tempTag ?? null,
         paxReferenceId: pax.paxReferenceId ?? null,
       };
+      if (form.isTurkishCitizen) {
+        item.citizenNo = form.citizenNo;
+      } else {
+        item.passportNo = form.passportNo.toUpperCase();
+        item.passportCountry = form.passportCountry.toUpperCase();
+      }
+      return item;
     });
 
     const contactInfo: ContactInfo = {
       email: contact.email.trim().toLowerCase(),
-      phone: contact.phone.trim(),
+      phone: (contact.phoneCode + '-' + contact.phone.replace(/^\+?\d{1,3}[-\s]?/, '').replace(/[\s()-]/g, '')).trim(),
     };
 
     onSubmit(passengerItems, contactInfo);
@@ -392,15 +398,56 @@ export default function PassengerForm({ passengers, onSubmit, loading, disabled 
             <div className="bb-pax-panel__row">
               <div className={`bb-pax-panel__field ${err.birthDate ? 'bb-pax-panel__field--error' : ''}`}>
                 <label className="bb-pax-panel__label">Doğum Tarihi</label>
-                <input
-                  type="date"
-                  className="bb-pax-panel__input"
-                  value={form.birthDate}
-                  onChange={e => updateField(index, 'birthDate', e.target.value)}
-                  min={dateLimits.min}
-                  max={dateLimits.max}
-                  autoComplete="bday"
-                />
+                <div className="bb-date-picker">
+                  <select
+                    className="bb-date-picker__select"
+                    value={form.birthDate ? parseInt(form.birthDate.split('-')[2], 10).toString() : ''}
+                    onChange={e => {
+                      const [y, m] = (form.birthDate || '--').split('-');
+                      const day = e.target.value.padStart(2, '0');
+                      updateField(index, 'birthDate', `${y || '0000'}-${m || '01'}-${day}`);
+                    }}
+                  >
+                    <option value="">Gün</option>
+                    {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
+                  <select
+                    className="bb-date-picker__select"
+                    value={form.birthDate ? parseInt(form.birthDate.split('-')[1], 10).toString() : ''}
+                    onChange={e => {
+                      const [y, , d] = (form.birthDate || '--').split('-');
+                      const month = e.target.value.padStart(2, '0');
+                      updateField(index, 'birthDate', `${y || '0000'}-${month}-${d || '01'}`);
+                    }}
+                  >
+                    <option value="">Ay</option>
+                    {[
+                      'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
+                      'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık',
+                    ].map((name, i) => (
+                      <option key={i + 1} value={i + 1}>{name}</option>
+                    ))}
+                  </select>
+                  <select
+                    className="bb-date-picker__select bb-date-picker__select--year"
+                    value={form.birthDate ? parseInt(form.birthDate.split('-')[0], 10).toString() : ''}
+                    onChange={e => {
+                      const [, m, d] = (form.birthDate || '--').split('-');
+                      updateField(index, 'birthDate', `${e.target.value}-${m || '01'}-${d || '01'}`);
+                    }}
+                  >
+                    <option value="">Yıl</option>
+                    {(() => {
+                      const minYear = parseInt(dateLimits.min.split('-')[0], 10);
+                      const maxYear = parseInt(dateLimits.max.split('-')[0], 10);
+                      const years: number[] = [];
+                      for (let y = maxYear; y >= minYear; y--) years.push(y);
+                      return years.map(y => <option key={y} value={y}>{y}</option>);
+                    })()}
+                  </select>
+                </div>
                 {err.birthDate && <span className="bb-pax-panel__error">{err.birthDate}</span>}
               </div>
               <div className="bb-pax-panel__field bb-pax-panel__field--checkbox">
@@ -563,7 +610,11 @@ export default function PassengerForm({ passengers, onSubmit, loading, disabled 
               <div className="bb-pax-panel__phone-group">
                 <select
                   className="bb-pax-panel__input bb-pax-panel__input--phone-code"
-                  defaultValue="+90"
+                  value={contact.phoneCode}
+                  onChange={e => {
+                    setContact(prev => ({ ...prev, phoneCode: e.target.value }));
+                    setContactErrors(prev => ({ ...prev, phone: undefined }));
+                  }}
                 >
                   <option value="+90">+90</option>
                   <option value="+1">+1</option>
@@ -599,7 +650,8 @@ export default function PassengerForm({ passengers, onSubmit, loading, disabled 
         </div>
       </div>
 
-      {/* Submit button is rendered by parent (checkout page) */}
+      {/* Hidden submit — parent triggers via form.requestSubmit() */}
+      <button type="submit" hidden />
     </form>
   );
 }

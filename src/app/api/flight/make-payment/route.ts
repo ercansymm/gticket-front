@@ -53,16 +53,17 @@ export async function POST(request: NextRequest) {
       bookingId: sessionData.bookingId || null,
     };
 
-    if (paymentType === 'CreditCard') {
-      const { cardHolderName, cardNumber, expireMonth, expireYear, cvv, installmentCount } = rest as {
-        cardHolderName: string; cardNumber: string; expireMonth: string;
-        expireYear: string; cvv: string; installmentCount?: number;
+    if (paymentType === 'CreditCard' || paymentType === 'CreditCardDirect') {
+      const { cardHolderName, cardNumber, expiryMonth, expiryYear, cvv, installmentOptionId } = rest as {
+        cardHolderName: string; cardNumber: string; expiryMonth: string;
+        expiryYear: string; cvv: string; installmentOptionId?: string;
       };
-      backendBody.creditCard = { cardHolderName, cardNumber, expireMonth, expireYear, cvv };
-      backendBody.installmentCount = installmentCount ?? 1;
+      backendBody.creditCard = { cardHolderName, cardNumber, expiryMonth, expiryYear, cvv };
+      if (installmentOptionId) {
+        backendBody.installmentOptionId = installmentOptionId;
+      }
     } else {
       backendBody.creditCard = null;
-      backendBody.installmentCount = 1;
     }
 
     const { signal, clear } = withTimeout(60_000);

@@ -64,7 +64,9 @@ export async function POST(request: NextRequest) {
     const data = await res.json();
 
     // GÜVENLİK: filterSensitiveFields sessionId/sessionToken ve hassas alanları siler
-    const safeData = filterSensitiveFields(data);
+    const safeData = filterSensitiveFields(data) as Record<string, unknown>;
+    // searchId'yi backend döndürmeyebilir — istemcinin checkout akışında kullanabilmesi için ekle
+    safeData.searchId = searchId;
     return NextResponse.json(safeData, { status: res.status });
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {

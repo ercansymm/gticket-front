@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const query = searchParams.get("q") || "";
     const lang = searchParams.get("lang") || "tr";
+    const domestic = searchParams.get("domestic");
 
     if (!ALLOWED_LANGS.has(lang)) {
       return NextResponse.json({ error: "Invalid language" }, { status: 400 });
@@ -21,10 +22,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Query too long" }, { status: 400 });
     }
 
+    // domestic=true → yurt içi havalimanları, q varsa → arama, yoksa → tümü
+    let backendUrl: string;
+    if (domestic === "true") {
+      backendUrl = `${API_BASE}/api/lookup/airports/domestic?lang=${encodeURIComponent(lang)}`;
+    } else if (query) {
+      backendUrl = `${API_BASE}/api/lookup/airports/search?q=${encodeURIComponent(query)}&lang=${encodeURIComponent(lang)}`;
+    } else {
+      backendUrl = `${API_BASE}/api/lookup/airports?lang=${encodeURIComponent(lang)}`;
+    }
+
     const { signal, clear } = withTimeout(10_000);
-    const res = await fetch(
-      `${API_BASE}/api/lookup/airports/search?q=${encodeURIComponent(query)}&lang=${encodeURIComponent(lang)}`,
-      {
+    const res = await fetch(backendUrl, {
         headers: {
           Accept: "application/json; charset=utf-8",
           "X-Transaction-Id": crypto.randomUUID(),

@@ -82,7 +82,7 @@ export const searchAirports = async (query: string, lang: 'tr' | 'en' = 'tr'): P
   if (!query || query.length < 2) return [];
 
   try {
-    const response = await apiClient.get<{ value: AirportRaw[] } | AirportRaw[]>(`/api/airport/search?q=${encodeURIComponent(query)}`);
+    const response = await apiClient.get<{ value: AirportRaw[] } | AirportRaw[]>(`/lookup/airports?q=${encodeURIComponent(query)}`);
     const raw = Array.isArray(response.data) ? response.data : response.data.value;
     return raw.map(a => mapAirport(a, lang));
   } catch {
@@ -106,7 +106,7 @@ export const searchAirports = async (query: string, lang: 'tr' | 'en' = 'tr'): P
  * GET /api/airport/domestic
  */
 export const getDomesticAirports = async (lang: 'tr' | 'en' = 'tr'): Promise<AirportDto[]> => {
-  const response = await apiClient.get<{ value: AirportRaw[] } | AirportRaw[]>('/api/airport/domestic');
+  const response = await apiClient.get<{ value: AirportRaw[] } | AirportRaw[]>('/lookup/airports?domestic=true');
   const raw = Array.isArray(response.data) ? response.data : response.data.value;
   return raw.map(a => mapAirport(a, lang));
 };
@@ -116,7 +116,7 @@ export const getDomesticAirports = async (lang: 'tr' | 'en' = 'tr'): Promise<Air
  * GET /api/airport
  */
 export const getAllAirports = async (lang: 'tr' | 'en' = 'tr'): Promise<AirportDto[]> => {
-  const response = await apiClient.get<{ value: AirportRaw[] } | AirportRaw[]>('/api/airport');
+  const response = await apiClient.get<{ value: AirportRaw[] } | AirportRaw[]>('/lookup/airports');
   const raw = Array.isArray(response.data) ? response.data : response.data.value;
   return raw.map(a => mapAirport(a, lang));
 };
@@ -126,7 +126,7 @@ export const getAllAirports = async (lang: 'tr' | 'en' = 'tr'): Promise<AirportD
  * GET /api/airline
  */
 export const getAllAirlines = async (): Promise<AirlineDto[]> => {
-  const response = await apiClient.get<AirlineDto[]>('/api/airline');
+  const response = await apiClient.get<AirlineDto[]>('/lookup/airlines');
   return response.data;
 };
 
@@ -135,6 +135,6 @@ export const getAllAirlines = async (): Promise<AirlineDto[]> => {
  * GET /api/popularroute
  */
 export const getPopularRoutes = async (): Promise<PopularRouteDto[]> => {
-  const response = await apiClient.get<PopularRouteDto[]>('/api/popularroute');
+  const response = await apiClient.get<PopularRouteDto[]>('/lookup/popular-routes');
   return response.data;
 };

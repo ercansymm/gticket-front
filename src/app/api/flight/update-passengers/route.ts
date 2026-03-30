@@ -50,6 +50,8 @@ export async function POST(request: NextRequest) {
       contact,
     };
 
+    logger.info('update-passengers → backend payload', 'api/flight/update-passengers', { body: backendBody } as Record<string, unknown>);
+
     const { signal, clear } = withTimeout(30_000);
     const res = await fetch(`${API_BASE}/api/flight/update-passengers`, {
       method: 'POST',

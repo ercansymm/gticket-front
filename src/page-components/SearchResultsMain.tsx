@@ -11,14 +11,14 @@ import { filterFlights, sortFlights, INITIAL_FILTERS } from '../utils/flightFilt
 import type { RootState, AppDispatch } from '../redux/store';
 import type { FlightResult, FlightFilters, FlightSortBy, AllocateResponse } from '@/types';
 
-const SORT_OPTIONS: { value: FlightSortBy; label: string; icon: string }[] = [
-  { value: 'cheapest', label: 'En Ucuz', icon: '💰' },
-  { value: 'expensive', label: 'En Pahalı', icon: '💎' },
-  { value: 'earliest', label: 'En Erken', icon: '🌅' },
-  { value: 'latest', label: 'En Geç', icon: '🌙' },
-  { value: 'shortest', label: 'En Kısa', icon: '⚡' },
-  { value: 'stops', label: 'En Az Aktarma', icon: '✈️' },
-  { value: 'airline', label: 'Havayolu', icon: '🏢' },
+const SORT_OPTIONS: { value: FlightSortBy; label: string }[] = [
+  { value: 'cheapest', label: 'En Ucuz' },
+  { value: 'expensive', label: 'En Pahalı' },
+  { value: 'earliest', label: 'En Erken' },
+  { value: 'latest', label: 'En Geç' },
+  { value: 'shortest', label: 'En Kısa' },
+  { value: 'stops', label: 'En Az Aktarma' },
+  { value: 'airline', label: 'Havayolu' },
 ];
 
 const SearchResultsMain = () => {
@@ -138,7 +138,7 @@ const SearchResultsMain = () => {
         <HeaderOne />
         <main className="bb-search-results">
           <div className="bb-empty-state">
-            <div className="bb-empty-state__icon">⚠️</div>
+            <div className="bb-empty-state__icon"><i className="fa-solid fa-triangle-exclamation"></i></div>
             <h2 className="bb-empty-state__title">Arama Sırasında Hata Oluştu</h2>
             <p className="bb-empty-state__text">{searchError}</p>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -163,7 +163,7 @@ const SearchResultsMain = () => {
         <HeaderOne />
         <main className="bb-search-results">
           <div className="bb-empty-state">
-            <div className="bb-empty-state__icon">⚠️</div>
+            <div className="bb-empty-state__icon"><i className="fa-solid fa-triangle-exclamation"></i></div>
             <h2 className="bb-empty-state__title">Uçuş Tahsis Edilemedi</h2>
             <p className="bb-empty-state__text">{allocateError}</p>
             <button className="bb-empty-state__btn" onClick={() => dispatch(clearAllocate())}>
@@ -183,7 +183,7 @@ const SearchResultsMain = () => {
         <HeaderOne />
         <main className="bb-search-results">
           <div className="bb-empty-state">
-            <div className="bb-empty-state__icon">✈️</div>
+            <div className="bb-empty-state__icon"><i className="fa-solid fa-plane"></i></div>
             <h2 className="bb-empty-state__title">Uçuş Bulunamadı</h2>
             <p className="bb-empty-state__text">
               Arama kriterlerinize uygun uçuş bulunamadı. Farklı tarih veya güzergah deneyebilirsiniz.
@@ -221,11 +221,11 @@ const SearchResultsMain = () => {
               <span className="bb-search-summary__city">{searchParams?.destination}</span>
             </div>
             <div className="bb-search-summary__meta">
-              <span className="bb-search-summary__meta-item">📅 {searchParams?.departureDate}</span>
+              <span className="bb-search-summary__meta-item">{searchParams?.departureDate}</span>
               {searchParams?.flightType === 'RT' && searchParams?.returnDate && (
-                <span className="bb-search-summary__meta-item">↩️ {searchParams.returnDate}</span>
+                <span className="bb-search-summary__meta-item">{searchParams.returnDate}</span>
               )}
-              <span className="bb-search-summary__meta-item">👥 {paxText}</span>
+              <span className="bb-search-summary__meta-item">{paxText}</span>
               <span className="bb-search-summary__meta-item">{tripTypeText}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -296,7 +296,6 @@ const SearchResultsMain = () => {
               className={`bb-mobile-sort-option ${sortBy === opt.value ? 'bb-mobile-sort-option--active' : ''}`}
               onClick={() => { setSortBy(opt.value); closeMobileSort(); }}
             >
-              <span>{opt.icon}</span>
               <span>{opt.label}</span>
               {sortBy === opt.value && <span style={{ marginLeft: 'auto' }}>✓</span>}
             </button>
@@ -321,7 +320,7 @@ const SearchResultsMain = () => {
 
             {displayedFlights.length === 0 ? (
               <div className="bb-empty-state">
-                <div className="bb-empty-state__icon">🔍</div>
+                <div className="bb-empty-state__icon"><i className="fa-solid fa-magnifying-glass"></i></div>
                 <h2 className="bb-empty-state__title">Filtre Sonucu Bulunamadı</h2>
                 <p className="bb-empty-state__text">Seçili filtrelere uygun uçuş yok. Filtreleri değiştirmeyi deneyin.</p>
                 <button className="bb-empty-state__btn" onClick={() => setFilters(INITIAL_FILTERS)}>

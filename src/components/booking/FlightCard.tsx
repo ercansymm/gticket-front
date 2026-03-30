@@ -141,7 +141,7 @@ const FlightCard = ({ flight, onSelect }: FlightCardProps) => {
               <span className="bb-flight-card__track-dot bb-flight-card__track-dot--start" />
               <span className={`bb-flight-card__track-bar ${!flight.isDirect ? 'bb-flight-card__track-bar--stops' : ''}`} />
               {!flight.isDirect && <span className="bb-flight-card__track-stop-dot" />}
-              <span className="bb-flight-card__track-plane">✈</span>
+
               <span className="bb-flight-card__track-dot bb-flight-card__track-dot--end" />
             </div>
             {flight.isDirect ? (
@@ -184,14 +184,16 @@ const FlightCard = ({ flight, onSelect }: FlightCardProps) => {
           {flight.refundableText}
         </span>
         {baggageDisplay && (
-          <span className="bb-flight-card__badge bb-flight-card__badge--baggage">🧳 {baggageDisplay}</span>
+          <span className="bb-flight-card__badge bb-flight-card__badge--baggage">
+            <i className="fa-solid fa-suitcase-rolling" style={{ fontSize: 12 }} /> {baggageDisplay}
+          </span>
         )}
         {flight.cabinClassName && (
           <span className="bb-flight-card__badge bb-flight-card__badge--cabin">{flight.cabinClassName}</span>
         )}
         {flight.availableSeats > 0 && flight.availableSeats <= 9 && (
           <span className="bb-flight-card__badge bb-flight-card__badge--seats">
-            🔥 {flight.availableSeatsText}
+            {flight.availableSeatsText}
           </span>
         )}
       </div>

@@ -19,9 +19,11 @@ export default function CheckoutClient() {
   const { data: session } = useSession();
   const { showWarning: sessionWarning, dismissWarning: dismissSessionWarning } = useSessionTimeout();
 
-  const { allocateResult, selectedFlight, searchId } = useSelector(
+  const { allocateResult, selectedFlight, searchId: allocateSearchId, searchResults } = useSelector(
     (state: RootState) => state.flight
   );
+  // searchId fallback: allocate response → search results
+  const searchId = allocateSearchId || searchResults?.searchId || null;
   const {
     updatePassengersLoading,
     updatePassengersError,
@@ -48,7 +50,12 @@ export default function CheckoutClient() {
   const firstBooking = airBookings[0];
   const productId = firstBooking?.productId ?? '';
   const productItemId = firstBooking?.bookingItems?.[0]?.productItemId ?? '';
-  const brandedFareItemId = firstBooking?.brandedFareItems?.[0]?.brandedFareItemId ?? '';
+
+  // brandedFareItemId: tercihli sıralama — segment seçimi → fare items → boş
+  const brandedFareItemId =
+    firstBooking?.segments?.[0]?.selectedBrandedFareItemId
+    ?? firstBooking?.brandedFareItems?.[0]?.brandedFareItemId
+    ?? '';
 
   // Fiyat hesaplaması — priceSummary 0 gelirse airBookings'ten hesapla
   const priceSummary = (() => {
@@ -90,9 +97,15 @@ export default function CheckoutClient() {
   ].filter(Boolean).join(', ');
 
   /* ── Submit handler — chain: updatePassengers → makePreBooking → navigate ── */
+  const submitRef = useRef(false);
   const handlePassengerSubmit = useCallback(
     async (passengerItems: PassengerItem[], contact: ContactInfo) => {
-      if (!searchId) return;
+      if (submitRef.current) return; // double-submit guard
+      if (!searchId || !productId || !productItemId) {
+        console.error('Missing booking data:', { searchId: !!searchId, productId: !!productId, productItemId: !!productItemId });
+        return;
+      }
+      submitRef.current = true;
 
       // Save to redux
       dispatch(setPassengers(passengerItems));
@@ -120,8 +133,15 @@ export default function CheckoutClient() {
         // 3. Başarılı → ödeme sayfasına yönlendir
         dispatch(setStep('payment'));
         router.push('/checkout/payment');
-      } catch {
-        // Hata redux state'e otomatik yazılır (updatePassengersError veya preBookingError)
+      } catch (err) {
+        console.error('[Checkout] Passenger/PreBooking chain failed:', err);
+        // Hata mesajını kullanıcıya göster — scroll to error
+        setTimeout(() => {
+          const errorEl = document.querySelector('.bb-checkout__price-warning');
+          if (errorEl) errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 150);
+      } finally {
+        submitRef.current = false;
       }
     },
     [dispatch, searchId, productId, productItemId, brandedFareItemId, router]
@@ -167,10 +187,17 @@ export default function CheckoutClient() {
               </div>
             )}
 
-            {/* API Error */}
+            {/* Missing data guard */}
+            {(!productId || !productItemId || !searchId) && (
+              <div className="bb-checkout__price-warning">
+                Uçuş tahsis bilgileri eksik. Lütfen geri dönüp tekrar uçuş seçiniz.
+              </div>
+            )}
+
+            {/* API Error — updatePassengers */}
             {updatePassengersError && (
               <div className="bb-checkout__price-warning">
-                ❌ {updatePassengersError}
+                {updatePassengersError}
               </div>
             )}
 
@@ -187,7 +214,7 @@ export default function CheckoutClient() {
             {/* PreBooking error */}
             {preBookingError && (
               <div className="bb-checkout__price-warning">
-                ❌ {preBookingError}
+                {preBookingError}
               </div>
             )}
 
@@ -210,7 +237,7 @@ export default function CheckoutClient() {
               <button
                 type="button"
                 className="bb-checkout__btn bb-checkout__btn--next"
-                disabled={updatePassengersLoading || preBookingLoading}
+                disabled={updatePassengersLoading || preBookingLoading || !productId || !productItemId || !searchId}
                 onClick={() => {
                   const form = document.querySelector('.bb-passenger-form') as HTMLFormElement;
                   if (form) {
@@ -298,7 +325,7 @@ export default function CheckoutClient() {
           <button
             type="button"
             className="bb-checkout__bottom-bar-btn"
-            disabled={updatePassengersLoading || preBookingLoading}
+            disabled={updatePassengersLoading || preBookingLoading || !productId || !productItemId || !searchId}
             onClick={() => {
               const form = document.querySelector('.bb-passenger-form') as HTMLFormElement;
               if (form) {

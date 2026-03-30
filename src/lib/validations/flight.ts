@@ -54,10 +54,20 @@ export const makePaymentClientSchema = z.discriminatedUnion('paymentType', [
     searchId: z.string().min(1).max(100),
     cardHolderName: z.string().min(3).max(100).trim().regex(/^[A-ZÇĞİÖŞÜa-zçğıöşü\s]+$/, 'Geçersiz kart sahibi adı'),
     cardNumber: z.string().regex(/^\d{15,16}$/, 'Geçersiz kart numarası'),
-    expireMonth: z.string().regex(/^(0[1-9]|1[0-2])$/, 'Geçersiz ay'),
-    expireYear: z.string().regex(/^\d{2,4}$/, 'Geçersiz yıl'),
+    expiryMonth: z.string().regex(/^(0[1-9]|1[0-2])$/, 'Geçersiz ay'),
+    expiryYear: z.string().regex(/^\d{2,4}$/, 'Geçersiz yıl'),
     cvv: z.string().regex(/^\d{3,4}$/, 'Geçersiz CVV'),
-    installmentCount: z.number().int().min(1).max(12).optional().default(1),
+    installmentOptionId: z.string().max(200).optional(),
+  }),
+  z.object({
+    paymentType: z.literal('CreditCardDirect'),
+    searchId: z.string().min(1).max(100),
+    cardHolderName: z.string().min(3).max(100).trim().regex(/^[A-ZÇĞİÖŞÜa-zçğıöşü\s]+$/, 'Geçersiz kart sahibi adı'),
+    cardNumber: z.string().regex(/^\d{15,16}$/, 'Geçersiz kart numarası'),
+    expiryMonth: z.string().regex(/^(0[1-9]|1[0-2])$/, 'Geçersiz ay'),
+    expiryYear: z.string().regex(/^\d{2,4}$/, 'Geçersiz yıl'),
+    cvv: z.string().regex(/^\d{3,4}$/, 'Geçersiz CVV'),
+    installmentOptionId: z.string().max(200).optional(),
   }),
 ]);
 

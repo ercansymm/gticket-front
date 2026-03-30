@@ -14,9 +14,18 @@ export const tr = {
   happyPassengers: "100.000+ Mutlu Yolcu",
 
   // SearchHero
-  heroTitle: "En Ucuz Uçak Bileti ve Otel Konaklamasını Bulun",
-  flight: "Uçuş",
+  heroTitle: "Türkiye’nin En Güvenilir Bilet Platformu",
+  heroSubtitle: "Yurt içi ve yurt dışı uçak biletlerini karşılaştır, en uygun fiyatı yakala.",
+  flight: "Uçak",
   hotel: "Otel",
+  bus: "Otobüs",
+  ferry: "Feribot",
+  carRental: "Araç",
+  event: "Etkinlik",
+  transfer: "Transfer",
+  istanbulkart: "İstanbulkart",
+  comingSoon: "Çok Yakında",
+  comingSoonDesc: "Bu hizmet çok yakında aktif olacaktır.",
   bookingCheck: "Bilet Sorgula",
 
   // Flight Form

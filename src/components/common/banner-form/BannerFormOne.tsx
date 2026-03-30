@@ -783,19 +783,6 @@ const BannerFormOne = () => {
                {passengerOpen && renderPaxDropdown()}
             </div>
 
-            {/* Bagajlı Arama */}
-            <div className="bb-flight-form__field bb-flight-form__field--baggage">
-               <div className="bb-baggage-toggle">
-                  <span>{t.baggageIncluded}</span>
-                  <div
-                     className={`bb-baggage-switch ${baggageOnly ? 'active' : ''}`}
-                     onClick={() => setBaggageOnly(!baggageOnly)}
-                     role="switch"
-                     aria-checked={baggageOnly}
-                  />
-               </div>
-            </div>
-
             {/* Ara butonu */}
             <div className="bb-flight-form__field bb-flight-form__field--submit">
                <button type="submit" className="bb-flight-form__submit" data-event="flight_search" data-action="click" disabled={searchLoading}>
@@ -805,6 +792,27 @@ const BannerFormOne = () => {
                      <><i className="fa-solid fa-magnifying-glass"></i> {t.searchFlight}</>
                   )}
                </button>
+            </div>
+         </div>
+
+         {/* Bagajlı Arama — form altı satır */}
+         <div className="bb-flight-form__baggage-row">
+            <div className="bb-baggage-toggle">
+               <span>{t.baggageIncluded}</span>
+               <div
+                  className={`bb-baggage-switch ${baggageOnly ? 'active' : ''}`}
+                  onClick={() => setBaggageOnly(!baggageOnly)}
+                  role="switch"
+                  aria-checked={baggageOnly}
+               />
+            </div>
+            <div className="bb-baggage-info">
+               <i className="fa-solid fa-circle-info bb-baggage-info__icon"></i>
+               <div className="bb-baggage-info__tooltip">
+                  {lang === 'tr'
+                     ? 'Bagajlı arama açıldığında, sadece bagaj hakkı dahil olan uçuşlar listelenir. Kapalıyken tüm uçuşlar (el bagajı dahil) gösterilir.'
+                     : 'When baggage search is on, only flights with checked baggage are shown. When off, all flights (including carry-on only) are listed.'}
+               </div>
             </div>
          </div>
       </form>
