@@ -43,6 +43,7 @@ interface PaymentState {
   // 3DS
   is3DSecureRequired: boolean;
   threeDSecureUrl: string | null;
+  threeDSecureHtml: string | null;
 
   // Biletleme
   finalizeResult: FinalizeShoppingResponse | null;
@@ -82,6 +83,7 @@ const initialState: PaymentState = {
   paymentError: null,
   is3DSecureRequired: false,
   threeDSecureUrl: null,
+  threeDSecureHtml: null,
   finalizeResult: null,
   finalizeLoading: false,
   finalizeError: null,
@@ -266,6 +268,7 @@ const paymentSlice = createSlice({
       state.paymentResult = action.payload;
       state.is3DSecureRequired = action.payload.is3DSecureRequired;
       state.threeDSecureUrl = action.payload.threeDSecureUrl;
+      state.threeDSecureHtml = action.payload.threeDSecureHtml;
     });
     builder.addCase(makePaymentThunk.rejected, (state, action) => {
       state.paymentLoading = false;

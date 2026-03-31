@@ -507,6 +507,7 @@ export interface MakePaymentResponse {
   isPaymentSuccess: boolean;
   is3DSecureRequired: boolean;
   threeDSecureUrl: string | null;
+  threeDSecureHtml: string | null;
   transactionId: string | null;
   paymentAmount: number;
   currency: string | null;

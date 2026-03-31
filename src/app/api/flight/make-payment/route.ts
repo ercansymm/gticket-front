@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { makePaymentClientSchema, validateBody, parseBody } from '@/lib/validations';
-import { filterSensitiveFields, withTimeout, checkRateLimit } from '@/lib/api-helpers';
+import { filterSensitiveFields, normalizeToCamelCase, withTimeout, checkRateLimit } from '@/lib/api-helpers';
 import { logger } from '@/lib/logger';
 
 const API_BASE = process.env.API_BASE_URL;
@@ -32,7 +32,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const sessionData = await sessionRes.json();
+    const sessionDataRaw = await sessionRes.json();
+    const sessionData = normalizeToCamelCase(sessionDataRaw) as Record<string, unknown>;
+
+    // Debug: session endpoint'inden dönen tüm alanları logla
+    logger.info('Session data keys and values', 'api/flight/make-payment', {
+      rawKeys: Object.keys(sessionDataRaw).join(','),
+      normalizedKeys: Object.keys(sessionData).join(','),
+      grandTotal: sessionData.grandTotal,
+      totalFare: sessionData.totalFare,
+      hasSessionId: !!sessionData.sessionId,
+      hasProductId: !!sessionData.productId,
+    });
 
     if (!sessionData.sessionId || !sessionData.sessionToken || !sessionData.shoppingFileId) {
       return NextResponse.json(
@@ -42,16 +53,35 @@ export async function POST(request: NextRequest) {
     }
 
     // GÜVENLİK: Kart bilgisi sadece backend'e gönderilir, asla loglanmaz
+    const amount = Number(sessionData.grandTotal || sessionData.totalFare || 0);
+    if (!amount || amount <= 0) {
+      logger.error('Session amount is zero or missing', { searchId, grandTotal: sessionData.grandTotal, totalFare: sessionData.totalFare }, 'api/flight/make-payment');
+      return NextResponse.json(
+        { error: 'Fiyat bilgisi alınamadı. Lütfen işlemi baştan başlatın.' },
+        { status: 400 },
+      );
+    }
+
     const backendBody: Record<string, unknown> = {
       sessionId: sessionData.sessionId,
       sessionToken: sessionData.sessionToken,
       shoppingFileId: sessionData.shoppingFileId,
-      productId: sessionData.productId || '',
-      amount: sessionData.grandTotal || 0,
+      productId: sessionData.productId ?? null,
+      amount,
       currency: sessionData.currency || 'TRY',
       paymentType: paymentType,
-      bookingId: sessionData.bookingId || null,
+      bookingId: sessionData.bookingId ?? null,
     };
+
+    // Debug: session'dan gelen alanları logla (hassas veri yok)
+    logger.info('MakePayment session fields', 'api/flight/make-payment', {
+      searchId,
+      hasProductId: !!sessionData.productId,
+      hasBookingId: !!sessionData.bookingId,
+      hasCurrency: !!sessionData.currency,
+      amount,
+      paymentType,
+    });
 
     if (paymentType === 'CreditCard' || paymentType === 'CreditCardDirect') {
       const { cardHolderName, cardNumber, expiryMonth, expiryYear, cvv, installmentOptionId } = rest as {
@@ -79,20 +109,37 @@ export async function POST(request: NextRequest) {
     });
     clear();
 
-    const data = await res.json();
+    const dataRaw = await res.json();
+    const data = normalizeToCamelCase(dataRaw) as Record<string, unknown>;
+
+    // Debug: backend response alanlarını logla
+    logger.info('MakePayment backend response fields', 'api/flight/make-payment', {
+      status: res.status,
+      hasError: data.hasError,
+      isPaymentSuccess: data.isPaymentSuccess,
+      is3DSecureRequired: data.is3DSecureRequired,
+      hasThreeDSecureHtml: !!data.threeDSecureHtml,
+      hasThreeDSecureUrl: !!data.threeDSecureUrl,
+      errorMessage: data.errorMessage,
+      keys: Object.keys(data).join(','),
+    });
 
     // GÜVENLİK: 3DS URL whitelist kontrolü
-    if (data.is3DSecureRequired && data.threeDSecureUrl) {
-      try {
-        const url = new URL(data.threeDSecureUrl);
-        const allowedHosts = (process.env.ALLOWED_3DS_HOSTS || '').split(',').map((h: string) => h.trim()).filter(Boolean);
-        if (allowedHosts.length > 0 && !allowedHosts.some((h: string) => url.hostname.endsWith(h))) {
-          logger.error('Suspicious 3DS URL blocked', { url: data.threeDSecureUrl }, 'api/flight/make-payment');
+    if (data.is3DSecureRequired) {
+      // Backend threeDSecureUrl veya threeDSecureHtml döndürebilir
+      const secureUrl = data.threeDSecureUrl as string | undefined;
+      if (secureUrl) {
+        try {
+          const url = new URL(secureUrl);
+          const allowedHosts = (process.env.ALLOWED_3DS_HOSTS || '').split(',').map((h: string) => h.trim()).filter(Boolean);
+          if (allowedHosts.length > 0 && !allowedHosts.some((h: string) => url.hostname.endsWith(h))) {
+            logger.error('Suspicious 3DS URL blocked', { url: secureUrl }, 'api/flight/make-payment');
+            return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+          }
+        } catch {
+          logger.error('Invalid 3DS URL', { url: secureUrl }, 'api/flight/make-payment');
           return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
         }
-      } catch {
-        logger.error('Invalid 3DS URL', { url: data.threeDSecureUrl }, 'api/flight/make-payment');
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
       }
     }
 

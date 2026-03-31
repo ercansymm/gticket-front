@@ -1,6 +1,26 @@
 import { NextResponse } from 'next/server';
 import { rateLimit } from '@/lib/rate-limit';
 
+/** Convert a single key from PascalCase to camelCase */
+function toCamelCase(key: string): string {
+  return key.charAt(0).toLowerCase() + key.slice(1);
+}
+
+/** Recursively convert all object keys from PascalCase to camelCase */
+export function normalizeToCamelCase(data: unknown): unknown {
+  if (Array.isArray(data)) {
+    return data.map(normalizeToCamelCase);
+  }
+  if (data && typeof data === 'object' && !(data instanceof Date)) {
+    const result: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(data as Record<string, unknown>)) {
+      result[toCamelCase(key)] = value && typeof value === 'object' ? normalizeToCamelCase(value) : value;
+    }
+    return result;
+  }
+  return data;
+}
+
 const SENSITIVE_KEYS = [
   // Komisyon/maliyet bilgileri
   'customerCommissionMin',
@@ -33,18 +53,23 @@ const SENSITIVE_KEYS = [
 
 /** Recursively strip business-sensitive fields before sending to client. */
 export function filterSensitiveFields(data: unknown): unknown {
+  // First normalize PascalCase → camelCase so keys match SENSITIVE_KEYS
+  const normalized = normalizeToCamelCase(data);
+  return stripSensitive(normalized);
+}
+
+function stripSensitive(data: unknown): unknown {
   if (Array.isArray(data)) {
-    return data.map(filterSensitiveFields);
+    return data.map(stripSensitive);
   }
   if (data && typeof data === 'object') {
     const filtered = { ...(data as Record<string, unknown>) };
     for (const key of SENSITIVE_KEYS) {
       delete filtered[key];
     }
-    // Recurse into nested objects
     for (const [k, v] of Object.entries(filtered)) {
       if (v && typeof v === 'object') {
-        filtered[k] = filterSensitiveFields(v);
+        filtered[k] = stripSensitive(v);
       }
     }
     return filtered;

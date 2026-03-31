@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cancelBookingClientSchema, validateBody, parseBody } from '@/lib/validations';
-import { filterSensitiveFields, withTimeout, checkRateLimit } from '@/lib/api-helpers';
+import { filterSensitiveFields, normalizeToCamelCase, withTimeout, checkRateLimit } from '@/lib/api-helpers';
 import { logger } from '@/lib/logger';
 
 const API_BASE = process.env.API_BASE_URL;
@@ -30,7 +30,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const sessionData = await sessionRes.json();
+    const sessionDataRaw = await sessionRes.json();
+    const sessionData = normalizeToCamelCase(sessionDataRaw) as Record<string, unknown>;
 
     if (!sessionData.sessionId || !sessionData.sessionToken || !sessionData.shoppingFileId) {
       return NextResponse.json(
