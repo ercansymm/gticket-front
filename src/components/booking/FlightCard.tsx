@@ -1,19 +1,11 @@
 import { useState } from 'react';
 import Image from 'next/image';
-import type { FlightResult, BrandedFareItem, BrandedItem, BrandedRule } from '@/types';
+import type { FlightResult } from '@/types';
 
 interface FlightCardProps {
   flight: FlightResult;
-  onSelect: (brandedFareItemId?: string | null) => void;
-}
-
-function getRuleIcon(application: string | null): string {
-  switch (application) {
-    case 'F': return '✅';
-    case 'C': return '💰';
-    case 'N': return '❌';
-    default: return '—';
-  }
+  onSelect: () => void;
+  isSelected?: boolean;
 }
 
 function getBaggageDisplay(flight: FlightResult): string | null {
@@ -45,7 +37,6 @@ const AIRLINE_COLORS: Record<string, { bg: string; color: string }> = {
 
 const FALLBACK_STYLE = { bg: '#6b7280', color: '#fff' };
 
-/** Local airline logo path */
 function getAirlineLogoPath(code: string | null): string | null {
   if (!code) return null;
   return `/images/airlines/${code}.svg`;
@@ -55,53 +46,15 @@ function getAirlineBrandStyle(code: string | null): { bg: string; color: string 
   return (code && AIRLINE_COLORS[code]) || FALLBACK_STYLE;
 }
 
-/** brandedFareItems → BrandedItem[] tümünü topla (görüntülenecek paketler) */
-function collectBrandedItems(fareItems: BrandedFareItem[]): Array<{
-  brandedFareItemId: string | null;
-  brandItem: BrandedItem;
-  totalFare: number;
-  totalFareFormatted: string;
-  currency: string;
-}> {
-  const result: Array<{
-    brandedFareItemId: string | null;
-    brandItem: BrandedItem;
-    totalFare: number;
-    totalFareFormatted: string;
-    currency: string;
-  }> = [];
-
-  for (const fareItem of fareItems) {
-    const totalInfo = fareItem.totalFareInfo;
-    const totalFare = totalInfo?.totalFare ?? 0;
-    const currency = fareItem.brandedFarePassengers?.[0]?.passengerFareInfo?.currency ?? 'TRY';
-
-    for (const bi of fareItem.brandedItems ?? []) {
-      result.push({
-        brandedFareItemId: fareItem.brandedFareItemId,
-        brandItem: bi,
-        totalFare,
-        totalFareFormatted: totalFare.toLocaleString('tr-TR', { minimumFractionDigits: 2 }) + ' ' + currency,
-        currency,
-      });
-    }
-  }
-
-  return result;
-}
-
-const FlightCard = ({ flight, onSelect }: FlightCardProps) => {
-  const [expandedPackage, setExpandedPackage] = useState<string | null>(null);
+const FlightCard = ({ flight, onSelect, isSelected = false }: FlightCardProps) => {
   const [logoError, setLogoError] = useState(false);
   const baggageDisplay = getBaggageDisplay(flight);
-  const brandedItems = collectBrandedItems(flight.brandedFareItems ?? []);
-  const hasPackages = brandedItems.length > 0;
   const logoPath = getAirlineLogoPath(flight.airlineCode);
   const brandStyle = getAirlineBrandStyle(flight.airlineCode);
 
   return (
-    <div className="bb-flight-card">
-      {/* Üst kısım: havayolu + zaman çizgisi + fiyat */}
+    <div className={`bb-flight-card ${isSelected ? 'bb-flight-card--selected' : ''}`}>
+      {/* Üst kısım: havayolu + zaman çizgisi + fiyat + genişlet butonu */}
       <div className="bb-flight-card__top">
         {/* Airline */}
         <div className="bb-flight-card__airline">
@@ -141,7 +94,6 @@ const FlightCard = ({ flight, onSelect }: FlightCardProps) => {
               <span className="bb-flight-card__track-dot bb-flight-card__track-dot--start" />
               <span className={`bb-flight-card__track-bar ${!flight.isDirect ? 'bb-flight-card__track-bar--stops' : ''}`} />
               {!flight.isDirect && <span className="bb-flight-card__track-stop-dot" />}
-
               <span className="bb-flight-card__track-dot bb-flight-card__track-dot--end" />
             </div>
             {flight.isDirect ? (
@@ -156,19 +108,21 @@ const FlightCard = ({ flight, onSelect }: FlightCardProps) => {
           </div>
         </div>
 
-        {/* Paket yoksa doğrudan fiyat + seç butonu */}
-        {!hasPackages && (
-          <div className="bb-flight-card__price-section">
-            <div className="bb-flight-card__price-amount">
-              {flight.totalFare?.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
-              <span style={{ fontSize: 14, fontWeight: 500, marginLeft: 4 }}>{flight.currency ?? 'TRY'}</span>
-            </div>
-            <div className="bb-flight-card__price-note">kişi başı</div>
-            <button className="bb-flight-card__select-btn" onClick={() => onSelect(null)}>
-              Uçuşu Seç
-            </button>
+        {/* Fiyat + seç butonu */}
+        <div className="bb-flight-card__price-section">
+          <div className="bb-flight-card__price-amount">
+            {flight.totalFare?.toLocaleString('tr-TR', { minimumFractionDigits: 0 })}
+            <span className="bb-flight-card__price-currency">{flight.currency ?? 'TRY'}</span>
           </div>
-        )}
+          <button
+            className="bb-flight-card__select-btn"
+            onClick={() => onSelect()}
+          >
+            Seç ve İlerle
+            {' '}
+            <i className="fa-solid fa-chevron-right" style={{ fontSize: 12, marginLeft: 4 }} />
+          </button>
+        </div>
       </div>
 
       {/* Badges */}
@@ -198,50 +152,6 @@ const FlightCard = ({ flight, onSelect }: FlightCardProps) => {
         )}
       </div>
 
-      {/* Fare paketleri */}
-      {hasPackages && (
-        <div className="bb-flight-card__packages">
-          {brandedItems.map((pkg) => {
-            const pkgId = pkg.brandedFareItemId ?? pkg.brandItem.brandCode;
-            const isExpanded = expandedPackage === pkgId;
-            return (
-              <div
-                key={pkgId}
-                className={`bb-fare-package ${isExpanded ? 'bb-fare-package--expanded' : ''}`}
-              >
-                <div
-                  className="bb-fare-package__header"
-                  onClick={() => setExpandedPackage(isExpanded ? null : (pkgId ?? null))}
-                >
-                  <span className="bb-fare-package__name">{pkg.brandItem.brandName}</span>
-                  <span className="bb-fare-package__price">{pkg.totalFareFormatted}</span>
-                </div>
-
-                <div className="bb-fare-package__rules">
-                  {(pkg.brandItem.brandedRules ?? []).slice(0, isExpanded ? undefined : 3).map((rule: BrandedRule, idx: number) => (
-                    <div key={idx} className="bb-fare-package__rule">
-                      <span className="bb-fare-package__rule-icon">{getRuleIcon(rule.application)}</span>
-                      <span className="bb-fare-package__rule-text">{rule.ruleDescription}</span>
-                    </div>
-                  ))}
-                  {!isExpanded && (pkg.brandItem.brandedRules ?? []).length > 3 && (
-                    <div className="bb-fare-package__more">
-                      +{(pkg.brandItem.brandedRules ?? []).length - 3} kural daha
-                    </div>
-                  )}
-                </div>
-
-                <button
-                  className="bb-fare-package__select"
-                  onClick={() => onSelect(pkg.brandedFareItemId)}
-                >
-                  Seç
-                </button>
-              </div>
-            );
-          })}
-        </div>
-      )}
     </div>
   );
 };

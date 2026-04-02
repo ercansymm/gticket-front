@@ -504,13 +504,17 @@ export interface CreditCardInfo {
 export interface MakePaymentResponse {
   hasError: boolean;
   errorMessage: string | null;
-  isPaymentSuccess: boolean;
+  isPaymentSuccessful: boolean;
   is3DSecureRequired: boolean;
   threeDSecureUrl: string | null;
   threeDSecureHtml: string | null;
   transactionId: string | null;
   paymentAmount: number;
   currency: string | null;
+  status: string | null;
+  pnr: string | null;
+  grandTotal: number;
+  remainingSum: number;
 }
 
 // ========== FINALIZE SHOPPING ==========
@@ -525,12 +529,15 @@ export interface FinalizeShoppingBackendRequest {
   sessionId: string;
   sessionToken: string;
   shoppingFileId: string;
+  productId: string | null;
+  bookingId: string | null;
 }
 
 export interface FinalizeShoppingResponse {
   hasError: boolean;
   errorMessage: string | null;
   isFinalized: boolean;
+  status: string | null;
   tickets: TicketInfo[];
   bookingCode: string | null;
   pnr: string | null;

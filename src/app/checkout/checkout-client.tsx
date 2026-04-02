@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useCallback, useRef } from 'react';
+import { useEffect, useCallback, useRef, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import Image from 'next/image';
 import HeaderOne from '@/layouts/headers/HeaderOne';
 import FooterOne from '@/layouts/footers/FooterOne';
 import PassengerForm from '@/components/booking/PassengerForm';
@@ -12,6 +13,15 @@ import { setStep, setPassengers, setContactInfo } from '@/redux/features/booking
 import type { RootState, AppDispatch } from '@/redux/store';
 import type { PassengerItem, ContactInfo } from '@/types/booking';
 import { useSessionTimeout } from '@/hooks/UseSessionTimeout';
+
+const AIRLINE_COLORS: Record<string, { bg: string; color: string }> = {
+  TK: { bg: '#E30A17', color: '#fff' },
+  PC: { bg: '#FFB800', color: '#1a1a1a' },
+  VF: { bg: '#1A56DB', color: '#fff' },
+  XQ: { bg: '#E30A17', color: '#fff' },
+  KK: { bg: '#00529B', color: '#fff' },
+};
+const FALLBACK_STYLE = { bg: '#6b7280', color: '#fff' };
 
 export default function CheckoutClient() {
   const router = useRouter();
@@ -150,6 +160,10 @@ export default function CheckoutClient() {
   // Guard: render nothing until allocate data is ready
   if (!allocateResult || !selectedFlight) return null;
 
+  const airlineCode = selectedFlight.airlineCode;
+  const logoPath = airlineCode ? `/images/airlines/${airlineCode}.svg` : null;
+  const brandStyle = (airlineCode && AIRLINE_COLORS[airlineCode]) || FALLBACK_STYLE;
+
   return (
     <>
       <HeaderOne />
@@ -256,6 +270,37 @@ export default function CheckoutClient() {
             <div className="bb-checkout__card">
               <h3 className="bb-checkout__card-title">Uçuş Özeti</h3>
               <div className="bb-checkout__flight-mini">
+                <div className="bb-checkout__flight-mini-logo"
+                  style={!logoPath ? { background: brandStyle.bg, color: brandStyle.color, border: 'none' } : undefined}
+                >
+                  {logoPath ? (
+                    <Image
+                      src={logoPath}
+                      alt={selectedFlight.airlineName ?? 'airline'}
+                      width={36}
+                      height={36}
+                      onError={(e) => {
+                        const target = e.currentTarget.parentElement;
+                        if (target) {
+                          target.style.background = brandStyle.bg;
+                          target.style.color = brandStyle.color;
+                          target.style.border = 'none';
+                        }
+                        e.currentTarget.style.display = 'none';
+                        const fallback = document.createElement('span');
+                        fallback.style.fontWeight = '700';
+                        fallback.style.fontSize = '13px';
+                        fallback.style.letterSpacing = '1px';
+                        fallback.textContent = airlineCode ?? '??';
+                        target?.appendChild(fallback);
+                      }}
+                    />
+                  ) : (
+                    <span style={{ fontWeight: 700, fontSize: 13, letterSpacing: 1 }}>
+                      {airlineCode ?? '??'}
+                    </span>
+                  )}
+                </div>
                 <div>
                   <div className="bb-checkout__flight-mini-airline">
                     {selectedFlight.airlineName}

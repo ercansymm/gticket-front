@@ -92,9 +92,8 @@ export async function POST(request: NextRequest) {
       if (installmentOptionId) {
         backendBody.installmentOptionId = installmentOptionId;
       }
-    } else {
-      backendBody.creditCard = null;
     }
+    // Non-card payments: creditCard alanı gönderilmez
 
     const { signal, clear } = withTimeout(60_000);
     const res = await fetch(`${API_BASE}/api/flight/make-payment`, {
@@ -116,7 +115,7 @@ export async function POST(request: NextRequest) {
     logger.info('MakePayment backend response fields', 'api/flight/make-payment', {
       status: res.status,
       hasError: data.hasError,
-      isPaymentSuccess: data.isPaymentSuccess,
+      isPaymentSuccessful: data.isPaymentSuccessful,
       is3DSecureRequired: data.is3DSecureRequired,
       hasThreeDSecureHtml: !!data.threeDSecureHtml,
       hasThreeDSecureUrl: !!data.threeDSecureUrl,

@@ -44,6 +44,8 @@ export async function POST(request: NextRequest) {
       sessionId: sessionData.sessionId,
       sessionToken: sessionData.sessionToken,
       shoppingFileId: sessionData.shoppingFileId,
+      productId: sessionData.productId || null,
+      bookingId: sessionData.bookingId || null,
     };
 
     const { signal, clear } = withTimeout(60_000);

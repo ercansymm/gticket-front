@@ -26,7 +26,7 @@ const FilterSidebar = ({ options, filters, onChange, resultCount, totalCount }: 
     onChange({ ...filters, [key]: !filters[key] });
   }, [filters, onChange]);
 
-  const toggleArrayItem = useCallback((key: 'airlineCodes' | 'cabinClasses' | 'farePackages', value: string) => {
+  const toggleArrayItem = useCallback((key: 'airlineCodes' | 'cabinClasses', value: string) => {
     const arr = filters[key];
     const next = arr.includes(value) ? arr.filter(v => v !== value) : [...arr, value];
     onChange({ ...filters, [key]: next });
@@ -156,23 +156,6 @@ const FilterSidebar = ({ options, filters, onChange, resultCount, totalCount }: 
                 onChange={() => toggleArrayItem('cabinClasses', cls)}
               />
               <span>{cls}</span>
-            </label>
-          ))}
-        </div>
-      )}
-
-      {/* Paket tipi */}
-      {options.farePackages && options.farePackages.length > 0 && (
-        <div className="bb-filter-section">
-          <h4 className="bb-filter-section__title">Paket Tipi</h4>
-          {options.farePackages.map(pkg => (
-            <label key={pkg} className="bb-filter-checkbox">
-              <input
-                type="checkbox"
-                checked={filters.farePackages.includes(pkg)}
-                onChange={() => toggleArrayItem('farePackages', pkg)}
-              />
-              <span>{pkg}</span>
             </label>
           ))}
         </div>

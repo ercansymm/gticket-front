@@ -108,11 +108,17 @@ export const makePaymentThunk = createAsyncThunk(
   async (params: MakePaymentClientRequest, { rejectWithValue }) => {
     try {
       const result = await makePayment(params);
-      if (result.hasError) {
+      // Ödeme başarılıysa hasError olsa bile devam et (backend tutarsız dönebiliyor)
+      if (result.hasError && !result.isPaymentSuccessful) {
         return rejectWithValue(result.errorMessage || 'Ödeme başarısız');
       }
       return result;
     } catch (error: any) {
+      // Backend hasError:true dönse bile isPaymentSuccessful:true ise ödeme alınmış demektir
+      const data = error.response?.data;
+      if (data?.isPaymentSuccessful) {
+        return data as MakePaymentResponse;
+      }
       return rejectWithValue(extractErrorMessage(error, 'Ödeme başarısız'));
     }
   },

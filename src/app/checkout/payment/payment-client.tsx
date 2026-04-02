@@ -114,7 +114,7 @@ export default function PaymentClient() {
 
   // Auto-finalize after successful payment (non-3DS)
   const isPaymentSuccessful = paymentResult && paymentResult.hasError === false &&
-    (paymentResult.isPaymentSuccess !== false) && !paymentResult.is3DSecureRequired;
+    paymentResult.isPaymentSuccessful === true && !paymentResult.is3DSecureRequired;
 
   useEffect(() => {
     if (isPaymentSuccessful && searchId && !hasFinalized.current) {
@@ -141,8 +141,10 @@ export default function PaymentClient() {
 
   // After finalize → success page
   useEffect(() => {
-    if (finalizeResult && finalizeResult.hasError === false &&
-        (finalizeResult.isFinalized !== false)) {
+    const successStatuses = ['Booking', 'Ticketed', 'Reservation'];
+    const isFinalized = finalizeResult && finalizeResult.hasError === false &&
+      (finalizeResult.isFinalized === true || successStatuses.includes(finalizeResult.status ?? ''));
+    if (isFinalized) {
       dispatch(setStep('confirmation'));
       router.push('/checkout/success');
     }
@@ -285,7 +287,7 @@ export default function PaymentClient() {
                     <div className="bb-pay-flight__airline-logo">
                       {selectedFlight.airlineCode && (
                         <img
-                          src={`/images/airlines/${selectedFlight.airlineCode}.png`}
+                          src={`/images/airlines/${selectedFlight.airlineCode}.svg`}
                           alt={selectedFlight.airlineName ?? ''}
                           width={32}
                           height={32}

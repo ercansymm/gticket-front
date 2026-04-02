@@ -34,6 +34,13 @@ const SearchResultsMain = () => {
   const [mobileSortOpen, setMobileSortOpen] = useState(false);
   const [priceChangedData, setPriceChangedData] = useState<AllocateResponse | null>(null);
 
+  // Gidiş-dönüş seçimleri
+  const [selectedOutbound, setSelectedOutbound] = useState<{ flight: FlightResult } | null>(null);
+  const [selectedReturn, setSelectedReturn] = useState<{ flight: FlightResult } | null>(null);
+  const [rtAllocating, setRtAllocating] = useState(false);
+
+  const isRoundTrip = searchParams?.flightType === 'RT';
+
   const closeMobileFilter = useCallback(() => setMobileFilterOpen(false), []);
   const closeMobileSort = useCallback(() => setMobileSortOpen(false), []);
 
@@ -50,12 +57,28 @@ const SearchResultsMain = () => {
     return sortFlights(filtered, sortBy);
   }, [searchResults?.flights, filters, sortBy]);
 
-  const handleSelectFlight = (flight: FlightResult, brandedFareItemId?: string | null) => {
+  // Gidiş-Dönüş: uçuşları yöne göre ayır
+  const outboundFlights = useMemo(() => {
+    if (!isRoundTrip || !searchParams) return displayedFlights;
+    return displayedFlights.filter(f =>
+      f.originCode === searchParams.origin && f.destinationCode === searchParams.destination
+    );
+  }, [displayedFlights, isRoundTrip, searchParams]);
+
+  const returnFlights = useMemo(() => {
+    if (!isRoundTrip || !searchParams) return [];
+    return displayedFlights.filter(f =>
+      f.originCode === searchParams.destination && f.destinationCode === searchParams.origin
+    );
+  }, [displayedFlights, isRoundTrip, searchParams]);
+
+  // Tek yön uçuş seçimi (allocate + yönlendir)
+  const handleSelectFlight = (flight: FlightResult) => {
     if (allocateLoading || !searchResults) return;
     dispatch(setSelectedFlight(flight));
     dispatch(allocateFlightThunk({
       searchId: searchResults.searchId!,
-      productId: brandedFareItemId ?? flight.productId!,
+      productId: flight.productId!,
     })).unwrap()
       .then((result: AllocateResponse) => {
         if (result.isPriceChanged) {
@@ -65,6 +88,53 @@ const SearchResultsMain = () => {
         }
       })
       .catch(() => {});
+  };
+
+  // Gidiş-Dönüş: gidiş seçimi
+  const handleSelectOutbound = (flight: FlightResult) => {
+    setSelectedOutbound({ flight });
+    setSelectedReturn(null);
+  };
+
+  // Gidiş-Dönüş: dönüş seçimi → her ikisini de allocate et
+  const handleSelectReturn = async (flight: FlightResult) => {
+    const returnSelection = { flight };
+    setSelectedReturn(returnSelection);
+
+    if (!selectedOutbound || !searchResults) return;
+
+    setRtAllocating(true);
+    dispatch(setSelectedFlight(selectedOutbound.flight));
+
+    try {
+      // 1. Gidiş uçuşunu tahsis et
+      await dispatch(allocateFlightThunk({
+        searchId: searchResults.searchId!,
+        productId: selectedOutbound.flight.productId!,
+      })).unwrap();
+
+      // 2. Dönüş uçuşunu tahsis et (aynı oturumda)
+      const retResult = await dispatch(allocateFlightThunk({
+        searchId: searchResults.searchId!,
+        productId: returnSelection.flight.productId!,
+      })).unwrap();
+
+      if (retResult.isPriceChanged) {
+        setPriceChangedData(retResult);
+      } else {
+        router.push('/checkout');
+      }
+    } catch {
+      // Redux hata yönetimi zaten çalışıyor
+    } finally {
+      setRtAllocating(false);
+    }
+  };
+
+  // Gidiş seçimini temizle
+  const handleClearOutbound = () => {
+    setSelectedOutbound(null);
+    setSelectedReturn(null);
   };
 
   const handleAcceptPriceChange = () => {
@@ -92,12 +162,32 @@ const SearchResultsMain = () => {
 
   const tripTypeText = searchParams?.flightType === 'RT' ? 'Gidiş-Dönüş' : 'Tek Yön';
 
-  // Loading — skeleton
+  // Loading — skeleton + centered spinner card
   if (searchLoading) {
     return (
       <>
         <HeaderOne />
-        <main className="bb-search-results">
+        <main className="bb-search-results" style={{ position: 'relative' }}>
+          {/* Spinner card overlay */}
+          <div className="bb-flight-loading-overlay">
+            <div className="bb-flight-loading__card">
+              <div className="bb-flight-loading__logo">
+                <span style={{ color: '#DC2626' }}>Ata</span>
+                <span style={{ color: '#0F172A' }}>Bilet</span>
+              </div>
+              <div className="bb-flight-loading__bar">
+                <div className="bb-flight-loading__bar-fill"></div>
+              </div>
+              <div className="bb-flight-loading__route">
+                <span>{searchParams?.origin ?? '...'}</span>
+                <i className="fa-solid fa-plane" style={{ fontSize: 13, color: '#0C4A6E' }}></i>
+                <span>{searchParams?.destination ?? '...'}</span>
+              </div>
+              <p className="bb-flight-loading__text">Uçuşlar aranıyor<span className="bb-flight-loading__dots"></span></p>
+            </div>
+          </div>
+
+          {/* Background skeleton */}
           <div className="bb-search-summary">
             <div className="bb-search-summary__inner">
               <div className="bb-search-summary__route">
@@ -120,9 +210,6 @@ const SearchResultsMain = () => {
               <div className="bb-loading-skeleton bb-skeleton-card" />
               <div className="bb-loading-skeleton bb-skeleton-card" />
               <div className="bb-loading-skeleton bb-skeleton-card" />
-              <p style={{ textAlign: 'center', color: '#6b7280', marginTop: 20, fontSize: 14 }}>
-                Uçuşlar aranıyor...
-              </p>
             </div>
           </div>
         </main>
@@ -203,7 +290,7 @@ const SearchResultsMain = () => {
     <>
       <HeaderOne />
       <main className="bb-search-results" style={{ position: 'relative' }}>
-        {allocateLoading && (
+        {(allocateLoading || rtAllocating) && (
           <div className="bb-spinner-overlay">
             <div className="bb-spinner-wrapper">
               <div className="bb-spinner bb-spinner--large"></div>
@@ -327,13 +414,96 @@ const SearchResultsMain = () => {
                   Filtreleri Temizle
                 </button>
               </div>
+            ) : isRoundTrip ? (
+              /* ═══ Gidiş-Dönüş Modu ═══ */
+              <div className="bb-search-results__list">
+                {/* ── Gidiş bölümü ── */}
+                <div className="bb-direction-header">
+                  <div className="bb-direction-header__icon">
+                    <i className="fa-solid fa-plane-departure" />
+                  </div>
+                  <div className="bb-direction-header__info">
+                    <h3 className="bb-direction-header__title">Gidiş Uçuşu</h3>
+                    <span className="bb-direction-header__route">
+                      {searchParams?.origin} → {searchParams?.destination}
+                      <span className="bb-direction-header__date">{searchParams?.departureDate}</span>
+                    </span>
+                  </div>
+                  <span className="bb-direction-header__count">{outboundFlights.length} uçuş</span>
+                </div>
+
+                {/* Seçili gidiş özeti */}
+                {selectedOutbound ? (
+                  <div className="bb-selected-summary">
+                    <div className="bb-selected-summary__badge">
+                      <i className="fa-solid fa-check-circle" /> Gidiş Seçildi
+                    </div>
+                    <div className="bb-selected-summary__info">
+                      <span className="bb-selected-summary__airline">{selectedOutbound.flight.airlineName}</span>
+                      <span className="bb-selected-summary__flight">{selectedOutbound.flight.flightNumber}</span>
+                      <span className="bb-selected-summary__time">
+                        {selectedOutbound.flight.departureTime} → {selectedOutbound.flight.arrivalTime}
+                      </span>
+                      <span className="bb-selected-summary__price">
+                        {selectedOutbound.flight.totalFare?.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} {selectedOutbound.flight.currency ?? 'TRY'}
+                      </span>
+                    </div>
+                    <button className="bb-selected-summary__change" onClick={handleClearOutbound}>
+                      Değiştir
+                    </button>
+                  </div>
+                ) : (
+                  /* Gidiş uçuşları listesi */
+                  outboundFlights.map((flight) => (
+                    <FlightCard
+                      key={flight.productId}
+                      flight={flight}
+                      onSelect={() => handleSelectOutbound(flight)}
+                    />
+                  ))
+                )}
+
+                {/* ── Dönüş bölümü (gidiş seçildikten sonra) ── */}
+                {selectedOutbound && (
+                  <>
+                    <div className="bb-direction-header bb-direction-header--return">
+                      <div className="bb-direction-header__icon">
+                        <i className="fa-solid fa-plane-arrival" />
+                      </div>
+                      <div className="bb-direction-header__info">
+                        <h3 className="bb-direction-header__title">Dönüş Uçuşu</h3>
+                        <span className="bb-direction-header__route">
+                          {searchParams?.destination} → {searchParams?.origin}
+                          <span className="bb-direction-header__date">{searchParams?.returnDate}</span>
+                        </span>
+                      </div>
+                      <span className="bb-direction-header__count">{returnFlights.length} uçuş</span>
+                    </div>
+
+                    {returnFlights.length === 0 ? (
+                      <div className="bb-empty-state" style={{ marginTop: 12 }}>
+                        <p className="bb-empty-state__text">Bu güzergâh için dönüş uçuşu bulunamadı.</p>
+                      </div>
+                    ) : (
+                      returnFlights.map((flight) => (
+                        <FlightCard
+                          key={flight.productId}
+                          flight={flight}
+                          onSelect={() => handleSelectReturn(flight)}
+                        />
+                      ))
+                    )}
+                  </>
+                )}
+              </div>
             ) : (
+              /* ═══ Tek Yön Modu ═══ */
               <div className="bb-search-results__list">
                 {displayedFlights.map((flight) => (
                   <FlightCard
                     key={flight.productId}
                     flight={flight}
-                    onSelect={(brandedFareItemId) => handleSelectFlight(flight, brandedFareItemId)}
+                    onSelect={() => handleSelectFlight(flight)}
                   />
                 ))}
               </div>
