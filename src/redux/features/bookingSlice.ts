@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { updatePassengers, makePreBooking } from '../../api/flight';
+import { searchFlightsThunk } from './flightSlice';
 import type {
   PassengerItem, ContactInfo,
   UpdatePassengersClientRequest, UpdatePassengersResponse,
@@ -152,6 +153,9 @@ const bookingSlice = createSlice({
       state.preBookingLoading = false;
       state.preBookingError = action.payload as string;
     });
+
+    // Auto-reset when a new search starts — prevents stale booking data leaking into new searches
+    builder.addCase(searchFlightsThunk.pending, () => initialState);
   },
 });
 

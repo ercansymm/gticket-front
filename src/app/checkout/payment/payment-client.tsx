@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import HeaderOne from '@/layouts/headers/HeaderOne';
 import FooterOne from '@/layouts/footers/FooterOne';
 import CountdownTimer from '@/components/booking/CountdownTimer';
-import { makePaymentThunk, finalizeShoppingThunk } from '@/redux/features/paymentSlice';
+import { makePaymentThunk, finalizeShoppingThunk, clearFinalizeError } from '@/redux/features/paymentSlice';
 import { setStep } from '@/redux/features/bookingSlice';
 import type { RootState, AppDispatch } from '@/redux/store';
 import { useSessionTimeout } from '@/hooks/UseSessionTimeout';
@@ -48,6 +48,8 @@ export default function PaymentClient() {
   const [threeDSError, setThreeDSError] = useState<string | null>(null);
   const hasFinalized = useRef(false);
   const finalizeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const finalizeResultRef = useRef(finalizeResult);
+  finalizeResultRef.current = finalizeResult;
   const { showWarning: sessionWarning, dismissWarning: dismissSessionWarning } = useSessionTimeout();
 
   // Guard: no prebooking → back
@@ -105,11 +107,15 @@ export default function PaymentClient() {
     paymentResult.isPaymentSuccessful === true && !paymentResult.is3DSecureRequired;
 
   useEffect(() => {
-    if (isPaymentSuccessful && searchId && !hasFinalized.current) {
+    if (isPaymentSuccessful && searchId && !hasFinalized.current && !finalizeResult && !finalizeError) {
       hasFinalized.current = true;
+      // Clear any previous timeout before creating a new one
+      if (finalizeTimeoutRef.current) {
+        clearTimeout(finalizeTimeoutRef.current);
+      }
       // Start a hard timeout — if no result in 60s, show error
       finalizeTimeoutRef.current = setTimeout(() => {
-        if (!finalizeResult) {
+        if (!finalizeResultRef.current) {
           dispatch({ type: 'payment/finalizeTimeout' });
         }
       }, 60_000);
@@ -119,7 +125,7 @@ export default function PaymentClient() {
       }, 1500);
       return () => clearTimeout(timer);
     }
-  }, [isPaymentSuccessful, searchId, dispatch]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isPaymentSuccessful, searchId, dispatch, finalizeResult, finalizeError]);
 
   // Cleanup finalize timeout on unmount
   useEffect(() => {
@@ -128,8 +134,9 @@ export default function PaymentClient() {
     };
   }, []);
 
-  // After finalize → success page (no retry — duplicate calls cause 429)
+  // After finalize → success page (only if finalize was triggered from this payment session)
   useEffect(() => {
+    if (!hasFinalized.current) return; // Only redirect if we initiated finalization
     const successStatuses = ['Booking', 'Ticketed', 'Reservation'];
     const isFinalized = finalizeResult && finalizeResult.hasError === false &&
       (finalizeResult.isFinalized === true || successStatuses.includes(finalizeResult.status ?? ''));
@@ -142,6 +149,21 @@ export default function PaymentClient() {
       router.push('/checkout/success');
     }
   }, [finalizeResult, dispatch, router]);
+
+  // Handle "Duplicate call" as potential success — booking may already be finalized
+  useEffect(() => {
+    if (finalizeError && /duplicate|zaten biletlen/i.test(finalizeError) && searchId) {
+      if (finalizeTimeoutRef.current) {
+        clearTimeout(finalizeTimeoutRef.current);
+        finalizeTimeoutRef.current = null;
+      }
+      // Booking likely already finalized — navigate to status check
+      const timer = setTimeout(() => {
+        router.push('/bilet-sorgula');
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [finalizeError, searchId, router]);
 
   const validateCard = useCallback((): boolean => {
     const errs: Record<string, string> = {};
@@ -563,7 +585,10 @@ export default function PaymentClient() {
             )}
             {finalizeError && (
               <div className="bb-checkout__price-warning" style={{ marginBottom: 16 }}>
-                <i className="fa-solid fa-circle-exclamation" style={{ marginRight: 8 }} />{finalizeError}
+                <i className="fa-solid fa-circle-exclamation" style={{ marginRight: 8 }} />
+                {/duplicate|zaten biletlen/i.test(finalizeError)
+                  ? 'Biletleme işlemi zaten tamamlanmış görünüyor. Bilet sorgulama sayfasına yönlendiriliyorsunuz...'
+                  : finalizeError}
                 <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
                   <button
                     type="button"
@@ -572,6 +597,22 @@ export default function PaymentClient() {
                   >
                     Bilet Sorgula
                   </button>
+                  {!/duplicate|zaten biletlen/i.test(finalizeError) && (
+                    <button
+                      type="button"
+                      className="bb-checkout__btn bb-checkout__btn--back text-sm px-4 py-1.5"
+                      onClick={() => {
+                        if (finalizeTimeoutRef.current) {
+                          clearTimeout(finalizeTimeoutRef.current);
+                          finalizeTimeoutRef.current = null;
+                        }
+                        dispatch(clearFinalizeError());
+                        hasFinalized.current = false;
+                      }}
+                    >
+                      Tekrar Dene
+                    </button>
+                  )}
                 </div>
               </div>
             )}

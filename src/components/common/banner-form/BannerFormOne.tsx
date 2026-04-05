@@ -5,7 +5,9 @@ import Calendar, { formatDate } from "../calendar/Calendar";
 import { useTranslation } from "../../../context/LanguageContext";
 import { airports as staticAirports } from "../../../data/AirportData";
 import { getAllAirports, searchAirports, type AirportDto } from "../../../api/lookup";
-import { searchFlightsThunk, setSearchParams } from "../../../redux/features/flightSlice";
+import { searchFlightsThunk, setSearchParams, clearSearch } from "../../../redux/features/flightSlice";
+import { resetBooking } from "../../../redux/features/bookingSlice";
+import { resetPayment } from "../../../redux/features/paymentSlice";
 import type { FlightSearchRequest, Airport } from "@/types";
 import type { AppDispatch, RootState } from "../../../redux/store";
 
@@ -389,6 +391,12 @@ const BannerFormOne = () => {
          preferredAirlines: airlines.length > 0 ? airlines : null,
          searchReason: 'SearchAndBook',
       };
+
+      // Clear all previous booking state before starting a new search
+      dispatch(resetPayment());
+      dispatch(resetBooking());
+      dispatch(clearSearch());
+      sessionStorage.removeItem('payment_3ds_session');
 
       // Redux'a kaydet ve API çağrısı yap
       dispatch(setSearchParams(searchRequest));

@@ -12,6 +12,7 @@ import {
   cancelBooking,
   getBookingStatus,
 } from '../../api/flight';
+import { searchFlightsThunk } from './flightSlice';
 import type {
   MakePaymentClientRequest, MakePaymentResponse,
   FinalizeShoppingClientRequest, FinalizeShoppingResponse,
@@ -140,9 +141,10 @@ export const finalizeShoppingThunk = createAsyncThunk(
   {
     condition: (_, { getState }) => {
       const { payment } = getState() as { payment: PaymentState };
-      // Prevent duplicate dispatch while already loading or already finalized
+      // Prevent duplicate dispatch while already loading, already finalized, or already errored
       if (payment.finalizeLoading) return false;
       if (payment.finalizeResult && !payment.finalizeResult.hasError) return false;
+      if (payment.finalizeError) return false;
       return true;
     },
   },
@@ -307,17 +309,6 @@ const paymentSlice = createSlice({
       state.finalizeError = action.payload as string;
     });
 
-    // Finalize timeout (dispatched manually after 60s)
-    builder.addMatcher(
-      (action) => action.type === 'payment/finalizeTimeout',
-      (state) => {
-        if (state.finalizeLoading) {
-          state.finalizeLoading = false;
-          state.finalizeError = 'Biletleme zaman aşımına uğradı. Lütfen bilet sorgulama sayfasından durumunuzu kontrol edin.';
-        }
-      },
-    );
-
     // Poke Shopping File
     builder.addCase(pokeShoppingFileThunk.pending, (state) => {
       state.pokeLoading = true;
@@ -408,6 +399,20 @@ const paymentSlice = createSlice({
     builder.addCase(getBookingStatusThunk.rejected, (state) => {
       state.bookingStatusLoading = false;
     });
+
+    // Auto-reset when a new search starts — prevents stale payment/finalize data leaking into new searches
+    builder.addCase(searchFlightsThunk.pending, () => initialState);
+
+    // Finalize timeout (dispatched manually after 60s) — must be after all addCase calls
+    builder.addMatcher(
+      (action) => action.type === 'payment/finalizeTimeout',
+      (state) => {
+        if (state.finalizeLoading) {
+          state.finalizeLoading = false;
+          state.finalizeError = 'Biletleme zaman aşımına uğradı. Lütfen bilet sorgulama sayfasından durumunuzu kontrol edin.';
+        }
+      },
+    );
   },
 });
 
