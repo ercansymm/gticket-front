@@ -1,7 +1,7 @@
 // ========== UÇUŞ ARAMA (AirSearch) ==========
 
 export type TripType = 'OW' | 'RT' | 'MP';
-export type CabinClass = 'Economy' | 'Business' | 'First' | 'Comfort';
+export type CabinClass = 'Economy' | 'PremiumEconomy' | 'Business' | 'First';
 
 export interface FlightSearchRequest {
   origin: string;
@@ -31,6 +31,8 @@ export interface FlightSearchResponse {
   searchId: string | null;
   flights: FlightResult[];
   filterOptions: FilterOptions | null;
+  /** DEV only — geçici, canlıda kaldırılacak */
+  __devSessionId?: string | null;
 }
 
 // Server-side'da kullanılan ham backend response — istemciye GİTMEZ
@@ -82,6 +84,7 @@ export interface FlightResult {
   baggageInfo: BaggageInfo | null;
   cabinClass: string | null;
   cabinClassName: string | null;
+  defaultBrandedFareItemId: string | null;
   // NOT: customerCommission* alanları güvenlik gereği backend tarafından filtrelenir, frontend tipinde tutulmaz
 }
 
@@ -93,9 +96,23 @@ export interface FarePackage {
   totalTaxes: number;
   currency: string | null;
   totalFareFormatted: string | null;
+  priceDifference: number;
+  priceDifferenceFormatted: string | null;
   cabinClass: string | null;
   bookingClass: string | null;
+  isDefault: boolean;
   rules: FarePackageRule[];
+  passengerFares: FarePackagePassengerFare[];
+}
+
+export interface FarePackagePassengerFare {
+  passengerType: string | null;
+  passengerCount: number;
+  baseFare: number;
+  taxes: number;
+  totalFare: number;
+  currency: string | null;
+  totalFareFormatted: string | null;
 }
 
 export interface FarePackageRule {
@@ -291,6 +308,7 @@ export interface FlightSessionData {
 export interface AllocateClientRequest {
   searchId: string;
   productId: string;
+  brandedFareItemId?: string | null;
 }
 
 // Server-side'da backend'e gönderilen tam request
@@ -509,6 +527,8 @@ export interface MakePaymentResponse {
   threeDSecureUrl: string | null;
   threeDSecureHtml: string | null;
   transactionId: string | null;
+  paymentReferenceId: string | null;
+  shoppingFileId: string | null;
   paymentAmount: number;
   currency: string | null;
   status: string | null;

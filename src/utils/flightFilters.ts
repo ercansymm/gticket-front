@@ -43,6 +43,14 @@ export function filterFlights(flights: FlightResult[], filters: FlightFilters): 
     );
   }
 
+  if (filters.farePackages.length > 0) {
+    result = result.filter(f =>
+      f.farePackages?.some(p =>
+        p.brandName != null && filters.farePackages.includes(p.brandName)
+      )
+    );
+  }
+
   if (filters.departureTimeFrom && filters.departureTimeTo) {
     result = result.filter(f =>
       f.departureTime != null &&

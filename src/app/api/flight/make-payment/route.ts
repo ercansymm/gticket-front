@@ -92,6 +92,10 @@ export async function POST(request: NextRequest) {
       if (installmentOptionId) {
         backendBody.installmentOptionId = installmentOptionId;
       }
+
+      // 3D Secure callback URL — backend banka dönüşünü buraya yönlendirir
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+      backendBody.continueUrl = `${siteUrl}/payment/result`;
     }
     // Non-card payments: creditCard alanı gönderilmez
 
@@ -143,7 +147,13 @@ export async function POST(request: NextRequest) {
     }
 
     // filterSensitiveFields zaten creditCard, cardNumber, cvv, sessionId, sessionToken siler
-    return NextResponse.json(filterSensitiveFields(data), { status: res.status });
+    // 3DS akışı için paymentReferenceId ve shoppingFileId korunmalı
+    const filtered = filterSensitiveFields(data) as Record<string, unknown>;
+    // Ensure these fields pass through even if filterSensitiveFields strips them
+    if (data.paymentReferenceId) filtered.paymentReferenceId = data.paymentReferenceId;
+    if (data.shoppingFileId) filtered.shoppingFileId = data.shoppingFileId;
+
+    return NextResponse.json(filtered, { status: res.status });
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {
       logger.error('Backend timeout', error, 'api/flight/make-payment');

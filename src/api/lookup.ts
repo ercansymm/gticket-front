@@ -82,8 +82,9 @@ export const searchAirports = async (query: string, lang: 'tr' | 'en' = 'tr'): P
   if (!query || query.length < 2) return [];
 
   try {
-    const response = await apiClient.get<{ value: AirportRaw[] } | AirportRaw[]>(`/lookup/airports?q=${encodeURIComponent(query)}`);
-    const raw = Array.isArray(response.data) ? response.data : response.data.value;
+    const response = await apiClient.get<{ success: boolean; data: AirportRaw[] } | { value: AirportRaw[] } | AirportRaw[]>(`/lookup/airports?q=${encodeURIComponent(query)}`);
+    const d = response.data as any;
+    const raw: AirportRaw[] = Array.isArray(d) ? d : (d.data ?? d.value ?? []);
     return raw.map(a => mapAirport(a, lang));
   } catch {
     // Search endpoint 404 fallback: tüm havalimanlarını çekip frontend'de filtrele
@@ -106,8 +107,9 @@ export const searchAirports = async (query: string, lang: 'tr' | 'en' = 'tr'): P
  * GET /api/airport/domestic
  */
 export const getDomesticAirports = async (lang: 'tr' | 'en' = 'tr'): Promise<AirportDto[]> => {
-  const response = await apiClient.get<{ value: AirportRaw[] } | AirportRaw[]>('/lookup/airports?domestic=true');
-  const raw = Array.isArray(response.data) ? response.data : response.data.value;
+  const response = await apiClient.get<{ success: boolean; data: AirportRaw[] } | { value: AirportRaw[] } | AirportRaw[]>('/lookup/airports?domestic=true');
+  const d = response.data as any;
+  const raw: AirportRaw[] = Array.isArray(d) ? d : (d.data ?? d.value ?? []);
   return raw.map(a => mapAirport(a, lang));
 };
 
@@ -116,8 +118,9 @@ export const getDomesticAirports = async (lang: 'tr' | 'en' = 'tr'): Promise<Air
  * GET /api/airport
  */
 export const getAllAirports = async (lang: 'tr' | 'en' = 'tr'): Promise<AirportDto[]> => {
-  const response = await apiClient.get<{ value: AirportRaw[] } | AirportRaw[]>('/lookup/airports');
-  const raw = Array.isArray(response.data) ? response.data : response.data.value;
+  const response = await apiClient.get<{ success: boolean; data: AirportRaw[] } | { value: AirportRaw[] } | AirportRaw[]>('/lookup/airports');
+  const d = response.data as any;
+  const raw: AirportRaw[] = Array.isArray(d) ? d : (d.data ?? d.value ?? []);
   return raw.map(a => mapAirport(a, lang));
 };
 

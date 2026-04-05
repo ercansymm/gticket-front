@@ -164,9 +164,18 @@ export default function PassengerForm({ passengers, onSubmit, loading, disabled 
   /* ── validation ── */
   const validatePassenger = useCallback((form: PassengerFormData, paxType: 'ADT' | 'CHD' | 'INF'): FormErrors => {
     const e: FormErrors = {};
+    const nameRegex = /^[A-ZÇĞİÖŞÜa-zçğıöşü\s'-]+$/;
     if (!form.gender) e.gender = 'Cinsiyet seçiniz';
-    if (!form.firstName.trim() || form.firstName.trim().length < 2) e.firstName = 'Ad gereklidir (en az 2 harf)';
-    if (!form.lastName.trim() || form.lastName.trim().length < 2) e.lastName = 'Soyad gereklidir (en az 2 harf)';
+    if (!form.firstName.trim() || form.firstName.trim().length < 2) {
+      e.firstName = 'Ad gereklidir (en az 2 harf)';
+    } else if (!nameRegex.test(form.firstName.trim())) {
+      e.firstName = 'Ad yalnızca harf, boşluk ve tire içerebilir';
+    }
+    if (!form.lastName.trim() || form.lastName.trim().length < 2) {
+      e.lastName = 'Soyad gereklidir (en az 2 harf)';
+    } else if (!nameRegex.test(form.lastName.trim())) {
+      e.lastName = 'Soyad yalnızca harf, boşluk ve tire içerebilir';
+    }
     if (!form.birthDate) {
       e.birthDate = 'Doğum tarihi gereklidir';
     } else {
@@ -250,7 +259,7 @@ export default function PassengerForm({ passengers, onSubmit, loading, disabled 
         paxReferenceId: pax.paxReferenceId ?? null,
       };
       if (form.isTurkishCitizen) {
-        item.citizenNo = form.citizenNo;
+        item.citizenNo = form.citizenNo || null;
       } else {
         item.passportNo = form.passportNo.toUpperCase();
         item.passportCountry = form.passportCountry.toUpperCase();
@@ -260,7 +269,7 @@ export default function PassengerForm({ passengers, onSubmit, loading, disabled 
 
     const contactInfo: ContactInfo = {
       email: contact.email.trim().toLowerCase(),
-      phone: (contact.phoneCode + '-' + contact.phone.replace(/^\+?\d{1,3}[-\s]?/, '').replace(/[\s()-]/g, '')).trim(),
+      phone: (contact.phoneCode + contact.phone.replace(/^0+/, '').replace(/[\s()-]/g, '')).trim(),
     };
 
     onSubmit(passengerItems, contactInfo);

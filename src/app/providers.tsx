@@ -8,6 +8,7 @@ import { hydrateCart } from "@/redux/features/cartSlice";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { ToastContainer } from "react-toastify";
 import ScrollToTop from "@/components/common/ScrollToTop";
+import SessionIdBadge from "@/components/dev/SessionIdBadge";
 
 function HydrateCart() {
   useEffect(() => {
@@ -18,12 +19,17 @@ function HydrateCart() {
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <SessionProvider>
+    <SessionProvider
+      refetchOnWindowFocus={false}
+      refetchWhenOffline={false}
+      refetchInterval={5 * 60}
+    >
       <Provider store={store}>
         <LanguageProvider>
           <HydrateCart />
           {children}
           <ScrollToTop />
+          <SessionIdBadge />
           <ToastContainer position="top-center" />
         </LanguageProvider>
       </Provider>

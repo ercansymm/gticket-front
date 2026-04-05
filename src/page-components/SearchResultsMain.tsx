@@ -6,7 +6,7 @@ import FooterOne from '../layouts/footers/FooterOne';
 import FlightCard from '../components/booking/FlightCard';
 import FilterSidebar from '../components/booking/FilterSidebar';
 import SortBar from '../components/booking/SortBar';
-import { searchFlightsThunk, setSelectedFlight, allocateFlightThunk, clearAllocate } from '../redux/features/flightSlice';
+import { searchFlightsThunk, setSelectedFlight, setSelectedBrandedFareItemId, allocateFlightThunk, clearAllocate } from '../redux/features/flightSlice';
 import { filterFlights, sortFlights, INITIAL_FILTERS } from '../utils/flightFilters';
 import type { RootState, AppDispatch } from '../redux/store';
 import type { FlightResult, FlightFilters, FlightSortBy, AllocateResponse } from '@/types';
@@ -35,8 +35,8 @@ const SearchResultsMain = () => {
   const [priceChangedData, setPriceChangedData] = useState<AllocateResponse | null>(null);
 
   // Gidiş-dönüş seçimleri
-  const [selectedOutbound, setSelectedOutbound] = useState<{ flight: FlightResult } | null>(null);
-  const [selectedReturn, setSelectedReturn] = useState<{ flight: FlightResult } | null>(null);
+  const [selectedOutbound, setSelectedOutbound] = useState<{ flight: FlightResult; brandedFareItemId: string | null } | null>(null);
+  const [selectedReturn, setSelectedReturn] = useState<{ flight: FlightResult; brandedFareItemId: string | null } | null>(null);
   const [rtAllocating, setRtAllocating] = useState(false);
 
   const isRoundTrip = searchParams?.flightType === 'RT';
@@ -73,12 +73,14 @@ const SearchResultsMain = () => {
   }, [displayedFlights, isRoundTrip, searchParams]);
 
   // Tek yön uçuş seçimi (allocate + yönlendir)
-  const handleSelectFlight = (flight: FlightResult) => {
+  const handleSelectFlight = (flight: FlightResult, brandedFareItemId?: string | null) => {
     if (allocateLoading || !searchResults) return;
     dispatch(setSelectedFlight(flight));
+    dispatch(setSelectedBrandedFareItemId(brandedFareItemId ?? null));
     dispatch(allocateFlightThunk({
       searchId: searchResults.searchId!,
       productId: flight.productId!,
+      brandedFareItemId: brandedFareItemId ?? undefined,
     })).unwrap()
       .then((result: AllocateResponse) => {
         if (result.isPriceChanged) {
@@ -91,14 +93,14 @@ const SearchResultsMain = () => {
   };
 
   // Gidiş-Dönüş: gidiş seçimi
-  const handleSelectOutbound = (flight: FlightResult) => {
-    setSelectedOutbound({ flight });
+  const handleSelectOutbound = (flight: FlightResult, brandedFareItemId?: string | null) => {
+    setSelectedOutbound({ flight, brandedFareItemId: brandedFareItemId ?? null });
     setSelectedReturn(null);
   };
 
   // Gidiş-Dönüş: dönüş seçimi → her ikisini de allocate et
-  const handleSelectReturn = async (flight: FlightResult) => {
-    const returnSelection = { flight };
+  const handleSelectReturn = async (flight: FlightResult, brandedFareItemId?: string | null) => {
+    const returnSelection = { flight, brandedFareItemId: brandedFareItemId ?? null };
     setSelectedReturn(returnSelection);
 
     if (!selectedOutbound || !searchResults) return;
@@ -111,12 +113,14 @@ const SearchResultsMain = () => {
       await dispatch(allocateFlightThunk({
         searchId: searchResults.searchId!,
         productId: selectedOutbound.flight.productId!,
+        brandedFareItemId: selectedOutbound.brandedFareItemId ?? undefined,
       })).unwrap();
 
       // 2. Dönüş uçuşunu tahsis et (aynı oturumda)
       const retResult = await dispatch(allocateFlightThunk({
         searchId: searchResults.searchId!,
         productId: returnSelection.flight.productId!,
+        brandedFareItemId: returnSelection.brandedFareItemId ?? undefined,
       })).unwrap();
 
       if (retResult.isPriceChanged) {
@@ -458,7 +462,7 @@ const SearchResultsMain = () => {
                     <FlightCard
                       key={flight.productId}
                       flight={flight}
-                      onSelect={() => handleSelectOutbound(flight)}
+                      onSelect={(fareItemId) => handleSelectOutbound(flight, fareItemId)}
                     />
                   ))
                 )}
@@ -489,7 +493,7 @@ const SearchResultsMain = () => {
                         <FlightCard
                           key={flight.productId}
                           flight={flight}
-                          onSelect={() => handleSelectReturn(flight)}
+                          onSelect={(fareItemId) => handleSelectReturn(flight, fareItemId)}
                         />
                       ))
                     )}
@@ -503,7 +507,8 @@ const SearchResultsMain = () => {
                   <FlightCard
                     key={flight.productId}
                     flight={flight}
-                    onSelect={() => handleSelectFlight(flight)}
+                    onSelect={(fareItemId) => handleSelectFlight(flight, fareItemId)}
+                    allocateLoading={allocateLoading && selectedFlight?.productId === flight.productId}
                   />
                 ))}
               </div>

@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import Calendar, { formatDate } from "../calendar/Calendar";
 import { useTranslation } from "../../../context/LanguageContext";
 import { airports as staticAirports } from "../../../data/AirportData";
-import { getAllAirports, type AirportDto } from "../../../api/lookup";
+import { getAllAirports, searchAirports, type AirportDto } from "../../../api/lookup";
 import { searchFlightsThunk, setSearchParams } from "../../../redux/features/flightSlice";
 import type { FlightSearchRequest, Airport } from "@/types";
 import type { AppDispatch, RootState } from "../../../redux/store";
@@ -145,6 +145,8 @@ const BannerFormOne = () => {
          if (n > 0 && n <= 9) setPassengers(prev => ({ ...prev, adult: n }));
       }
       if (urlClass === "business") setFlightClass("business");
+      if (urlClass === "premiumeconomy") setFlightClass("premiumeconomy");
+      if (urlClass === "first") setFlightClass("first");
       if (urlType === "roundtrip" || urlType === "oneway") setTripType(urlType);
    }, [searchParams]);
 
@@ -159,6 +161,14 @@ const BannerFormOne = () => {
       };
       document.addEventListener("mousedown", handler);
       return () => document.removeEventListener("mousedown", handler);
+   }, []);
+
+   /** Seçilen havalimanını allAirports'a ekle (yoksa) — getAirportLabel'ın bulabilmesi için */
+   const addToAirportsList = useCallback((airport: AirportDto) => {
+      setAllAirports(prev => {
+         if (prev.some(a => a.iataCode === airport.iataCode)) return prev;
+         return [...prev, airport];
+      });
    }, []);
 
    const getAirportLabel = (code: string) => {
@@ -180,7 +190,7 @@ const BannerFormOne = () => {
          .toLowerCase();
    }, []);
 
-   /** Havalimanlarını state'teki listeden filtrele — API'ye gitmez */
+   /** Havalimanlarını state'teki listeden filtrele — anlık sonuç */
    const filterAirports = useCallback((search: string, exclude?: string): AirportDto[] => {
       if (!search || search.length < 2) return [];
       const q = turkishLower(search);
@@ -193,6 +203,26 @@ const BannerFormOne = () => {
          )
          .slice(0, 8);
    }, [allAirports, turkishLower]);
+
+   /** API'den async havalimanı araması — yerel sonuç yetersizse tetiklenir */
+   const apiSearchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+   const searchAirportsAsync = useCallback((search: string, exclude: string | undefined, setter: React.Dispatch<React.SetStateAction<AirportDto[]>>) => {
+      if (apiSearchTimerRef.current) clearTimeout(apiSearchTimerRef.current);
+      if (!search || search.length < 2) return;
+      apiSearchTimerRef.current = setTimeout(async () => {
+         try {
+            const results = await searchAirports(search, lang);
+            const merged = results.filter(a => a.iataCode !== exclude);
+            if (merged.length > 0) {
+               setter(prev => {
+                  const existingCodes = new Set(prev.map(p => p.iataCode));
+                  const newOnes = merged.filter(m => !existingCodes.has(m.iataCode));
+                  return newOnes.length > 0 ? [...prev, ...newOnes].slice(0, 12) : prev;
+               });
+            }
+         } catch { /* sessizce geç */ }
+      }, 300);
+   }, [lang]);
 
    /** Aynı şehir kontrolü — state'teki city bilgisini kullanır */
    const isSameCity = useCallback((city1: string, city2: string): boolean => {
@@ -223,7 +253,13 @@ const BannerFormOne = () => {
       if (passengers.adult > 0) parts.push(`${passengers.adult} ${t.adult}`);
       if (passengers.child > 0) parts.push(`${passengers.child} ${t.child}`);
       if (passengers.infant > 0) parts.push(`${passengers.infant} ${t.infant}`);
-      parts.push(flightClass === "economy" ? t.economy : t.business);
+      const classLabel: Record<string, string> = {
+         economy: t.economy,
+         premiumeconomy: t.premiumEconomy,
+         business: t.business,
+         first: t.first,
+      };
+      parts.push(classLabel[flightClass] ?? t.economy);
       return parts.join(", ");
    }, [passengers, flightClass, t]);
 
@@ -343,7 +379,7 @@ const BannerFormOne = () => {
          departureDate: formatDateForApi(departDate!),
          returnDate: tripType === 'roundtrip' && returnDate ? formatDateForApi(returnDate) : null,
          flightType: tripType === 'oneway' ? 'OW' : 'RT',
-         flightClass: flightClass === 'economy' ? 'Economy' : 'Business',
+         flightClass: ({ economy: 'Economy', premiumeconomy: 'PremiumEconomy', business: 'Business', first: 'First' } as Record<string, string>)[flightClass] ?? 'Economy',
          adultCount: passengers.adult,
          childCount: passengers.child,
          infantCount: passengers.infant,
@@ -370,8 +406,11 @@ const BannerFormOne = () => {
    ) => (
       <ul className="bb-flight-form__dropdown" role="listbox">
          {list.map((a, i) => (
-            <li key={a.iataCode} role="option" aria-selected={i === highlightedIndex} className={i === highlightedIndex ? 'bb-dropdown-highlighted' : ''} onClick={() => onSelect(a)}>
-               <strong>{a.city}</strong> <span className="bb-airport-code">{a.iataCode}</span>
+            <li key={a.iataCode} role="option" aria-selected={i === highlightedIndex} className={i === highlightedIndex ? 'bb-dropdown-highlighted' : ''} onClick={() => { addToAirportsList(a); onSelect(a); }}>
+               <div className="bb-dropdown-top">
+                  <strong>{a.city}</strong>
+                  <span className="bb-airport-code">{a.iataCode}</span>
+               </div>
                <small>{a.name}</small>
             </li>
          ))}
@@ -397,6 +436,7 @@ const BannerFormOne = () => {
          setHighlight(highlightedIndex > 0 ? highlightedIndex - 1 : suggestions.length - 1);
       } else if (e.key === 'Enter' && highlightedIndex >= 0) {
          e.preventDefault();
+         addToAirportsList(suggestions[highlightedIndex]);
          onSelect(suggestions[highlightedIndex]);
          setHighlight(-1);
       } else if (e.key === 'Escape') {
@@ -615,7 +655,9 @@ const BannerFormOne = () => {
                </div>
                <select className="bb-pax-class-select" value={flightClass} onChange={e => setFlightClass(e.target.value)}>
                   <option value="economy">{t.economy}</option>
+                  <option value="premiumeconomy">{t.premiumEconomy}</option>
                   <option value="business">{t.business}</option>
+                  <option value="first">{t.first}</option>
                </select>
             </div>
             <button type="button" className="bb-pax-apply" onClick={() => setPassengerOpen(false)}>{t.apply}</button>
@@ -640,7 +682,13 @@ const BannerFormOne = () => {
                   className={`bb-flight-form__input ${errors.from ? "bb-flight-form__input--error" : ""}`}
                   placeholder={t.cityOrAirport}
                   value={fromOpen ? fromSearch : getAirportLabel(from)}
-                  onChange={(e) => { setFromSearch(e.target.value); setFromOpen(true); setFromHighlight(-1); setFromSuggestions(filterAirports(e.target.value, to)); }}
+                  onChange={(e) => {
+                     const val = e.target.value;
+                     setFromSearch(val); setFromOpen(true); setFromHighlight(-1);
+                     const local = filterAirports(val, to);
+                     setFromSuggestions(local);
+                     searchAirportsAsync(val, to, setFromSuggestions);
+                  }}
                   onFocus={() => {
                      setFromOpen(true); setFromSearch(""); setFromHighlight(-1);
                      setFromSuggestions(allAirports.slice(0, 8));
@@ -683,7 +731,13 @@ const BannerFormOne = () => {
                   className={`bb-flight-form__input ${errors.to ? "bb-flight-form__input--error" : ""}`}
                   placeholder={t.cityOrAirport}
                   value={toOpen ? toSearch : getAirportLabel(to)}
-                  onChange={(e) => { setToSearch(e.target.value); setToOpen(true); setToHighlight(-1); setToSuggestions(filterAirports(e.target.value, from)); }}
+                  onChange={(e) => {
+                     const val = e.target.value;
+                     setToSearch(val); setToOpen(true); setToHighlight(-1);
+                     const local = filterAirports(val, from);
+                     setToSuggestions(local);
+                     searchAirportsAsync(val, from, setToSuggestions);
+                  }}
                   onFocus={() => {
                      setToOpen(true); setToSearch(""); setToHighlight(-1);
                      setToSuggestions(allAirports.slice(0, 8));

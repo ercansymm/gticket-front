@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import Image from 'next/image';
-import type { FlightResult } from '@/types';
+import type { FlightResult, FarePackage } from '@/types';
+import FarePackageSelector from './FarePackageSelector';
 
 interface FlightCardProps {
   flight: FlightResult;
-  onSelect: () => void;
+  onSelect: (brandedFareItemId?: string | null) => void;
   isSelected?: boolean;
+  allocateLoading?: boolean;
 }
 
 function getBaggageDisplay(flight: FlightResult): string | null {
@@ -46,11 +48,35 @@ function getAirlineBrandStyle(code: string | null): { bg: string; color: string 
   return (code && AIRLINE_COLORS[code]) || FALLBACK_STYLE;
 }
 
-const FlightCard = ({ flight, onSelect, isSelected = false }: FlightCardProps) => {
+const FlightCard = ({ flight, onSelect, isSelected = false, allocateLoading = false }: FlightCardProps) => {
   const [logoError, setLogoError] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const baggageDisplay = getBaggageDisplay(flight);
   const logoPath = getAirlineLogoPath(flight.airlineCode);
   const brandStyle = getAirlineBrandStyle(flight.airlineCode);
+
+  const hasPackages = flight.farePackages && flight.farePackages.length > 1;
+
+  // Default selected package: isDefault=true or first package
+  const defaultPkg = hasPackages
+    ? (flight.farePackages.find(p => p.isDefault) ?? flight.farePackages[0])
+    : null;
+  const [selectedPkg, setSelectedPkg] = useState<FarePackage | null>(defaultPkg);
+
+  // Displayed price: selected package price or flight's totalFare
+  const displayPrice = (hasPackages && selectedPkg) ? selectedPkg.totalFare : flight.totalFare;
+  const displayPriceFormatted = (hasPackages && selectedPkg?.totalFareFormatted)
+    ? selectedPkg.totalFareFormatted
+    : displayPrice?.toLocaleString('tr-TR', { minimumFractionDigits: 0 });
+
+  const handlePackageSelect = (pkg: FarePackage) => {
+    setSelectedPkg(pkg);
+  };
+
+  const handleContinue = () => {
+    const fareItemId = (hasPackages && selectedPkg) ? selectedPkg.brandedFareItemId : null;
+    onSelect(fareItemId);
+  };
 
   return (
     <div className={`bb-flight-card ${isSelected ? 'bb-flight-card--selected' : ''}`}>
@@ -111,16 +137,28 @@ const FlightCard = ({ flight, onSelect, isSelected = false }: FlightCardProps) =
         {/* Fiyat + seç butonu */}
         <div className="bb-flight-card__price-section">
           <div className="bb-flight-card__price-amount">
-            {flight.totalFare?.toLocaleString('tr-TR', { minimumFractionDigits: 0 })}
+            {displayPriceFormatted}
             <span className="bb-flight-card__price-currency">{flight.currency ?? 'TRY'}</span>
           </div>
           <button
             className="bb-flight-card__select-btn"
-            onClick={() => onSelect()}
+            onClick={() => {
+              if (hasPackages) {
+                setExpanded(!expanded);
+              } else {
+                onSelect(null);
+              }
+            }}
           >
-            Seç ve İlerle
+            {hasPackages
+              ? (expanded ? 'Gizle' : 'Seç')
+              : 'Seç ve İlerle'}
             {' '}
-            <i className="fa-solid fa-chevron-right" style={{ fontSize: 12, marginLeft: 4 }} />
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 4 }}>
+              {hasPackages && expanded
+                ? <polyline points="18 15 12 9 6 15" />
+                : <polyline points="9 18 15 12 9 6" />}
+            </svg>
           </button>
         </div>
       </div>
@@ -129,7 +167,7 @@ const FlightCard = ({ flight, onSelect, isSelected = false }: FlightCardProps) =
       <div className="bb-flight-card__badges-row">
         {flight.isDirect ? (
           <span className="bb-flight-card__badge bb-flight-card__badge--direct">
-            <i className="fa-solid fa-arrow-right" /> Direkt
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg> Direkt
           </span>
         ) : (
           <span className="bb-flight-card__badge bb-flight-card__badge--stop">{flight.stopText}</span>
@@ -139,7 +177,7 @@ const FlightCard = ({ flight, onSelect, isSelected = false }: FlightCardProps) =
         </span>
         {baggageDisplay && (
           <span className="bb-flight-card__badge bb-flight-card__badge--baggage">
-            <i className="fa-solid fa-suitcase-rolling" style={{ fontSize: 12 }} /> {baggageDisplay}
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="6" y="4" width="12" height="16" rx="1" /><path d="M9 4V2" /><path d="M15 4V2" /><path d="M6 14h12" /></svg> {baggageDisplay}
           </span>
         )}
         {flight.cabinClassName && (
@@ -151,6 +189,17 @@ const FlightCard = ({ flight, onSelect, isSelected = false }: FlightCardProps) =
           </span>
         )}
       </div>
+
+      {/* Fare Packages */}
+      {hasPackages && expanded && (
+        <FarePackageSelector
+          packages={flight.farePackages}
+          selectedId={selectedPkg?.brandedFareItemId ?? null}
+          onSelect={handlePackageSelect}
+          onContinue={handleContinue}
+          loading={allocateLoading}
+        />
+      )}
 
     </div>
   );

@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     const validation = validateBody(flightAllocateClientSchema, parsed.data);
     if (!validation.success) return validation.response;
 
-    const { searchId, productId } = validation.data;
+    const { searchId, productId, brandedFareItemId } = validation.data;
 
     // 1. Server-side'da session bilgisini al
     const sessionRes = await fetch(`${API_BASE}/api/flight/session/${encodeURIComponent(searchId)}`, {
@@ -41,13 +41,16 @@ export async function POST(request: NextRequest) {
     }
 
     // 2. Backend'e tam request gönder (session server-side'da eklendi, serviceFee sabit 0)
-    const backendBody = {
+    const backendBody: Record<string, unknown> = {
       sessionId: sessionData.sessionId,
       sessionToken: sessionData.sessionToken,
       productId,
       selectedServiceFee: 0,
       searchRequest: null,
     };
+    if (brandedFareItemId) {
+      backendBody.brandedFareItemId = brandedFareItemId;
+    }
 
     const { signal, clear } = withTimeout(30_000);
     const res = await fetch(`${API_BASE}/api/flight/allocate`, {

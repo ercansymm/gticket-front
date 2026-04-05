@@ -27,6 +27,9 @@ interface FlightState {
   // Seçili uçuş
   selectedFlight: FlightResult | null;
 
+  // Seçili branded fare (paket seçimi)
+  selectedBrandedFareItemId: string | null;
+
   // Allocate
   allocateResult: AllocateResponse | null;
   allocateLoading: boolean;
@@ -45,6 +48,7 @@ const initialState: FlightState = {
   searchLoading: false,
   searchError: null,
   selectedFlight: null,
+  selectedBrandedFareItemId: null,
   allocateResult: null,
   allocateLoading: false,
   allocateError: null,
@@ -88,10 +92,14 @@ const flightSlice = createSlice({
     setSelectedFlight: (state, action: PayloadAction<FlightResult>) => {
       state.selectedFlight = action.payload;
     },
+    setSelectedBrandedFareItemId: (state, action: PayloadAction<string | null>) => {
+      state.selectedBrandedFareItemId = action.payload;
+    },
     clearSearch: (state) => {
       state.searchResults = null;
       state.searchError = null;
       state.selectedFlight = null;
+      state.selectedBrandedFareItemId = null;
       state.allocateResult = null;
       state.searchId = null;
       state.sessionStartedAt = null;
@@ -135,5 +143,5 @@ const flightSlice = createSlice({
   },
 });
 
-export const { setSearchParams, setSelectedFlight, clearSearch, clearAllocate } = flightSlice.actions;
+export const { setSearchParams, setSelectedFlight, setSelectedBrandedFareItemId, clearSearch, clearAllocate } = flightSlice.actions;
 export default flightSlice.reducer;

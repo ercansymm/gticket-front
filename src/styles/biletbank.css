@@ -924,10 +924,16 @@ select.bb-flight-form__input {
   cursor: pointer;
   font-size: 14px;
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  gap: 2px;
   border-bottom: 1px solid var(--bb-gray-100);
   transition: background var(--bb-transition);
+}
+
+.bb-dropdown-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .bb-flight-form__dropdown li:last-child {
@@ -946,7 +952,7 @@ select.bb-flight-form__input {
 .bb-flight-form__dropdown li small {
   color: var(--bb-gray-400);
   font-size: 12px;
-  margin-left: auto;
+  line-height: 1.3;
 }
 
 .bb-airport-code {
@@ -992,7 +998,9 @@ select.bb-flight-form__input {
   position: absolute;
   top: 100%;
   left: 0;
-  right: 0;
+  min-width: 280px;
+  width: max-content;
+  max-width: 340px;
   background: var(--bb-white);
   border: 1px solid var(--bb-border);
   border-top: none;
@@ -1006,6 +1014,7 @@ select.bb-flight-form__input {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
   padding: 8px 0;
 }
 
@@ -1013,11 +1022,17 @@ select.bb-flight-form__input {
   border-top: 1px solid var(--bb-gray-100);
 }
 
+.bb-pax-row > div:first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .bb-pax-label {
   font-size: 14px;
   font-weight: 600;
   color: var(--bb-gray-800);
   display: block;
+  white-space: nowrap;
 }
 
 .bb-pax-desc {
@@ -1025,12 +1040,14 @@ select.bb-flight-form__input {
   color: var(--bb-gray-400);
   display: block;
   margin-top: 2px;
+  white-space: nowrap;
 }
 
 .bb-pax-controls {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 .bb-pax-controls button {
@@ -1138,9 +1155,14 @@ select.bb-flight-form__input {
 .bb-pax-row--class {
   padding-top: 12px;
   border-top: 1px solid var(--bb-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
 }
 
 .bb-pax-class-select {
+  flex-shrink: 0;
   border: 1px solid var(--bb-border);
   border-radius: var(--bb-radius-sm);
   padding: 6px 10px;
@@ -1148,6 +1170,7 @@ select.bb-flight-form__input {
   color: var(--bb-gray-800);
   background: var(--bb-white);
   outline: none;
+  max-width: 180px;
 }
 
 .bb-pax-apply {
@@ -3945,6 +3968,7 @@ select.bb-flight-form__input {
 
 .bb-fare-package--active {
   border-color: #10B981;
+  border-top-color: #10B981;
   background: #f0fdf4;
   box-shadow: 0 2px 12px rgba(16, 185, 129, 0.12);
 }
@@ -4061,6 +4085,87 @@ select.bb-flight-form__input {
   background: #059669;
   transform: translateY(-1px);
   box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+}
+
+.bb-packages-footer__btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ── Recommended Badge ── */
+.bb-fare-package__badge-recommended {
+  position: absolute;
+  top: -1px;
+  right: 12px;
+  background: var(--ab-primary);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 0 0 6px 6px;
+  letter-spacing: 0.3px;
+}
+
+/* ── Rule icon color variants ── */
+.bb-fare-package__rule-icon--included {
+  color: #059669;
+  font-weight: 700;
+}
+
+.bb-fare-package__rule-icon--chargeable {
+  color: #d97706;
+  font-weight: 700;
+}
+
+.bb-fare-package__rule-icon--excluded {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+/* ── Total fare in package card ── */
+.bb-fare-package__total {
+  font-size: 13px;
+  color: #6b7280;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+/* ── Passenger fare detail ── */
+.bb-fare-package__pax-detail {
+  margin-top: 10px;
+  border-top: 1px solid var(--ab-border);
+  padding-top: 8px;
+}
+
+.bb-fare-package__pax-toggle {
+  background: none;
+  border: none;
+  color: var(--ab-primary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+}
+
+.bb-fare-package__pax-toggle:hover {
+  text-decoration: underline;
+}
+
+.bb-fare-package__pax-list {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bb-fare-package__pax-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #4b5563;
 }
 
 /* Expand button (chevron) */
@@ -7222,79 +7327,525 @@ footer,
 }
 
 /* ================================================================
-   3D SECURE MODAL
+   3D SECURE CALLBACK PAGE
    ================================================================ */
-.bb-3ds-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  z-index: 9999;
+.bb-3ds-callback {
+  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  backdrop-filter: blur(4px);
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  padding: 24px;
 }
 
-.bb-3ds-modal {
+.bb-3ds-callback__card {
   background: #fff;
-  border-radius: 16px;
-  width: 90vw;
-  max-width: 520px;
-  height: 80vh;
-  max-height: 700px;
+  border-radius: 20px;
+  padding: 48px 40px;
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  animation: bb-card-fadein 0.4s ease-out;
+}
+
+.bb-3ds-callback__icon {
+  margin-bottom: 24px;
+}
+
+.bb-3ds-callback__icon--loading {
+  display: flex;
+  justify-content: center;
+}
+
+.bb-3ds-callback__icon--success {
+  font-size: 56px;
+  color: #10b981;
+}
+
+.bb-3ds-callback__icon--failed {
+  font-size: 56px;
+  color: #ef4444;
+}
+
+.bb-3ds-callback__title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0 0 12px;
+}
+
+.bb-3ds-callback__pnr {
+  font-size: 18px;
+  color: #0C4A6E;
+  margin: 0 0 8px;
+  letter-spacing: 1px;
+}
+
+.bb-3ds-callback__text {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0 0 24px;
+  line-height: 1.6;
+}
+
+.bb-3ds-callback__actions {
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  overflow: hidden;
+  gap: 10px;
+  margin-top: 8px;
 }
 
-.bb-3ds-modal__header {
-  display: flex;
-  align-items: center;
-  padding: 16px 20px;
-  background: var(--ab-secondary, #0F172A);
-  color: #fff;
-  font-size: 16px;
+.bb-3ds-callback__btn {
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-size: 14px;
   font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.bb-3ds-callback__btn:active {
+  transform: scale(0.98);
+}
+
+.bb-3ds-callback__btn--primary {
+  background: #0C4A6E;
+  color: #fff;
+}
+
+.bb-3ds-callback__btn--primary:hover {
+  background: #0a3d5c;
+}
+
+.bb-3ds-callback__btn--secondary {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.bb-3ds-callback__btn--secondary:hover {
+  background: #e2e8f0;
+}
+
+.bb-3ds-callback__btn--ghost {
+  background: transparent;
+  color: #64748b;
+}
+
+.bb-3ds-callback__btn--ghost:hover {
+  background: #f8fafc;
+}
+
+@media (max-width: 480px) {
+  .bb-3ds-callback__card {
+    padding: 36px 24px;
+    border-radius: 16px;
+  }
+
+  .bb-3ds-callback__icon--success,
+  .bb-3ds-callback__icon--failed {
+    font-size: 48px;
+  }
+
+  .bb-3ds-callback__title {
+    font-size: 18px;
+  }
+}
+
+/* ============================================================
+   FARE PACKAGE CARD — bb-pkg-card
+   ============================================================ */
+.bb-pkg-card {
+  position: relative;
+  border: 1.5px solid var(--ab-border, #e2e8f0);
+  border-radius: 12px;
+  background: #fff;
+  padding: 16px;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bb-pkg-card:hover {
+  border-color: rgba(12, 74, 110, 0.35);
+  box-shadow: 0 2px 8px rgba(12, 74, 110, 0.08);
+}
+
+.bb-pkg-card--active {
+  border-color: var(--ab-primary, #0c4a6e);
+  box-shadow: 0 0 0 3px rgba(12, 74, 110, 0.1);
+}
+
+.bb-pkg-card--compact {
+  padding: 12px;
   gap: 8px;
 }
 
-.bb-3ds-modal__close {
-  margin-left: auto;
-  background: none;
-  border: none;
-  color: #fff;
-  font-size: 18px;
-  cursor: pointer;
-  opacity: 0.7;
-  transition: opacity 0.15s;
-  padding: 4px 8px;
-}
-
-.bb-3ds-modal__close:hover {
-  opacity: 1;
-}
-
-.bb-3ds-modal__body {
-  flex: 1;
+/* Header */
+.bb-pkg-card__header {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.bb-pkg-card__header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Radio circle */
+.bb-pkg-card__radio {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid #cbd5e1;
+  flex-shrink: 0;
+  position: relative;
+  transition: border-color 0.15s;
+}
+
+.bb-pkg-card__radio--checked {
+  border-color: var(--ab-primary, #0c4a6e);
+}
+
+.bb-pkg-card__radio--checked::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ab-primary, #0c4a6e);
+}
+
+.bb-pkg-card__name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.bb-pkg-card__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #047857;
+  background: #ecfdf5;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+/* Rules grid */
+.bb-pkg-card__rules {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bb-pkg-card__rule {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #4b5563;
+  padding: 4px 0;
+}
+
+.bb-pkg-card__rule-label {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.bb-3ds-modal__iframe {
+/* Rule-status icons */
+.bb-pkg-card__rule-status {
+  flex-shrink: 0;
+}
+
+.bb-pkg-card__rule-status--included {
+  color: #059669;
+}
+
+.bb-pkg-card__rule-status--chargeable {
+  color: #d97706;
+}
+
+.bb-pkg-card__rule-status--excluded {
+  color: #dc2626;
+}
+
+/* Service group icon */
+.bb-pkg-card__svc-icon {
+  flex-shrink: 0;
+  color: #6b7280;
+}
+
+/* Price area */
+.bb-pkg-card__price-area {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.bb-pkg-card__diff {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.bb-pkg-card__total {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ab-primary, #0c4a6e);
+}
+
+/* Passenger breakdown */
+.bb-pkg-card__pax-section {
+  border-top: 1px solid #f1f5f9;
+  padding-top: 6px;
+}
+
+.bb-pkg-card__pax-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   width: 100%;
-  height: 100%;
+  background: none;
   border: none;
+  padding: 6px 0;
+  font-size: 12px;
+  color: #6b7280;
+  cursor: pointer;
+  font-family: inherit;
 }
 
-@media (max-width: 576px) {
-  .bb-3ds-modal {
-    width: 100vw;
-    height: 100vh;
-    max-width: none;
-    max-height: none;
-    border-radius: 0;
+.bb-pkg-card__pax-toggle:hover {
+  color: var(--ab-primary, #0c4a6e);
+}
+
+.bb-pkg-card__pax-chevron {
+  transition: transform 0.2s;
+}
+
+.bb-pkg-card__pax-chevron--open {
+  transform: rotate(180deg);
+}
+
+.bb-pkg-card__pax-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px 0;
+}
+
+.bb-pkg-card__pax-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #4b5563;
+}
+
+/* ============================================================
+   CABIN CLASS SELECTOR — bb-cabin-selector
+   ============================================================ */
+.bb-cabin-selector {
+  position: relative;
+}
+
+.bb-cabin-selector__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: #fff;
+  border: 1.5px solid var(--ab-border, #e2e8f0);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1e293b;
+  font-family: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  white-space: nowrap;
+}
+
+.bb-cabin-selector__trigger:hover {
+  border-color: rgba(12, 74, 110, 0.4);
+}
+
+.bb-cabin-selector__trigger:focus-visible {
+  outline: none;
+  border-color: var(--ab-primary, #0c4a6e);
+  box-shadow: 0 0 0 3px rgba(12, 74, 110, 0.1);
+}
+
+.bb-cabin-selector__icon {
+  color: var(--ab-primary, #0c4a6e);
+  flex-shrink: 0;
+}
+
+.bb-cabin-selector__label {
+  flex: 1;
+}
+
+.bb-cabin-selector__chevron {
+  color: #9ca3af;
+  transition: transform 0.2s;
+}
+
+.bb-cabin-selector__chevron--open {
+  transform: rotate(180deg);
+}
+
+.bb-cabin-selector__dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 240px;
+  background: #fff;
+  border: 1px solid var(--ab-border, #e2e8f0);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  z-index: 50;
+  overflow: hidden;
+  animation: cabinDropFade 0.15s ease;
+}
+
+@keyframes cabinDropFade {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.bb-cabin-selector__option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: background 0.1s;
+}
+
+.bb-cabin-selector__option:hover {
+  background: #f1f5f9;
+}
+
+.bb-cabin-selector__option--active {
+  background: rgba(12, 74, 110, 0.04);
+}
+
+.bb-cabin-selector__option-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bb-cabin-selector__option-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.bb-cabin-selector__option-desc {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.bb-cabin-selector__check {
+  color: var(--ab-primary, #0c4a6e);
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   FILTER SECTION ICONS — bb-filter-section__icon
+   ============================================================ */
+.bb-filter-section__icon {
+  flex-shrink: 0;
+  color: #9ca3af;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+.bb-filter-section__title {
+  display: flex;
+  align-items: center;
+}
+
+/* Price inputs row */
+.bb-filter-section__price-inputs,
+.bb-filter-section__time-inputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.bb-filter-section__input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid var(--ab-border, #e2e8f0);
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #1e293b;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.bb-filter-section__input:focus {
+  border-color: var(--ab-primary, #0c4a6e);
+}
+
+.bb-filter-section__separator {
+  color: #9ca3af;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.bb-filter-section__range {
+  width: 100%;
+  margin-top: 8px;
+  accent-color: var(--ab-primary, #0c4a6e);
+}
+
+/* ============================================================
+   RESPONSIVE — Fare Package Cards
+   ============================================================ */
+@media (max-width: 768px) {
+  .bb-pkg-card {
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .bb-pkg-card__name {
+    font-size: 14px;
+  }
+
+  .bb-pkg-card__total {
+    font-size: 15px;
+  }
+
+  .bb-pkg-card__rule {
+    font-size: 12px;
+  }
+
+  .bb-cabin-selector__dropdown {
+    min-width: 200px;
   }
 }

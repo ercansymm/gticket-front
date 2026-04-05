@@ -7,8 +7,44 @@ import type {
   MakePreBookingClientRequest, MakePreBookingResponse,
 } from '@/types/booking';
 
+/** Field-level Zod hata detaylarını Türkçe kullanıcı mesajına çevirir */
+const FIELD_LABELS: Record<string, string> = {
+  firstName: 'Ad',
+  lastName: 'Soyad',
+  gender: 'Cinsiyet',
+  birthDate: 'Doğum tarihi',
+  citizenNo: 'TC kimlik no',
+  passportNo: 'Pasaport no',
+  passportCountry: 'Pasaport ülkesi',
+  nationality: 'Uyruk',
+  phone: 'Telefon',
+  email: 'E-posta',
+  sequenceNo: 'Yolcu sırası',
+  paxType: 'Yolcu tipi',
+};
+
+function formatValidationDetails(details: Array<{ field: string; message: string }>): string {
+  return details
+    .map(d => {
+      // "passengers.0.firstName" → field = "firstName", paxIndex = 0
+      const parts = d.field.split('.');
+      const fieldName = parts[parts.length - 1];
+      const label = FIELD_LABELS[fieldName] || fieldName;
+      const paxMatch = d.field.match(/passengers\.(\d+)/);
+      const prefix = paxMatch ? `${Number(paxMatch[1]) + 1}. yolcu — ` : '';
+      return `${prefix}${label}: ${d.message}`;
+    })
+    .join('; ');
+}
+
 /** Backend'den gelen 4 farklı hata formatını tek mesaja çevirir */
 function extractErrorMessage(error: any, fallback: string): string {
+  // Zod validation details varsa, alan bazlı hata mesajı döndür
+  const details = error.response?.data?.details;
+  if (Array.isArray(details) && details.length > 0) {
+    return formatValidationDetails(details);
+  }
+
   return error.userMessage
     || error.response?.data?.errorMessage
     || error.response?.data?.error

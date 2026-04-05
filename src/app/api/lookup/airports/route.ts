@@ -25,11 +25,11 @@ export async function GET(request: NextRequest) {
     // domestic=true → yurt içi havalimanları, q varsa → arama, yoksa → tümü
     let backendUrl: string;
     if (domestic === "true") {
-      backendUrl = `${API_BASE}/api/lookup/airports/domestic?lang=${encodeURIComponent(lang)}`;
+      backendUrl = `${API_BASE}/api/Airport?domestic=true&lang=${encodeURIComponent(lang)}`;
     } else if (query) {
-      backendUrl = `${API_BASE}/api/lookup/airports/search?q=${encodeURIComponent(query)}&lang=${encodeURIComponent(lang)}`;
+      backendUrl = `${API_BASE}/api/Airport/search?q=${encodeURIComponent(query)}&limit=20&lang=${encodeURIComponent(lang)}`;
     } else {
-      backendUrl = `${API_BASE}/api/lookup/airports?lang=${encodeURIComponent(lang)}`;
+      backendUrl = `${API_BASE}/api/Airport?lang=${encodeURIComponent(lang)}`;
     }
 
     const { signal, clear } = withTimeout(10_000);

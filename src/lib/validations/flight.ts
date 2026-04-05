@@ -10,7 +10,7 @@ export const flightSearchSchema = z.object({
   departureDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   returnDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
   flightType: z.enum(['OW', 'RT', 'MP']).optional().default('OW'),
-  flightClass: z.enum(['Economy', 'Business', 'First', 'Comfort']).optional().default('Economy'),
+  flightClass: z.enum(['Economy', 'PremiumEconomy', 'Business', 'First']).optional().default('Economy'),
   adultCount: z.number().int().min(1).max(9).optional().default(1),
   childCount: z.number().int().min(0).max(9).optional().default(0),
   infantCount: z.number().int().min(0).max(4).optional().default(0),
@@ -34,6 +34,7 @@ export const flightSearchSchema = z.object({
 export const flightAllocateClientSchema = z.object({
   searchId: z.string().min(1).max(100),
   productId: z.string().min(1).max(200),
+  brandedFareItemId: z.string().max(200).nullish(),
 });
 
 // İstemciden gelen remove-product request

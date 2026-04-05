@@ -20,7 +20,20 @@ export async function GET(request: Request) {
     });
     clear();
 
-    const data = await res.json();
+    // Guard against empty or non-JSON responses from backend
+    const text = await res.text();
+    if (!text || text.trim().length === 0) {
+      return NextResponse.json([], { status: 200 });
+    }
+
+    let data: unknown;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      logger.error("Invalid JSON from backend", { body: text.substring(0, 200) }, "api/lookup/popular-routes");
+      return NextResponse.json([], { status: 200 });
+    }
+
     return NextResponse.json(data, { status: res.status });
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") {

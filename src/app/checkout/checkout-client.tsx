@@ -29,7 +29,7 @@ export default function CheckoutClient() {
   const { data: session } = useSession();
   const { showWarning: sessionWarning, dismissWarning: dismissSessionWarning } = useSessionTimeout();
 
-  const { allocateResult, selectedFlight, searchId: allocateSearchId, searchResults } = useSelector(
+  const { allocateResult, selectedFlight, searchId: allocateSearchId, searchResults, selectedBrandedFareItemId } = useSelector(
     (state: RootState) => state.flight
   );
   // searchId fallback: allocate response → search results
@@ -61,9 +61,10 @@ export default function CheckoutClient() {
   const productId = firstBooking?.productId ?? '';
   const productItemId = firstBooking?.bookingItems?.[0]?.productItemId ?? '';
 
-  // brandedFareItemId: tercihli sıralama — segment seçimi → fare items → boş
+  // brandedFareItemId: tercihli sıralama — Redux seçimi → segment seçimi → fare items → boş
   const brandedFareItemId =
-    firstBooking?.segments?.[0]?.selectedBrandedFareItemId
+    selectedBrandedFareItemId
+    ?? firstBooking?.segments?.[0]?.selectedBrandedFareItemId
     ?? firstBooking?.brandedFareItems?.[0]?.brandedFareItemId
     ?? '';
 

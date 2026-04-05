@@ -137,6 +137,15 @@ export const finalizeShoppingThunk = createAsyncThunk(
       return rejectWithValue(extractErrorMessage(error, 'Biletleme başarısız'));
     }
   },
+  {
+    condition: (_, { getState }) => {
+      const { payment } = getState() as { payment: PaymentState };
+      // Prevent duplicate dispatch while already loading or already finalized
+      if (payment.finalizeLoading) return false;
+      if (payment.finalizeResult && !payment.finalizeResult.hasError) return false;
+      return true;
+    },
+  },
 );
 
 export const pokeShoppingFileThunk = createAsyncThunk(
@@ -258,6 +267,9 @@ const paymentSlice = createSlice({
     clearPaymentError: (state) => {
       state.paymentError = null;
     },
+    clearFinalizeError: (state) => {
+      state.finalizeError = null;
+    },
     clearBookingDetail: (state) => {
       state.bookingDetail = null;
       state.bookingDetailError = null;
@@ -294,6 +306,17 @@ const paymentSlice = createSlice({
       state.finalizeLoading = false;
       state.finalizeError = action.payload as string;
     });
+
+    // Finalize timeout (dispatched manually after 60s)
+    builder.addMatcher(
+      (action) => action.type === 'payment/finalizeTimeout',
+      (state) => {
+        if (state.finalizeLoading) {
+          state.finalizeLoading = false;
+          state.finalizeError = 'Biletleme zaman aşımına uğradı. Lütfen bilet sorgulama sayfasından durumunuzu kontrol edin.';
+        }
+      },
+    );
 
     // Poke Shopping File
     builder.addCase(pokeShoppingFileThunk.pending, (state) => {
@@ -388,5 +411,5 @@ const paymentSlice = createSlice({
   },
 });
 
-export const { resetPayment, clearPaymentError, clearBookingDetail } = paymentSlice.actions;
+export const { resetPayment, clearPaymentError, clearFinalizeError, clearBookingDetail } = paymentSlice.actions;
 export default paymentSlice.reducer;

@@ -44,10 +44,10 @@ export default function PaymentClient() {
     cvv: '',
   });
   const [cardErrors, setCardErrors] = useState<Record<string, string>>({});
-  const [show3DSModal, setShow3DSModal] = useState(false);
+  const [threeDSRedirecting, setThreeDSRedirecting] = useState(false);
   const [threeDSError, setThreeDSError] = useState<string | null>(null);
-  const threeDSIframeRef = useRef<HTMLIFrameElement>(null);
   const hasFinalized = useRef(false);
+  const finalizeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { showWarning: sessionWarning, dismissWarning: dismissSessionWarning } = useSessionTimeout();
 
   // Guard: no prebooking → back
@@ -61,56 +61,44 @@ export default function PaymentClient() {
     dispatch(setStep('payment'));
   }, [dispatch]);
 
-  // ── 3D Secure flow — show modal when backend requires 3DS ──
+  // ── 3D Secure flow — redirect to bank page ──
   useEffect(() => {
-    if (is3DSecureRequired && (threeDSecureHtml || threeDSecureUrl)) {
-      setShow3DSModal(true);
+    if (is3DSecureRequired && (threeDSecureUrl || threeDSecureHtml)) {
+      setThreeDSRedirecting(true);
       setThreeDSError(null);
-    }
-  }, [is3DSecureRequired, threeDSecureHtml, threeDSecureUrl]);
 
-  // Write 3DS HTML into iframe after modal mounts
-  useEffect(() => {
-    if (show3DSModal && threeDSecureHtml && threeDSIframeRef.current) {
-      const doc = threeDSIframeRef.current.contentDocument;
-      if (doc) {
-        doc.open();
-        doc.write(threeDSecureHtml);
-        doc.close();
-      }
-    }
-  }, [show3DSModal, threeDSecureHtml]);
+      // Save session info to sessionStorage for callback page
+      const paymentSession = {
+        searchId,
+        shoppingFileId: paymentResult?.shoppingFileId ?? null,
+        paymentReferenceId: paymentResult?.paymentReferenceId ?? null,
+        amount: paymentResult?.grandTotal ?? paymentResult?.paymentAmount ?? 0,
+        currency: paymentResult?.currency ?? 'TRY',
+        pnr: paymentResult?.pnr ?? null,
+      };
+      sessionStorage.setItem('payment_3ds_session', JSON.stringify(paymentSession));
 
-  // Listen for postMessage from 3DS callback (backend sends this via HTML)
-  useEffect(() => {
-    if (!show3DSModal) return;
-
-    const handleMessage = (event: MessageEvent) => {
-      // Accept from same origin only
-      if (event.origin !== window.location.origin) return;
-
-      const data = event.data;
-      if (!data || typeof data !== 'object') return;
-
-      // Backend callback sends: { status: 'paid'|'failed', ... }
-      if (data.status === 'paid' || data.status === 'success') {
-        setShow3DSModal(false);
-        // Trigger finalize after 3DS success
-        if (searchId && !hasFinalized.current) {
-          hasFinalized.current = true;
-          setTimeout(() => {
-            dispatch(finalizeShoppingThunk({ searchId }));
-          }, 1500);
+      if (threeDSecureUrl) {
+        // Full-page redirect to bank 3DS page
+        const timer = setTimeout(() => {
+          window.location.href = threeDSecureUrl;
+        }, 1500);
+        return () => clearTimeout(timer);
+      } else if (threeDSecureHtml) {
+        // Write HTML to a new popup/window
+        const win = window.open('', '_blank', 'width=500,height=700,scrollbars=yes');
+        if (win) {
+          win.document.open();
+          win.document.write(threeDSecureHtml);
+          win.document.close();
+        } else {
+          // Popup blocked — fallback: redirect via data URI or show error
+          setThreeDSRedirecting(false);
+          setThreeDSError('Tarayıcınız popup penceresini engelledi. Lütfen popup engelleyiciyi devre dışı bırakıp tekrar deneyin.');
         }
-      } else if (data.status === 'failed' || data.status === 'error') {
-        setShow3DSModal(false);
-        setThreeDSError(data.message || '3D Secure doğrulaması başarısız oldu.');
       }
-    };
-
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [show3DSModal, searchId, dispatch]);
+    }
+  }, [is3DSecureRequired, threeDSecureUrl, threeDSecureHtml, searchId, paymentResult]);
 
   // Auto-finalize after successful payment (non-3DS)
   const isPaymentSuccessful = paymentResult && paymentResult.hasError === false &&
@@ -119,32 +107,37 @@ export default function PaymentClient() {
   useEffect(() => {
     if (isPaymentSuccessful && searchId && !hasFinalized.current) {
       hasFinalized.current = true;
+      // Start a hard timeout — if no result in 60s, show error
+      finalizeTimeoutRef.current = setTimeout(() => {
+        if (!finalizeResult) {
+          dispatch({ type: 'payment/finalizeTimeout' });
+        }
+      }, 60_000);
       // Small delay to let backend process payment before finalizing
       const timer = setTimeout(() => {
         dispatch(finalizeShoppingThunk({ searchId }));
       }, 1500);
       return () => clearTimeout(timer);
     }
-  }, [isPaymentSuccessful, searchId, dispatch]);
+  }, [isPaymentSuccessful, searchId, dispatch]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Retry finalize on failure (max 2 retries)
-  const finalizeRetryCount = useRef(0);
+  // Cleanup finalize timeout on unmount
   useEffect(() => {
-    if (finalizeError && searchId && finalizeRetryCount.current < 2) {
-      finalizeRetryCount.current += 1;
-      const timer = setTimeout(() => {
-        dispatch(finalizeShoppingThunk({ searchId }));
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [finalizeError, searchId, dispatch]);
+    return () => {
+      if (finalizeTimeoutRef.current) clearTimeout(finalizeTimeoutRef.current);
+    };
+  }, []);
 
-  // After finalize → success page
+  // After finalize → success page (no retry — duplicate calls cause 429)
   useEffect(() => {
     const successStatuses = ['Booking', 'Ticketed', 'Reservation'];
     const isFinalized = finalizeResult && finalizeResult.hasError === false &&
       (finalizeResult.isFinalized === true || successStatuses.includes(finalizeResult.status ?? ''));
     if (isFinalized) {
+      if (finalizeTimeoutRef.current) {
+        clearTimeout(finalizeTimeoutRef.current);
+        finalizeTimeoutRef.current = null;
+      }
       dispatch(setStep('confirmation'));
       router.push('/checkout/success');
     }
@@ -571,16 +564,25 @@ export default function PaymentClient() {
             {finalizeError && (
               <div className="bb-checkout__price-warning" style={{ marginBottom: 16 }}>
                 <i className="fa-solid fa-circle-exclamation" style={{ marginRight: 8 }} />{finalizeError}
+                <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
+                  <button
+                    type="button"
+                    className="bb-checkout__btn bb-checkout__btn--next text-sm px-4 py-1.5"
+                    onClick={() => router.push('/bilet-sorgula')}
+                  >
+                    Bilet Sorgula
+                  </button>
+                </div>
               </div>
             )}
 
             {/* Loading states */}
-            {(paymentLoading || finalizeLoading) && (
+            {(paymentLoading || finalizeLoading || threeDSRedirecting) && (
               <div className="bb-spinner-overlay" style={{ position: 'relative', minHeight: 120, borderRadius: 12 }}>
                 <div className="bb-spinner-wrapper">
                   <div className="bb-spinner bb-spinner--large"></div>
                   <p className="bb-spinner-text">
-                    {paymentLoading ? 'Ödeme işleniyor...' : 'Biletleme yapılıyor...'}
+                    {threeDSRedirecting ? '3D Secure doğrulamasına yönlendiriliyorsunuz...' : paymentLoading ? 'Ödeme işleniyor...' : 'Biletleme yapılıyor...'}
                   </p>
                 </div>
               </div>
@@ -592,7 +594,7 @@ export default function PaymentClient() {
                 type="button"
                 className="bb-checkout__btn bb-checkout__btn--back"
                 onClick={() => router.push('/checkout')}
-                disabled={paymentLoading || finalizeLoading}
+                disabled={paymentLoading || finalizeLoading || threeDSRedirecting}
               >
                 ← Geri Dön
               </button>
@@ -600,9 +602,9 @@ export default function PaymentClient() {
                 type="button"
                 className="bb-checkout__btn bb-checkout__btn--next"
                 onClick={handlePayment}
-                disabled={paymentLoading || finalizeLoading || !agreed}
+                disabled={paymentLoading || finalizeLoading || threeDSRedirecting || !agreed}
               >
-                {paymentLoading ? 'Ödeme Yapılıyor...' : finalizeLoading ? 'Biletleniyor...' : (
+                {paymentLoading ? 'Ödeme Yapılıyor...' : threeDSRedirecting ? '3D Secure Yönlendiriliyor...' : finalizeLoading ? 'Biletleniyor...' : (
                   <><i className="fa-solid fa-lock" style={{ marginRight: 6 }} />Ödemeyi Tamamla</>
                 )}
               </button>
@@ -646,50 +648,6 @@ export default function PaymentClient() {
           </aside>
         </div>
       </main>
-
-      {/* 3D Secure Modal */}
-      {show3DSModal && (
-        <div className="bb-3ds-overlay">
-          <div className="bb-3ds-modal">
-            <div className="bb-3ds-modal__header">
-              <i className="fa-solid fa-shield-halved" style={{ marginRight: 8 }} />
-              <span>3D Secure Doğrulama</span>
-              <button
-                type="button"
-                className="bb-3ds-modal__close"
-                onClick={() => {
-                  setShow3DSModal(false);
-                  setThreeDSError('3D Secure doğrulaması iptal edildi.');
-                }}
-              >
-                ✕
-              </button>
-            </div>
-            <div className="bb-3ds-modal__body">
-              {threeDSecureHtml ? (
-                <iframe
-                  ref={threeDSIframeRef}
-                  className="bb-3ds-modal__iframe"
-                  sandbox="allow-scripts allow-forms allow-same-origin allow-top-navigation"
-                  title="3D Secure Doğrulama"
-                />
-              ) : threeDSecureUrl ? (
-                <iframe
-                  src={threeDSecureUrl}
-                  className="bb-3ds-modal__iframe"
-                  sandbox="allow-scripts allow-forms allow-same-origin allow-top-navigation"
-                  title="3D Secure Doğrulama"
-                />
-              ) : (
-                <div className="bb-spinner-wrapper">
-                  <div className="bb-spinner bb-spinner--large" />
-                  <p className="bb-spinner-text">3D Secure yükleniyor...</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
       <FooterOne />
     </>

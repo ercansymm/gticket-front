@@ -31,6 +31,15 @@ export async function POST(request: NextRequest) {
 
     const data = await res.json();
     const safeData = filterSensitiveFields(data);
+
+    // DEV: sessionId'yi geçici olarak frontend'e aktar (canlıda kaldırılacak)
+    if (process.env.NODE_ENV === 'development') {
+      const rawSessionId = (data as Record<string, unknown>)?.sessionId
+        ?? (data as Record<string, unknown>)?.SessionId;
+      if (rawSessionId && typeof safeData === 'object' && safeData !== null) {
+        (safeData as Record<string, unknown>)['__devSessionId'] = rawSessionId;
+      }
+    }
     
     // DEBUG: Paket verisi kontrolü
     const flights = (safeData as any)?.flights;

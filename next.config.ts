@@ -1,11 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Turbopack root dizini
-  turbopack: {
-    root: __dirname,
-  },
-
   // Görsel optimizasyonu
   images: {
     remotePatterns: [
@@ -30,7 +25,7 @@ const nextConfig: NextConfig = {
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           {
             key: "Content-Security-Policy",
-            value: "frame-ancestors 'none';",
+            value: "frame-ancestors 'none'; frame-src 'self' https://pay3dstage.biletbank.com https://pay3d.biletbank.com;",
           },
         ],
       },
