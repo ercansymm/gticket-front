@@ -108,22 +108,35 @@ export default function CheckoutClient() {
     paxCounts.infant > 0 ? `${paxCounts.infant} Bebek` : '',
   ].filter(Boolean).join(', ');
 
-  // Detect international flight: check if any segment has origin/destination in different countries
+  // Detect international flight: primary source is allocate flightType, fallback to airport lookup
   const isInternational = useMemo(() => {
+    // 1. Primary: BiletBank flightType from allocate response ("I" = international, "D" = domestic)
+    const flightTypeDetected = airBookings.some(ab =>
+      ab.flightType?.toUpperCase() === 'I' || ab.flightType?.toUpperCase() === 'INTERNATIONAL'
+    );
+    if (flightTypeDetected) return true;
+
+    // If flightType explicitly says domestic, trust it
+    const allDomestic = airBookings.length > 0 && airBookings.every(ab =>
+      ab.flightType?.toUpperCase() === 'D' || ab.flightType?.toUpperCase() === 'DOMESTIC'
+    );
+    if (allDomestic) return false;
+
+    // 2. Fallback: check airport country codes from segments
     const segments = airBookings.flatMap(ab => ab.segments ?? []);
-    if (segments.length === 0 && selectedFlight) {
-      // Fallback to selectedFlight origin/destination
-      const originAirport = airports.find(a => a.code === selectedFlight.originCode);
-      const destAirport = airports.find(a => a.code === selectedFlight.destinationCode);
-      if (originAirport && destAirport) {
-        return originAirport.countryCode !== destAirport.countryCode;
-      }
-      // If airport not found in local data, assume international if codes don't match TR pattern
-      return false;
-    }
-    return segments.some(seg => {
-      const originAirport = airports.find(a => a.code === seg.originCode);
-      const destAirport = airports.find(a => a.code === seg.destinationCode);
+    const codes = segments.length > 0
+      ? segments.map(seg => ({ origin: seg.originCode, dest: seg.destinationCode }))
+      : selectedFlight
+        ? [{ origin: selectedFlight.originCode, dest: selectedFlight.destinationCode }]
+        : [];
+
+    return codes.some(({ origin, dest }) => {
+      const originAirport = airports.find(a => a.code === origin);
+      const destAirport = airports.find(a => a.code === dest);
+      // If one airport is found (TR) and the other is NOT in the list → international
+      if (originAirport && !destAirport) return true;
+      if (!originAirport && destAirport) return true;
+      // If both found, compare country codes
       if (originAirport && destAirport) {
         return originAirport.countryCode !== destAirport.countryCode;
       }
