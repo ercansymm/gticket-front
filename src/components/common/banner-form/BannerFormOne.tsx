@@ -76,6 +76,10 @@ const BannerFormOne = () => {
    const [errors, setErrors] = useState<Record<string, string>>({});
    const [fromCity, setFromCity] = useState('');
    const [toCity, setToCity] = useState('');
+   const [fromCountryCode, setFromCountryCode] = useState('TR');
+   const [toCountryCode, setToCountryCode] = useState('TR');
+   const [fromIsCity, setFromIsCity] = useState(false);
+   const [toIsCity, setToIsCity] = useState(false);
    const [fromSuggestions, setFromSuggestions] = useState<AirportDropdownItem[]>([]);
    const [toSuggestions, setToSuggestions] = useState<AirportDropdownItem[]>([]);
    const [allAirports, setAllAirports] = useState<AirportDto[]>(staticFallback);
@@ -344,10 +348,18 @@ const BannerFormOne = () => {
       const tempTo = to;
       const tempFromCity = fromCity;
       const tempToCity = toCity;
+      const tempFromCountryCode = fromCountryCode;
+      const tempToCountryCode = toCountryCode;
+      const tempFromIsCity = fromIsCity;
+      const tempToIsCity = toIsCity;
       setFrom(tempTo);
       setTo(tempFrom);
       setFromCity(tempToCity);
       setToCity(tempFromCity);
+      setFromCountryCode(tempToCountryCode);
+      setToCountryCode(tempFromCountryCode);
+      setFromIsCity(tempToIsCity);
+      setToIsCity(tempFromIsCity);
       if (tempFromCity && tempToCity && isSameCity(tempToCity, tempFromCity)) {
          setErrors(prev => ({ ...prev, to: t.sameCityError }));
       } else {
@@ -368,14 +380,7 @@ const BannerFormOne = () => {
 
    const handleRangeSelect = useCallback((start: Date, end: Date) => {
       setDepartDate(start);
-      // Prevent same-day round trip — return must be at least the next day
-      const startTime = new Date(start); startTime.setHours(0, 0, 0, 0);
-      const endTime = new Date(end); endTime.setHours(0, 0, 0, 0);
-      if (endTime > startTime) {
-         setReturnDate(end);
-      } else {
-         setReturnDate(null);
-      }
+      setReturnDate(end);
    }, []);
 
    // Multi-city segment helpers
@@ -423,7 +428,7 @@ const BannerFormOne = () => {
          if (from && to && (from === to || isSameCity(fromCity, toCity))) errs.to = t.sameCityError;
          if (!departDate) errs.departDate = t.selectDate;
          if (tripType === "roundtrip" && !returnDate) errs.returnDate = t.selectDate;
-         if (tripType === "roundtrip" && departDate && returnDate && returnDate <= departDate) errs.returnDate = t.returnDateError;
+         if (tripType === "roundtrip" && departDate && returnDate && returnDate < departDate) errs.returnDate = t.returnDateError;
       }
       setErrors(errs);
       return Object.keys(errs).length === 0;
@@ -455,10 +460,10 @@ const BannerFormOne = () => {
       const searchRequest: FlightSearchRequest = {
          origin: from,
          destination: to,
-         originCountryCode: allAirports.find(ap => ap.iataCode === from.split(',')[0])?.countryCode ?? 'TR',
-         destinationCountryCode: allAirports.find(ap => ap.iataCode === to.split(',')[0])?.countryCode ?? 'TR',
-         originIsCity: false,
-         destinationIsCity: false,
+         originCountryCode: fromCountryCode,
+         destinationCountryCode: toCountryCode,
+         originIsCity: fromIsCity,
+         destinationIsCity: toIsCity,
          departureDate: formatDateForApi(departDate!),
          returnDate: tripType === 'roundtrip' && returnDate ? formatDateForApi(returnDate) : null,
          flightType: tripType === 'oneway' ? 'OW' : 'RT',
@@ -813,7 +818,7 @@ const BannerFormOne = () => {
                      setFromSuggestions(getInitialSuggestions());
                   }}
                   onKeyDown={(e) => handleAirportKeyDown(e, fromSuggestions, fromHighlight, setFromHighlight, (airport) => {
-                     setFrom(airport.iataCode); setFromCity(airport.city); setFromOpen(false); setFromSearch(""); setFromSuggestions([]);
+                     setFrom(airport.iataCode); setFromCity(airport.city); setFromCountryCode(airport.countryCode || 'TR'); setFromIsCity(!!(airport as AirportDropdownItem).isCityGroup); setFromOpen(false); setFromSearch(""); setFromSuggestions([]);
                      if (toCity && isSameCity(airport.city, toCity)) {
                         setErrors(prev => ({ ...prev, to: t.sameCityError }));
                      } else {
@@ -828,7 +833,7 @@ const BannerFormOne = () => {
                />
                {errors.from && <span className="bb-flight-form__error">{errors.from}</span>}
                {fromOpen && fromSuggestions.length > 0 && renderAirportDropdown(fromSuggestions, (airport) => {
-                  setFrom(airport.iataCode); setFromCity(airport.city); setFromOpen(false); setFromSearch(""); setFromSuggestions([]);
+                  setFrom(airport.iataCode); setFromCity(airport.city); setFromCountryCode(airport.countryCode || 'TR'); setFromIsCity(!!(airport as AirportDropdownItem).isCityGroup); setFromOpen(false); setFromSearch(""); setFromSuggestions([]);
                   if (toCity && isSameCity(airport.city, toCity)) {
                      setErrors(prev => ({ ...prev, to: t.sameCityError }));
                   } else {
@@ -862,7 +867,7 @@ const BannerFormOne = () => {
                      setToSuggestions(getInitialSuggestions());
                   }}
                   onKeyDown={(e) => handleAirportKeyDown(e, toSuggestions, toHighlight, setToHighlight, (airport) => {
-                     setTo(airport.iataCode); setToCity(airport.city); setToOpen(false); setToSearch(""); setToSuggestions([]);
+                     setTo(airport.iataCode); setToCity(airport.city); setToCountryCode(airport.countryCode || 'TR'); setToIsCity(!!(airport as AirportDropdownItem).isCityGroup); setToOpen(false); setToSearch(""); setToSuggestions([]);
                      if (fromCity && isSameCity(fromCity, airport.city)) {
                         setErrors(prev => ({ ...prev, to: t.sameCityError }));
                      } else {
@@ -877,7 +882,7 @@ const BannerFormOne = () => {
                />
                {errors.to && <span className="bb-flight-form__error">{errors.to}</span>}
                {toOpen && toSuggestions.length > 0 && renderAirportDropdown(toSuggestions, (airport) => {
-                  setTo(airport.iataCode); setToCity(airport.city); setToOpen(false); setToSearch(""); setToSuggestions([]);
+                  setTo(airport.iataCode); setToCity(airport.city); setToCountryCode(airport.countryCode || 'TR'); setToIsCity(!!(airport as AirportDropdownItem).isCityGroup); setToOpen(false); setToSearch(""); setToSuggestions([]);
                   if (fromCity && isSameCity(fromCity, airport.city)) {
                      setErrors(prev => ({ ...prev, to: t.sameCityError }));
                   } else {
@@ -940,7 +945,7 @@ const BannerFormOne = () => {
                         rangeStart={departDate}
                         rangeEnd={returnDate}
                         onSelectRange={handleRangeSelect}
-                        minDate={departDate ? new Date(departDate.getTime() + 86400000) : undefined}
+                        minDate={departDate || undefined}
                      />
                   )}
                </div>

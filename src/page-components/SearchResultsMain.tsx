@@ -74,17 +74,24 @@ const SearchResultsMain = () => {
   }, [searchResults?.flights, filters, sortBy]);
 
   // Gidiş-Dönüş: uçuşları yöne göre ayır
+  // Origin/destination multi-airport olabilir (örn: "IST,SAW"), f.originCode ise tekil airport kodu.
   const outboundFlights = useMemo(() => {
     if (!isRoundTrip || !searchParams) return displayedFlights;
+    const originCodes = searchParams.origin.split(',').map(c => c.trim().toUpperCase());
+    const destCodes = searchParams.destination.split(',').map(c => c.trim().toUpperCase());
     return displayedFlights.filter(f =>
-      f.originCode === searchParams.origin && f.destinationCode === searchParams.destination
+      originCodes.includes((f.originCode ?? '').toUpperCase()) &&
+      destCodes.includes((f.destinationCode ?? '').toUpperCase())
     );
   }, [displayedFlights, isRoundTrip, searchParams]);
 
   const returnFlights = useMemo(() => {
     if (!isRoundTrip || !searchParams) return [];
+    const originCodes = searchParams.origin.split(',').map(c => c.trim().toUpperCase());
+    const destCodes = searchParams.destination.split(',').map(c => c.trim().toUpperCase());
     return displayedFlights.filter(f =>
-      f.originCode === searchParams.destination && f.destinationCode === searchParams.origin
+      destCodes.includes((f.originCode ?? '').toUpperCase()) &&
+      originCodes.includes((f.destinationCode ?? '').toUpperCase())
     );
   }, [displayedFlights, isRoundTrip, searchParams]);
 
