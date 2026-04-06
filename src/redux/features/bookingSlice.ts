@@ -54,6 +54,21 @@ function extractErrorMessage(error: any, fallback: string): string {
     || fallback;
 }
 
+/** Teknik/provider hata mesajlarını kullanıcı dostu Türkçe mesajlara çevirir */
+function mapProviderError(rawMsg: string | null | undefined, fallback: string): string {
+  if (!rawMsg) return fallback;
+  const lower = rawMsg.toLowerCase();
+  if (lower.includes('nullable object must have a value'))
+    return 'Havayolu sağlayıcısında beklenmeyen bir hata oluştu. Lütfen farklı bir uçuş deneyin.';
+  if (lower.includes('providermakereservationerror') || lower.includes('provider'))
+    return 'Havayolu sağlayıcısında beklenmeyen bir hata oluştu. Lütfen farklı bir uçuş deneyin.';
+  if (lower.includes('timeout') || lower.includes('zaman asimi'))
+    return 'İşlem zaman aşımına uğradı. Lütfen tekrar deneyin.';
+  if (lower.includes('session') && (lower.includes('expired') || lower.includes('suresi')))
+    return 'Oturum süresi dolmuş. Lütfen yeni arama yapın.';
+  return rawMsg;
+}
+
 type BookingStep = 'search' | 'select' | 'passenger' | 'summary' | 'payment' | 'confirmation';
 
 interface BookingState {
@@ -87,8 +102,11 @@ export const updatePassengersThunk = createAsyncThunk(
   async (params: UpdatePassengersClientRequest, { rejectWithValue }) => {
     try {
       const result = await updatePassengers(params);
-      if (result.hasError) {
-        return rejectWithValue(result.errorMessage || 'Yolcu bilgileri güncellenemedi');
+      if (!result) {
+        return rejectWithValue('Yolcu bilgileri güncellenemedi: Sunucudan yanıt alınamadı');
+      }
+      if (result?.hasError) {
+        return rejectWithValue(result?.errorMessage ?? 'Yolcu bilgileri güncellenemedi');
       }
       return result;
     } catch (error: any) {
@@ -102,12 +120,16 @@ export const makePreBookingThunk = createAsyncThunk(
   async (params: MakePreBookingClientRequest, { rejectWithValue }) => {
     try {
       const result = await makePreBooking(params);
-      if (result.hasError) {
-        return rejectWithValue(result.errorMessage || 'Ön rezervasyon oluşturulamadı');
+      if (!result) {
+        return rejectWithValue('Ön rezervasyon oluşturulamadı: Sunucudan yanıt alınamadı');
+      }
+      if (result?.hasError) {
+        return rejectWithValue(mapProviderError(result?.errorMessage, 'Ön rezervasyon oluşturulamadı'));
       }
       return result;
     } catch (error: any) {
-      return rejectWithValue(extractErrorMessage(error, 'Ön rezervasyon oluşturulamadı'));
+      const raw = extractErrorMessage(error, 'Ön rezervasyon oluşturulamadı');
+      return rejectWithValue(mapProviderError(raw, 'Ön rezervasyon oluşturulamadı'));
     }
   }
 );

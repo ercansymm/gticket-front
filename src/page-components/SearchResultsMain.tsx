@@ -6,6 +6,7 @@ import FooterOne from '../layouts/footers/FooterOne';
 import FlightCard from '../components/booking/FlightCard';
 import FilterSidebar from '../components/booking/FilterSidebar';
 import SortBar from '../components/booking/SortBar';
+import PriceCalendar, { generateMockPrices } from '../components/flight/PriceCalendar';
 import { searchFlightsThunk, setSelectedFlight, setSelectedBrandedFareItemId, allocateFlightThunk, clearAllocate } from '../redux/features/flightSlice';
 import { filterFlights, sortFlights, INITIAL_FILTERS } from '../utils/flightFilters';
 import type { RootState, AppDispatch } from '../redux/store';
@@ -33,6 +34,21 @@ const SearchResultsMain = () => {
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   const [mobileSortOpen, setMobileSortOpen] = useState(false);
   const [priceChangedData, setPriceChangedData] = useState<AllocateResponse | null>(null);
+
+  // Günlük tahmini fiyatlar (mock data)
+  const mockPrices = useMemo(
+    () => (searchParams?.departureDate ? generateMockPrices(searchParams.departureDate) : []),
+    [searchParams?.departureDate]
+  );
+
+  const handlePriceDateSelect = useCallback(
+    (date: string) => {
+      if (searchParams) {
+        dispatch(searchFlightsThunk({ ...searchParams, departureDate: date }));
+      }
+    },
+    [dispatch, searchParams]
+  );
 
   // Gidiş-dönüş seçimleri
   const [selectedOutbound, setSelectedOutbound] = useState<{ flight: FlightResult; brandedFareItemId: string | null } | null>(null);
@@ -392,6 +408,17 @@ const SearchResultsMain = () => {
             </button>
           ))}
         </div>
+
+        {/* Günlük Tahmini Fiyatlar */}
+        {mockPrices.length > 0 && searchParams?.departureDate && (
+          <div className="px-4 lg:px-6 mt-3">
+            <PriceCalendar
+              prices={mockPrices}
+              selectedDate={searchParams.departureDate}
+              onDateSelect={handlePriceDateSelect}
+            />
+          </div>
+        )}
 
         <div className="bb-search-results__layout">
           {/* Sidebar — desktop only */}

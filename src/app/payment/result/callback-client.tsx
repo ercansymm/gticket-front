@@ -2,56 +2,6 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-
-type CallbackStatus = 'loading' | 'success' | 'failed';
-
-export default function PaymentCallbackClient() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-
-  const [status, setStatus] = useState<CallbackStatus>('loading');
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [pnr, setPnr] = useState<string | null>(null);
-  const hasProcessed = useRef(false);
-
-  useEffect(() => {
-    if (hasProcessed.current) return;
-    hasProcessed.current = true;
-
-    const callbackStatus = searchParams.get('status');
-    const callbackError = searchParams.get('error');
-    const callbackPnr = searchParams.get('pnr');
-
-    // Clean up saved 3DS session
-    sessionStorage.removeItem('payment_3ds_session');
-
-    if (callbackPnr) setPnr(callbackPnr);
-
-    if (callbackStatus === 'success' || callbackStatus === 'paid') {
-      // Backend already called FinalizeShopping and returned PNR
-      setStatus('success');
-      // Redirect to success page
-      setTimeout(() => {
-        const successUrl = callbackPnr
-          ? `/checkout/success?pnr=${encodeURIComponent(callbackPnr)}`
-          : '/checkout/success';
-        router.push(successUrl);
-      }, 2500);
-    } else if (callbackStatus === 'failed' || callbackStatus === 'error') {
-      setStatus('failed');
-      setErrorMessage(callbackError || '3D Secure doğrulaması başarısız oldu. Ödeme gerçekleşmedi.');
-    } else {
-      // Unknown status
-      setStatus('failed');
-      setErrorMessage('Ödeme durumu belirlenemedi. Lütfen bilet sorgulama sayfasından kontrol ediniz.');
-    }
-  }, [searchParams, router]);
-
-  return (
-"use client";
-
-import { useEffect, useState, useRef } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 type CallbackStatus = 'loading' | 'success' | 'failed';

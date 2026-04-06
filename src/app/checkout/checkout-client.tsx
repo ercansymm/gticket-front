@@ -146,7 +146,8 @@ export default function CheckoutClient() {
         router.push('/checkout/payment');
       } catch (err) {
         console.error('[Checkout] Passenger/PreBooking chain failed:', err);
-        // Hata mesajını kullanıcıya göster — scroll to error
+        // Error is already mapped to user-friendly Turkish in the thunk via mapProviderError
+        // and stored in Redux (preBookingError / updatePassengersError). Just scroll to show it.
         setTimeout(() => {
           const errorEl = document.querySelector('.bb-checkout__price-warning');
           if (errorEl) errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
