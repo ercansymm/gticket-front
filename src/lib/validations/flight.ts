@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
 export const flightSearchSchema = z.object({
-  origin: z.string().min(2).max(10).trim().regex(/^[A-Z]{2,5}$/i, 'Geçersiz havalimanı kodu'),
-  destination: z.string().min(2).max(10).trim().regex(/^[A-Z]{2,5}$/i, 'Geçersiz havalimanı kodu'),
+  origin: z.string().min(2).max(50).trim().regex(/^[A-Z]{2,5}(,[A-Z]{2,5})*$/i, 'Geçersiz havalimanı kodu'),
+  destination: z.string().min(2).max(50).trim().regex(/^[A-Z]{2,5}(,[A-Z]{2,5})*$/i, 'Geçersiz havalimanı kodu'),
   originCountryCode: z.string().min(2).max(5).optional().default('TR'),
   destinationCountryCode: z.string().min(2).max(5).optional().default('TR'),
   originIsCity: z.boolean().optional().default(false),
