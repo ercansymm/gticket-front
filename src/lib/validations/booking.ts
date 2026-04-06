@@ -10,6 +10,7 @@ const passengerItemSchema = z.object({
   citizenNo: z.string().length(11).regex(/^\d{11}$/).nullable().optional(),
   passportNo: z.string().min(5).max(20).regex(/^[A-Z0-9]+$/i).nullable().optional(),
   passportCountry: z.string().length(2).regex(/^[A-Z]{2}$/i).nullable().optional(),
+  passportExpiry: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
   nationality: z.string().length(2).regex(/^[A-Z]{2}$/i).optional().default('TR'),
   tempTag: z.string().max(200).nullable().optional(),
   paxReferenceId: z.string().max(200).nullable().optional(),

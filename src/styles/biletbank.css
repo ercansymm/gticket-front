@@ -5312,6 +5312,11 @@ footer,
   font-weight: 500;
 }
 
+.bb-pax-panel__required {
+  color: #ef4444;
+  font-weight: 600;
+}
+
 /* Miles hint */
 
 .bb-pax-panel__miles-hint {

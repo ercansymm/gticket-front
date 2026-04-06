@@ -30,6 +30,7 @@ export interface PassengerItem {
   citizenNo?: string | null;
   passportNo?: string | null;
   passportCountry?: string | null;
+  passportExpiry?: string | null;
   nationality?: string;
   tempTag?: string | null;
   paxReferenceId?: string | null;

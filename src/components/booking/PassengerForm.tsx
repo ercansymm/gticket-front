@@ -91,6 +91,7 @@ interface PassengerFormData {
   isTurkishCitizen: boolean;
   passportNo: string;
   passportCountry: string;
+  passportExpiry: string;
   nationality: string;
 }
 
@@ -103,11 +104,12 @@ export interface PassengerFormProps {
   onSubmit: (passengers: PassengerItem[], contact: ContactInfo) => void;
   loading?: boolean;
   disabled?: boolean;
+  isInternational?: boolean;
 }
 
 /* ───────── component ───────── */
 
-export default function PassengerForm({ passengers, onSubmit, loading, disabled }: PassengerFormProps) {
+export default function PassengerForm({ passengers, onSubmit, loading, disabled, isInternational = false }: PassengerFormProps) {
   const sortedPassengers = useMemo(() =>
     [...passengers].sort((a, b) => {
       const order = { ADT: 0, CHD: 1, INF: 2 };
@@ -129,6 +131,7 @@ export default function PassengerForm({ passengers, onSubmit, loading, disabled 
       isTurkishCitizen: true,
       passportNo: '',
       passportCountry: '',
+      passportExpiry: '',
       nationality: 'TR',
     }))
   );
@@ -186,20 +189,48 @@ export default function PassengerForm({ passengers, onSubmit, loading, disabled 
           : '0–2 yaş arası olmalıdır';
       }
     }
-    if (form.isTurkishCitizen) {
-      if (!form.citizenNo || !isValidTCKimlik(form.citizenNo)) {
-        e.citizenNo = 'TC kimlik no 11 haneli olmalıdır';
-      }
-    } else {
+
+    // Identity document validation
+    if (isInternational) {
+      // International flights: passport fields are always mandatory
       if (!form.passportNo || form.passportNo.trim().length < 5) {
-        e.passportNo = 'Pasaport numarası gereklidir';
+        e.passportNo = 'Yurt dışı uçuşlarda pasaport numarası zorunludur';
       }
       if (!form.passportCountry || form.passportCountry.length !== 2) {
-        e.passportCountry = 'Pasaport ülkesi seçiniz';
+        e.passportCountry = 'Pasaport ülkesi zorunludur (2 haneli ülke kodu)';
+      }
+      if (!form.passportExpiry) {
+        e.passportExpiry = 'Pasaport geçerlilik tarihi zorunludur';
+      } else {
+        // Passport must be valid after today
+        const today = new Date().toISOString().split('T')[0];
+        if (form.passportExpiry <= today) {
+          e.passportExpiry = 'Pasaport geçerlilik tarihi uçuş tarihinden sonra olmalıdır';
+        }
+      }
+      // TC Kimlik is still required for Turkish citizens on international flights
+      if (form.isTurkishCitizen) {
+        if (!form.citizenNo || !isValidTCKimlik(form.citizenNo)) {
+          e.citizenNo = 'TC kimlik no 11 haneli olmalıdır';
+        }
+      }
+    } else {
+      // Domestic flights: TC Kimlik or Passport based on citizenship
+      if (form.isTurkishCitizen) {
+        if (!form.citizenNo || !isValidTCKimlik(form.citizenNo)) {
+          e.citizenNo = 'TC kimlik no 11 haneli olmalıdır';
+        }
+      } else {
+        if (!form.passportNo || form.passportNo.trim().length < 5) {
+          e.passportNo = 'Pasaport numarası gereklidir';
+        }
+        if (!form.passportCountry || form.passportCountry.length !== 2) {
+          e.passportCountry = 'Pasaport ülkesi seçiniz';
+        }
       }
     }
     return e;
-  }, []);
+  }, [isInternational]);
 
   const validateContact = useCallback((): { email?: string; phone?: string } => {
     const e: { email?: string; phone?: string } = {};
@@ -252,11 +283,14 @@ export default function PassengerForm({ passengers, onSubmit, loading, disabled 
       const citizenNo = form.isTurkishCitizen && form.citizenNo
         ? form.citizenNo
         : null;
-      const passportNo = !form.isTurkishCitizen && form.passportNo
+      const passportNo = (!form.isTurkishCitizen || isInternational) && form.passportNo
         ? form.passportNo.toUpperCase()
         : null;
-      const passportCountry = !form.isTurkishCitizen && form.passportCountry
+      const passportCountry = (!form.isTurkishCitizen || isInternational) && form.passportCountry
         ? form.passportCountry.toUpperCase()
+        : null;
+      const passportExpiry = (!form.isTurkishCitizen || isInternational) && form.passportExpiry
+        ? form.passportExpiry
         : null;
 
       const item: PassengerItem = {
@@ -269,6 +303,7 @@ export default function PassengerForm({ passengers, onSubmit, loading, disabled 
         citizenNo,
         passportNo,
         passportCountry,
+        passportExpiry,
         nationality: form.nationality.toUpperCase() || 'TR',
         tempTag: pax.tempTag ?? null,
         paxReferenceId: pax.paxReferenceId ?? null,
@@ -487,7 +522,78 @@ export default function PassengerForm({ passengers, onSubmit, loading, disabled 
             </div>
 
             {/* TC Kimlik or Passport */}
-            {form.isTurkishCitizen ? (
+            {isInternational ? (
+              /* International flight: passport always mandatory, TC Kimlik for Turkish citizens */
+              <>
+                {form.isTurkishCitizen && (
+                  <div className="bb-pax-panel__row">
+                    <div className={`bb-pax-panel__field ${err.citizenNo ? 'bb-pax-panel__field--error' : ''}`}>
+                      <label className="bb-pax-panel__label">TC Kimlik No</label>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        className="bb-pax-panel__input"
+                        placeholder="11 haneli TC kimlik numarası"
+                        value={form.citizenNo}
+                        onChange={e => {
+                          const val = e.target.value.replace(/\D/g, '').slice(0, 11);
+                          updateField(index, 'citizenNo', val);
+                        }}
+                        maxLength={11}
+                        autoComplete="off"
+                      />
+                      {err.citizenNo && <span className="bb-pax-panel__error">{err.citizenNo}</span>}
+                    </div>
+                  </div>
+                )}
+                <div className="bb-pax-panel__row">
+                  <div className={`bb-pax-panel__field ${err.passportNo ? 'bb-pax-panel__field--error' : ''}`}>
+                    <label className="bb-pax-panel__label">Pasaport No <span className="bb-pax-panel__required">*</span></label>
+                    <input
+                      type="text"
+                      className="bb-pax-panel__input"
+                      placeholder="Pasaport numarası"
+                      value={form.passportNo}
+                      onChange={e => updateField(index, 'passportNo', e.target.value.toUpperCase())}
+                      maxLength={20}
+                      autoComplete="off"
+                    />
+                    {err.passportNo && <span className="bb-pax-panel__error">{err.passportNo}</span>}
+                  </div>
+                  <div className={`bb-pax-panel__field ${err.passportCountry ? 'bb-pax-panel__field--error' : ''}`}>
+                    <label className="bb-pax-panel__label">Pasaport Ülkesi <span className="bb-pax-panel__required">*</span></label>
+                    <input
+                      type="text"
+                      className="bb-pax-panel__input"
+                      placeholder="Ülke kodu (ör: TR, DE, US)"
+                      value={form.passportCountry}
+                      onChange={e => {
+                        const val = e.target.value.replace(/[^A-Za-z]/g, '').slice(0, 2).toUpperCase();
+                        updateField(index, 'passportCountry', val);
+                        if (!form.isTurkishCitizen) updateField(index, 'nationality', val);
+                      }}
+                      maxLength={2}
+                      autoComplete="off"
+                    />
+                    {err.passportCountry && <span className="bb-pax-panel__error">{err.passportCountry}</span>}
+                  </div>
+                </div>
+                <div className="bb-pax-panel__row">
+                  <div className={`bb-pax-panel__field ${err.passportExpiry ? 'bb-pax-panel__field--error' : ''}`}>
+                    <label className="bb-pax-panel__label">Pasaport Geçerlilik Tarihi <span className="bb-pax-panel__required">*</span></label>
+                    <input
+                      type="date"
+                      className="bb-pax-panel__input"
+                      value={form.passportExpiry}
+                      onChange={e => updateField(index, 'passportExpiry', e.target.value)}
+                      min={new Date().toISOString().split('T')[0]}
+                      autoComplete="off"
+                    />
+                    {err.passportExpiry && <span className="bb-pax-panel__error">{err.passportExpiry}</span>}
+                  </div>
+                </div>
+              </>
+            ) : form.isTurkishCitizen ? (
                 <div className="bb-pax-panel__row">
                   <div className={`bb-pax-panel__field ${err.citizenNo ? 'bb-pax-panel__field--error' : ''}`}>
                     <label className="bb-pax-panel__label">TC Kimlik No</label>

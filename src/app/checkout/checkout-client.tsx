@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useCallback, useRef, useState } from 'react';
+import { useEffect, useCallback, useRef, useState, useMemo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
@@ -13,6 +13,7 @@ import { setStep, setPassengers, setContactInfo } from '@/redux/features/booking
 import type { RootState, AppDispatch } from '@/redux/store';
 import type { PassengerItem, ContactInfo } from '@/types/booking';
 import { useSessionTimeout } from '@/hooks/UseSessionTimeout';
+import { airports } from '@/data/AirportData';
 
 const AIRLINE_COLORS: Record<string, { bg: string; color: string }> = {
   TK: { bg: '#E30A17', color: '#fff' },
@@ -106,6 +107,29 @@ export default function CheckoutClient() {
     paxCounts.child > 0 ? `${paxCounts.child} Çocuk` : '',
     paxCounts.infant > 0 ? `${paxCounts.infant} Bebek` : '',
   ].filter(Boolean).join(', ');
+
+  // Detect international flight: check if any segment has origin/destination in different countries
+  const isInternational = useMemo(() => {
+    const segments = airBookings.flatMap(ab => ab.segments ?? []);
+    if (segments.length === 0 && selectedFlight) {
+      // Fallback to selectedFlight origin/destination
+      const originAirport = airports.find(a => a.code === selectedFlight.originCode);
+      const destAirport = airports.find(a => a.code === selectedFlight.destinationCode);
+      if (originAirport && destAirport) {
+        return originAirport.countryCode !== destAirport.countryCode;
+      }
+      // If airport not found in local data, assume international if codes don't match TR pattern
+      return false;
+    }
+    return segments.some(seg => {
+      const originAirport = airports.find(a => a.code === seg.originCode);
+      const destAirport = airports.find(a => a.code === seg.destinationCode);
+      if (originAirport && destAirport) {
+        return originAirport.countryCode !== destAirport.countryCode;
+      }
+      return false;
+    });
+  }, [airBookings, selectedFlight]);
 
   /* ── Submit handler — chain: updatePassengers → makePreBooking → navigate ── */
   const submitRef = useRef(false);
@@ -239,6 +263,7 @@ export default function CheckoutClient() {
               passengers={passengers}
               onSubmit={handlePassengerSubmit}
               loading={updatePassengersLoading}
+              isInternational={isInternational}
             />
 
             {/* Action buttons */}
