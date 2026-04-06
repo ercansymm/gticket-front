@@ -6813,6 +6813,11 @@ footer,
 /* ══════════════════════════════════════════════════════
    SUCCESS PAGE — TICKET CARD (Professional)
    ══════════════════════════════════════════════════════ */
+.bb-success-page {
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
 .bb-success {
   max-width: 720px;
   margin: 0 auto;

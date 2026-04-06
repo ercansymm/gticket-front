@@ -368,7 +368,14 @@ const BannerFormOne = () => {
 
    const handleRangeSelect = useCallback((start: Date, end: Date) => {
       setDepartDate(start);
-      setReturnDate(end);
+      // Prevent same-day round trip — return must be at least the next day
+      const startTime = new Date(start); startTime.setHours(0, 0, 0, 0);
+      const endTime = new Date(end); endTime.setHours(0, 0, 0, 0);
+      if (endTime > startTime) {
+         setReturnDate(end);
+      } else {
+         setReturnDate(null);
+      }
    }, []);
 
    // Multi-city segment helpers
@@ -416,7 +423,7 @@ const BannerFormOne = () => {
          if (from && to && (from === to || isSameCity(fromCity, toCity))) errs.to = t.sameCityError;
          if (!departDate) errs.departDate = t.selectDate;
          if (tripType === "roundtrip" && !returnDate) errs.returnDate = t.selectDate;
-         if (tripType === "roundtrip" && departDate && returnDate && returnDate < departDate) errs.returnDate = t.returnDateError;
+         if (tripType === "roundtrip" && departDate && returnDate && returnDate <= departDate) errs.returnDate = t.returnDateError;
       }
       setErrors(errs);
       return Object.keys(errs).length === 0;
@@ -448,8 +455,8 @@ const BannerFormOne = () => {
       const searchRequest: FlightSearchRequest = {
          origin: from,
          destination: to,
-         originCountryCode: 'TR',
-         destinationCountryCode: 'TR',
+         originCountryCode: allAirports.find(ap => ap.iataCode === from.split(',')[0])?.countryCode ?? 'TR',
+         destinationCountryCode: allAirports.find(ap => ap.iataCode === to.split(',')[0])?.countryCode ?? 'TR',
          originIsCity: false,
          destinationIsCity: false,
          departureDate: formatDateForApi(departDate!),
@@ -933,7 +940,7 @@ const BannerFormOne = () => {
                         rangeStart={departDate}
                         rangeEnd={returnDate}
                         onSelectRange={handleRangeSelect}
-                        minDate={departDate || undefined}
+                        minDate={departDate ? new Date(departDate.getTime() + 86400000) : undefined}
                      />
                   )}
                </div>
