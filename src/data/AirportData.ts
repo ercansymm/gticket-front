@@ -75,4 +75,114 @@ export const airports: Airport[] = [
   { code: 'AJI', nameTr: 'Ağrı Ahmed-i Hani Havalimanı', nameEn: 'Agri Ahmed-i Hani Airport', cityTr: 'Ağrı', cityEn: 'Agri', countryCode: 'TR', isDomestic: true },
   { code: 'IGD', nameTr: 'Iğdır Havalimanı', nameEn: 'Igdir Airport', cityTr: 'Iğdır', cityEn: 'Igdir', countryCode: 'TR', isDomestic: true },
   { code: 'HRK', nameTr: 'Hakkari Yüksekova Selahaddin Eyyubi Havalimanı', nameEn: 'Hakkari Yuksekova Airport', cityTr: 'Hakkari', cityEn: 'Hakkari', countryCode: 'TR', isDomestic: true },
+
+  // ══════════════════════════════════════
+  // ULUSLARARASI — Aynı şehirde 2+ havalimanı
+  // ══════════════════════════════════════
+
+  // ── Londra ──
+  { code: 'LHR', nameTr: 'Heathrow Havalimanı', nameEn: 'Heathrow Airport', cityTr: 'Londra', cityEn: 'London', countryCode: 'GB', isDomestic: false },
+  { code: 'LGW', nameTr: 'Gatwick Havalimanı', nameEn: 'Gatwick Airport', cityTr: 'Londra', cityEn: 'London', countryCode: 'GB', isDomestic: false },
+  { code: 'STN', nameTr: 'Stansted Havalimanı', nameEn: 'Stansted Airport', cityTr: 'Londra', cityEn: 'London', countryCode: 'GB', isDomestic: false },
+  { code: 'LTN', nameTr: 'Luton Havalimanı', nameEn: 'Luton Airport', cityTr: 'Londra', cityEn: 'London', countryCode: 'GB', isDomestic: false },
+
+  // ── Paris ──
+  { code: 'CDG', nameTr: 'Charles de Gaulle Havalimanı', nameEn: 'Charles de Gaulle Airport', cityTr: 'Paris', cityEn: 'Paris', countryCode: 'FR', isDomestic: false },
+  { code: 'ORY', nameTr: 'Orly Havalimanı', nameEn: 'Orly Airport', cityTr: 'Paris', cityEn: 'Paris', countryCode: 'FR', isDomestic: false },
+
+  // ── New York ──
+  { code: 'JFK', nameTr: 'John F. Kennedy Havalimanı', nameEn: 'John F. Kennedy Airport', cityTr: 'New York', cityEn: 'New York', countryCode: 'US', isDomestic: false },
+  { code: 'EWR', nameTr: 'Newark Liberty Havalimanı', nameEn: 'Newark Liberty Airport', cityTr: 'New York', cityEn: 'New York', countryCode: 'US', isDomestic: false },
+  { code: 'LGA', nameTr: 'LaGuardia Havalimanı', nameEn: 'LaGuardia Airport', cityTr: 'New York', cityEn: 'New York', countryCode: 'US', isDomestic: false },
+
+  // ── Moskova ──
+  { code: 'SVO', nameTr: 'Şeremetyevo Havalimanı', nameEn: 'Sheremetyevo Airport', cityTr: 'Moskova', cityEn: 'Moscow', countryCode: 'RU', isDomestic: false },
+  { code: 'DME', nameTr: 'Domodedovo Havalimanı', nameEn: 'Domodedovo Airport', cityTr: 'Moskova', cityEn: 'Moscow', countryCode: 'RU', isDomestic: false },
+  { code: 'VKO', nameTr: 'Vnukovo Havalimanı', nameEn: 'Vnukovo Airport', cityTr: 'Moskova', cityEn: 'Moscow', countryCode: 'RU', isDomestic: false },
+
+  // ── Milano ──
+  { code: 'MXP', nameTr: 'Malpensa Havalimanı', nameEn: 'Malpensa Airport', cityTr: 'Milano', cityEn: 'Milan', countryCode: 'IT', isDomestic: false },
+  { code: 'LIN', nameTr: 'Linate Havalimanı', nameEn: 'Linate Airport', cityTr: 'Milano', cityEn: 'Milan', countryCode: 'IT', isDomestic: false },
+  { code: 'BGY', nameTr: 'Bergamo Havalimanı', nameEn: 'Bergamo Airport', cityTr: 'Milano', cityEn: 'Milan', countryCode: 'IT', isDomestic: false },
+
+  // ── Roma ──
+  { code: 'FCO', nameTr: 'Fiumicino Havalimanı', nameEn: 'Fiumicino Airport', cityTr: 'Roma', cityEn: 'Rome', countryCode: 'IT', isDomestic: false },
+  { code: 'CIA', nameTr: 'Ciampino Havalimanı', nameEn: 'Ciampino Airport', cityTr: 'Roma', cityEn: 'Rome', countryCode: 'IT', isDomestic: false },
+
+  // ── Berlin ──
+  { code: 'BER', nameTr: 'Berlin Brandenburg Havalimanı', nameEn: 'Berlin Brandenburg Airport', cityTr: 'Berlin', cityEn: 'Berlin', countryCode: 'DE', isDomestic: false },
+  { code: 'SXF', nameTr: 'Schönefeld Havalimanı', nameEn: 'Schonefeld Airport', cityTr: 'Berlin', cityEn: 'Berlin', countryCode: 'DE', isDomestic: false },
+
+  // ── Dubai ──
+  { code: 'DXB', nameTr: 'Dubai Uluslararası Havalimanı', nameEn: 'Dubai International Airport', cityTr: 'Dubai', cityEn: 'Dubai', countryCode: 'AE', isDomestic: false },
+  { code: 'DWC', nameTr: 'Al Maktoum Havalimanı', nameEn: 'Al Maktoum Airport', cityTr: 'Dubai', cityEn: 'Dubai', countryCode: 'AE', isDomestic: false },
+
+  // ── Tokyo ──
+  { code: 'NRT', nameTr: 'Narita Havalimanı', nameEn: 'Narita Airport', cityTr: 'Tokyo', cityEn: 'Tokyo', countryCode: 'JP', isDomestic: false },
+  { code: 'HND', nameTr: 'Haneda Havalimanı', nameEn: 'Haneda Airport', cityTr: 'Tokyo', cityEn: 'Tokyo', countryCode: 'JP', isDomestic: false },
+
+  // ── Seul ──
+  { code: 'ICN', nameTr: 'Incheon Havalimanı', nameEn: 'Incheon Airport', cityTr: 'Seul', cityEn: 'Seoul', countryCode: 'KR', isDomestic: false },
+  { code: 'GMP', nameTr: 'Gimpo Havalimanı', nameEn: 'Gimpo Airport', cityTr: 'Seul', cityEn: 'Seoul', countryCode: 'KR', isDomestic: false },
+
+  // ── Buenos Aires ──
+  { code: 'EZE', nameTr: 'Ezeiza Havalimanı', nameEn: 'Ezeiza Airport', cityTr: 'Buenos Aires', cityEn: 'Buenos Aires', countryCode: 'AR', isDomestic: false },
+  { code: 'AEP', nameTr: 'Aeroparque Havalimanı', nameEn: 'Aeroparque Airport', cityTr: 'Buenos Aires', cityEn: 'Buenos Aires', countryCode: 'AR', isDomestic: false },
+
+  // ── Bangkok ──
+  { code: 'BKK', nameTr: 'Suvarnabhumi Havalimanı', nameEn: 'Suvarnabhumi Airport', cityTr: 'Bangkok', cityEn: 'Bangkok', countryCode: 'TH', isDomestic: false },
+  { code: 'DMK', nameTr: 'Don Mueang Havalimanı', nameEn: 'Don Mueang Airport', cityTr: 'Bangkok', cityEn: 'Bangkok', countryCode: 'TH', isDomestic: false },
+
+  // ── Şangay ──
+  { code: 'PVG', nameTr: 'Pudong Havalimanı', nameEn: 'Pudong Airport', cityTr: 'Şangay', cityEn: 'Shanghai', countryCode: 'CN', isDomestic: false },
+  { code: 'SHA', nameTr: 'Hongqiao Havalimanı', nameEn: 'Hongqiao Airport', cityTr: 'Şangay', cityEn: 'Shanghai', countryCode: 'CN', isDomestic: false },
+
+  // ── Tahran ──
+  { code: 'IKA', nameTr: 'İmam Humeyni Havalimanı', nameEn: 'Imam Khomeini Airport', cityTr: 'Tahran', cityEn: 'Tehran', countryCode: 'IR', isDomestic: false },
+  { code: 'THR', nameTr: 'Mehrabad Havalimanı', nameEn: 'Mehrabad Airport', cityTr: 'Tahran', cityEn: 'Tehran', countryCode: 'IR', isDomestic: false },
+
+  // ── Chicago ──
+  { code: 'ORD', nameTr: "O'Hare Havalimanı", nameEn: "O'Hare Airport", cityTr: 'Chicago', cityEn: 'Chicago', countryCode: 'US', isDomestic: false },
+  { code: 'MDW', nameTr: 'Midway Havalimanı', nameEn: 'Midway Airport', cityTr: 'Chicago', cityEn: 'Chicago', countryCode: 'US', isDomestic: false },
+
+  // ── Washington ──
+  { code: 'IAD', nameTr: 'Dulles Havalimanı', nameEn: 'Dulles Airport', cityTr: 'Washington', cityEn: 'Washington', countryCode: 'US', isDomestic: false },
+  { code: 'DCA', nameTr: 'Reagan Havalimanı', nameEn: 'Reagan Airport', cityTr: 'Washington', cityEn: 'Washington', countryCode: 'US', isDomestic: false },
+
+  // ── Toronto ──
+  { code: 'YYZ', nameTr: 'Pearson Havalimanı', nameEn: 'Pearson Airport', cityTr: 'Toronto', cityEn: 'Toronto', countryCode: 'CA', isDomestic: false },
+  { code: 'YTZ', nameTr: 'Billy Bishop Havalimanı', nameEn: 'Billy Bishop Airport', cityTr: 'Toronto', cityEn: 'Toronto', countryCode: 'CA', isDomestic: false },
+
+  // ══════════════════════════════════════
+  // ULUSLARARASI — Tekil popüler havalimanları
+  // ══════════════════════════════════════
+  { code: 'FRA', nameTr: 'Frankfurt Havalimanı', nameEn: 'Frankfurt Airport', cityTr: 'Frankfurt', cityEn: 'Frankfurt', countryCode: 'DE', isDomestic: false },
+  { code: 'MUC', nameTr: 'Münih Havalimanı', nameEn: 'Munich Airport', cityTr: 'Münih', cityEn: 'Munich', countryCode: 'DE', isDomestic: false },
+  { code: 'AMS', nameTr: 'Schiphol Havalimanı', nameEn: 'Schiphol Airport', cityTr: 'Amsterdam', cityEn: 'Amsterdam', countryCode: 'NL', isDomestic: false },
+  { code: 'BCN', nameTr: 'El Prat Havalimanı', nameEn: 'El Prat Airport', cityTr: 'Barselona', cityEn: 'Barcelona', countryCode: 'ES', isDomestic: false },
+  { code: 'MAD', nameTr: 'Barajas Havalimanı', nameEn: 'Barajas Airport', cityTr: 'Madrid', cityEn: 'Madrid', countryCode: 'ES', isDomestic: false },
+  { code: 'ATH', nameTr: 'Atina Havalimanı', nameEn: 'Athens Airport', cityTr: 'Atina', cityEn: 'Athens', countryCode: 'GR', isDomestic: false },
+  { code: 'VIE', nameTr: 'Viyana Havalimanı', nameEn: 'Vienna Airport', cityTr: 'Viyana', cityEn: 'Vienna', countryCode: 'AT', isDomestic: false },
+  { code: 'ZRH', nameTr: 'Zürih Havalimanı', nameEn: 'Zurich Airport', cityTr: 'Zürih', cityEn: 'Zurich', countryCode: 'CH', isDomestic: false },
+  { code: 'BRU', nameTr: 'Brüksel Havalimanı', nameEn: 'Brussels Airport', cityTr: 'Brüksel', cityEn: 'Brussels', countryCode: 'BE', isDomestic: false },
+  { code: 'CPH', nameTr: 'Kopenhag Havalimanı', nameEn: 'Copenhagen Airport', cityTr: 'Kopenhag', cityEn: 'Copenhagen', countryCode: 'DK', isDomestic: false },
+  { code: 'OSL', nameTr: 'Oslo Havalimanı', nameEn: 'Oslo Airport', cityTr: 'Oslo', cityEn: 'Oslo', countryCode: 'NO', isDomestic: false },
+  { code: 'DOH', nameTr: 'Hamad Havalimanı', nameEn: 'Hamad Airport', cityTr: 'Doha', cityEn: 'Doha', countryCode: 'QA', isDomestic: false },
+  { code: 'CAI', nameTr: 'Kahire Havalimanı', nameEn: 'Cairo Airport', cityTr: 'Kahire', cityEn: 'Cairo', countryCode: 'EG', isDomestic: false },
+  { code: 'TBS', nameTr: 'Tiflis Havalimanı', nameEn: 'Tbilisi Airport', cityTr: 'Tiflis', cityEn: 'Tbilisi', countryCode: 'GE', isDomestic: false },
+  { code: 'GYD', nameTr: 'Haydar Aliyev Havalimanı', nameEn: 'Heydar Aliyev Airport', cityTr: 'Bakü', cityEn: 'Baku', countryCode: 'AZ', isDomestic: false },
+  { code: 'ECN', nameTr: 'Ercan Havalimanı', nameEn: 'Ercan Airport', cityTr: 'Lefkoşa', cityEn: 'Nicosia', countryCode: 'CY', isDomestic: false },
+  { code: 'SKP', nameTr: 'Üsküp Havalimanı', nameEn: 'Skopje Airport', cityTr: 'Üsküp', cityEn: 'Skopje', countryCode: 'MK', isDomestic: false },
+  { code: 'SOF', nameTr: 'Sofya Havalimanı', nameEn: 'Sofia Airport', cityTr: 'Sofya', cityEn: 'Sofia', countryCode: 'BG', isDomestic: false },
+  { code: 'OTP', nameTr: 'Bükreş Havalimanı', nameEn: 'Bucharest Airport', cityTr: 'Bükreş', cityEn: 'Bucharest', countryCode: 'RO', isDomestic: false },
+  { code: 'BEG', nameTr: 'Belgrad Havalimanı', nameEn: 'Belgrade Airport', cityTr: 'Belgrad', cityEn: 'Belgrade', countryCode: 'RS', isDomestic: false },
+  { code: 'SJJ', nameTr: 'Saraybosna Havalimanı', nameEn: 'Sarajevo Airport', cityTr: 'Saraybosna', cityEn: 'Sarajevo', countryCode: 'BA', isDomestic: false },
+  { code: 'PRN', nameTr: 'Priştine Havalimanı', nameEn: 'Pristina Airport', cityTr: 'Priştine', cityEn: 'Pristina', countryCode: 'XK', isDomestic: false },
+  { code: 'TIA', nameTr: 'Tiran Havalimanı', nameEn: 'Tirana Airport', cityTr: 'Tiran', cityEn: 'Tirana', countryCode: 'AL', isDomestic: false },
+  { code: 'JED', nameTr: 'Cidde Havalimanı', nameEn: 'Jeddah Airport', cityTr: 'Cidde', cityEn: 'Jeddah', countryCode: 'SA', isDomestic: false },
+  { code: 'RUH', nameTr: 'Riyad Havalimanı', nameEn: 'Riyadh Airport', cityTr: 'Riyad', cityEn: 'Riyadh', countryCode: 'SA', isDomestic: false },
+  { code: 'KWI', nameTr: 'Kuveyt Havalimanı', nameEn: 'Kuwait Airport', cityTr: 'Kuveyt', cityEn: 'Kuwait', countryCode: 'KW', isDomestic: false },
+  { code: 'AMM', nameTr: 'Amman Havalimanı', nameEn: 'Amman Airport', cityTr: 'Amman', cityEn: 'Amman', countryCode: 'JO', isDomestic: false },
+  { code: 'TLV', nameTr: 'Ben Gurion Havalimanı', nameEn: 'Ben Gurion Airport', cityTr: 'Tel Aviv', cityEn: 'Tel Aviv', countryCode: 'IL', isDomestic: false },
+  { code: 'BEY', nameTr: 'Beyrut Havalimanı', nameEn: 'Beirut Airport', cityTr: 'Beyrut', cityEn: 'Beirut', countryCode: 'LB', isDomestic: false },
 ];

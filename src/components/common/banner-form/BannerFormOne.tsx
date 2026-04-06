@@ -8,7 +8,9 @@ import { getAllAirports, searchAirports, type AirportDto } from "../../../api/lo
 import { searchFlightsThunk, setSearchParams, clearSearch } from "../../../redux/features/flightSlice";
 import { resetBooking } from "../../../redux/features/bookingSlice";
 import { resetPayment } from "../../../redux/features/paymentSlice";
-import type { FlightSearchRequest, Airport } from "@/types";
+import { normalizeForSearch } from "../../../utils/normalizeForSearch";
+import { getTurkishAirportInfo } from "../../../utils/airportTurkishNames";
+import type { FlightSearchRequest, Airport, CabinClass } from "@/types";
 import type { AppDispatch, RootState } from "../../../redux/store";
 
 /** Statik havalimanını AirportDto formatına dönüştür */
@@ -19,6 +21,12 @@ const toAirportDto = (a: Airport, lang: 'tr' | 'en' = 'tr'): AirportDto => ({
    countryCode: a.countryCode,
    isDomestic: a.isDomestic,
 });
+
+/** Dropdown'da hem tek havalimanı hem de şehir grubunu temsil eden genişletilmiş tip */
+interface AirportDropdownItem extends AirportDto {
+   isCityGroup?: boolean;
+   groupCodes?: string[];
+}
 
 interface PassengerCounts {
    adult: number;
@@ -68,8 +76,8 @@ const BannerFormOne = () => {
    const [errors, setErrors] = useState<Record<string, string>>({});
    const [fromCity, setFromCity] = useState('');
    const [toCity, setToCity] = useState('');
-   const [fromSuggestions, setFromSuggestions] = useState<AirportDto[]>([]);
-   const [toSuggestions, setToSuggestions] = useState<AirportDto[]>([]);
+   const [fromSuggestions, setFromSuggestions] = useState<AirportDropdownItem[]>([]);
+   const [toSuggestions, setToSuggestions] = useState<AirportDropdownItem[]>([]);
    const [allAirports, setAllAirports] = useState<AirportDto[]>(staticFallback);
 
    // Calendar state
@@ -111,13 +119,19 @@ const BannerFormOne = () => {
 
    const closeCalendar = useCallback(() => setCalendarOpen(false), []);
 
-   // Sayfa yüklendiğinde tüm havalimanlarını API'den bir kere çek
+   // Sayfa yüklendiğinde tüm havalimanlarını API'den çek ve statik listeyle birleştir
    useEffect(() => {
       const fetchAirports = async () => {
          try {
             const data = await getAllAirports(lang);
-            if (data.length > 0) setAllAirports(data);
-            else setAllAirports(staticFallback);
+            if (data.length > 0) {
+               // API verisini statik fallback ile birleştir — uluslararası havalimanları korunsun
+               const apiCodes = new Set(data.map(a => a.iataCode));
+               const extras = staticFallback.filter(s => !apiCodes.has(s.iataCode));
+               setAllAirports([...data, ...extras]);
+            } else {
+               setAllAirports(staticFallback);
+            }
          } catch {
             setAllAirports(staticFallback);
          }
@@ -175,40 +189,100 @@ const BannerFormOne = () => {
 
    const getAirportLabel = (code: string) => {
       if (!code) return "";
+      // Şehir grubu (virgülle ayrılmış kodlar) — "İstanbul (IST, SAW)"
+      if (code.includes(',')) {
+         const codes = code.split(',');
+         const first = allAirports.find(ap => ap.iataCode === codes[0]);
+         const trInfo = getTurkishAirportInfo(codes[0]);
+         const city = trInfo?.cityName ?? first?.city ?? codes[0];
+         return `${city} (${codes.join(', ')})`;
+      }
       const a = allAirports.find(ap => ap.iataCode === code);
-      return a ? `${a.city} (${a.iataCode})` : code;
+      const trInfo = getTurkishAirportInfo(code);
+      const city = trInfo?.cityName ?? a?.city ?? code;
+      return a ? `${city} (${a.iataCode})` : code;
    };
 
-   /** Türkçe küçük harf dönüşümü — JS'nin toLowerCase() fonksiyonu İ→i̇ yapıyor, bu düzeltir */
-   const turkishLower = useCallback((str: string): string => {
-      return str
-         .replace(/İ/g, 'i')
-         .replace(/I/g, 'ı')
-         .replace(/Ş/g, 'ş')
-         .replace(/Ğ/g, 'ğ')
-         .replace(/Ü/g, 'ü')
-         .replace(/Ö/g, 'ö')
-         .replace(/Ç/g, 'ç')
-         .toLowerCase();
-   }, []);
+   /** Tüm allAirports'u şehir bazında indeksle — grupları hızlıca bulmak için */
+   const cityIndex = useMemo(() => {
+      const map = new Map<string, AirportDto[]>();
+      for (const a of allAirports) {
+         const key = normalizeForSearch(a.city || '');
+         if (!key) continue;
+         const arr = map.get(key) || [];
+         arr.push(a);
+         map.set(key, arr);
+      }
+      return map;
+   }, [allAirports]);
 
-   /** Havalimanlarını state'teki listeden filtrele — anlık sonuç */
-   const filterAirports = useCallback((search: string, exclude?: string): AirportDto[] => {
+   /** Havalimanlarını state'teki listeden filtrele — anlık sonuç, şehir gruplarını da ekler */
+   const filterAirports = useCallback((search: string, exclude?: string): AirportDropdownItem[] => {
       if (!search || search.length < 2) return [];
-      const q = turkishLower(search);
-      return allAirports
+      const q = normalizeForSearch(search);
+      const matched = allAirports
          .filter(a =>
             a.iataCode !== exclude &&
             (a.iataCode.toLowerCase().includes(q) ||
-             turkishLower(a.city || '').includes(q) ||
-             turkishLower(a.name || '').includes(q))
+             normalizeForSearch(a.city || '').includes(q) ||
+             normalizeForSearch(a.name || '').includes(q))
          )
-         .slice(0, 8);
-   }, [allAirports, turkishLower]);
+         .slice(0, 12);
+
+      // Eşleşen havalimanlarının şehirlerini al, o şehirdeki TÜM havalimanlarından grup oluştur
+      const seenCities = new Set<string>();
+      const groups: AirportDropdownItem[] = [];
+      for (const a of matched) {
+         const cityKey = normalizeForSearch(a.city || '');
+         if (!cityKey || seenCities.has(cityKey)) continue;
+         seenCities.add(cityKey);
+         const allInCity = cityIndex.get(cityKey);
+         if (allInCity && allInCity.length >= 2) {
+            const codes = allInCity.map(ap => ap.iataCode);
+            groups.push({
+               iataCode: codes.join(','),
+               name: `${allInCity[0].city} - ${t.allAirports}`,
+               city: allInCity[0].city,
+               countryCode: allInCity[0].countryCode,
+               isDomestic: allInCity[0].isDomestic,
+               isCityGroup: true,
+               groupCodes: codes,
+            });
+         }
+      }
+
+      return [...groups, ...matched].slice(0, 12);
+   }, [allAirports, t.allAirports, cityIndex]);
+
+   /** Focus'ta gösterilecek başlangıç önerileri — şehir gruplarını içerir */
+   const getInitialSuggestions = useCallback((): AirportDropdownItem[] => {
+      const top = allAirports.slice(0, 10);
+      const seenCities = new Set<string>();
+      const groups: AirportDropdownItem[] = [];
+      for (const a of top) {
+         const cityKey = normalizeForSearch(a.city || '');
+         if (!cityKey || seenCities.has(cityKey)) continue;
+         seenCities.add(cityKey);
+         const allInCity = cityIndex.get(cityKey);
+         if (allInCity && allInCity.length >= 2) {
+            const codes = allInCity.map(ap => ap.iataCode);
+            groups.push({
+               iataCode: codes.join(','),
+               name: `${allInCity[0].city} - ${t.allAirports}`,
+               city: allInCity[0].city,
+               countryCode: allInCity[0].countryCode,
+               isDomestic: allInCity[0].isDomestic,
+               isCityGroup: true,
+               groupCodes: codes,
+            });
+         }
+      }
+      return [...groups, ...top].slice(0, 10);
+   }, [allAirports, t.allAirports, cityIndex]);
 
    /** API'den async havalimanı araması — yerel sonuç yetersizse tetiklenir */
    const apiSearchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-   const searchAirportsAsync = useCallback((search: string, exclude: string | undefined, setter: React.Dispatch<React.SetStateAction<AirportDto[]>>) => {
+   const searchAirportsAsync = useCallback((search: string, exclude: string | undefined, setter: React.Dispatch<React.SetStateAction<AirportDropdownItem[]>>) => {
       if (apiSearchTimerRef.current) clearTimeout(apiSearchTimerRef.current);
       if (!search || search.length < 2) return;
       apiSearchTimerRef.current = setTimeout(async () => {
@@ -226,10 +300,10 @@ const BannerFormOne = () => {
       }, 300);
    }, [lang]);
 
-   /** Aynı şehir kontrolü — state'teki city bilgisini kullanır */
+   /** Aynı şehir kontrolü — Türkçe karakter normalize'lu */
    const isSameCity = useCallback((city1: string, city2: string): boolean => {
       if (!city1 || !city2) return false;
-      return city1.toLowerCase() === city2.toLowerCase();
+      return normalizeForSearch(city1) === normalizeForSearch(city2);
    }, []);
 
    const updatePassenger = (type: keyof PassengerCounts, delta: number) => {
@@ -318,7 +392,7 @@ const BannerFormOne = () => {
          const a1 = allAirports.find(a => a.iataCode === code1);
          const a2 = allAirports.find(a => a.iataCode === code2);
          if (!a1 || !a2) return false;
-         return a1.city.toLowerCase() === a2.city.toLowerCase();
+         return normalizeForSearch(a1.city) === normalizeForSearch(a2.city);
       };
 
       if (tripType === "multicity") {
@@ -381,7 +455,7 @@ const BannerFormOne = () => {
          departureDate: formatDateForApi(departDate!),
          returnDate: tripType === 'roundtrip' && returnDate ? formatDateForApi(returnDate) : null,
          flightType: tripType === 'oneway' ? 'OW' : 'RT',
-         flightClass: ({ economy: 'Economy', premiumeconomy: 'PremiumEconomy', business: 'Business', first: 'First' } as Record<string, string>)[flightClass] ?? 'Economy',
+         flightClass: (({ economy: 'Economy', premiumeconomy: 'PremiumEconomy', business: 'Business', first: 'First' } as Record<string, CabinClass>)[flightClass] ?? 'Economy') as CabinClass,
          adultCount: passengers.adult,
          childCount: passengers.child,
          infantCount: passengers.infant,
@@ -408,20 +482,50 @@ const BannerFormOne = () => {
 
    // ── Shared airport dropdown renderer ──
    const renderAirportDropdown = (
-      list: AirportDto[],
-      onSelect: (airport: AirportDto) => void,
+      list: AirportDropdownItem[],
+      onSelect: (airport: AirportDropdownItem) => void,
       highlightedIndex: number,
    ) => (
       <ul className="bb-flight-form__dropdown" role="listbox">
-         {list.map((a, i) => (
-            <li key={a.iataCode} role="option" aria-selected={i === highlightedIndex} className={i === highlightedIndex ? 'bb-dropdown-highlighted' : ''} onClick={() => { addToAirportsList(a); onSelect(a); }}>
-               <div className="bb-dropdown-top">
-                  <strong>{a.city}</strong>
-                  <span className="bb-airport-code">{a.iataCode}</span>
-               </div>
-               <small>{a.name}</small>
-            </li>
-         ))}
+         {list.map((a, i) => {
+            const isGroup = !!(a as AirportDropdownItem).isCityGroup;
+            return (
+               <li
+                  key={isGroup ? `group-${a.iataCode}` : a.iataCode}
+                  role="option"
+                  aria-selected={i === highlightedIndex}
+                  className={`${i === highlightedIndex ? 'bb-dropdown-highlighted' : ''} ${isGroup ? 'bb-dropdown-city-group' : ''}`}
+                  onClick={() => { addToAirportsList(a); onSelect(a); }}
+               >
+                  {isGroup ? (
+                     <>
+                        <div className="bb-dropdown-top">
+                           <strong className="bb-city-group-label">{a.city}</strong>
+                           <div className="bb-city-group-codes">
+                              {(a as AirportDropdownItem).groupCodes?.map(code => (
+                                 <span key={code} className="bb-airport-code">{code}</span>
+                              ))}
+                           </div>
+                        </div>
+                        <small className="bb-city-group-sub">{a.name}</small>
+                     </>
+                  ) : (() => {
+                     const trInfo = getTurkishAirportInfo(a.iataCode);
+                     const cityLabel = trInfo?.cityName ?? a.city;
+                     const nameLabel = trInfo?.airportName ?? a.name;
+                     return (
+                        <>
+                           <div className="bb-dropdown-top">
+                              <strong>{cityLabel}</strong>
+                              <span className="bb-airport-code">{a.iataCode}</span>
+                           </div>
+                           <small>{nameLabel}</small>
+                        </>
+                     );
+                  })()}
+               </li>
+            );
+         })}
          {list.length === 0 && <li className="bb-flight-form__no-result">{t.noResult}</li>}
       </ul>
    );
@@ -429,10 +533,10 @@ const BannerFormOne = () => {
    /** Keyboard handler for airport input fields */
    const handleAirportKeyDown = (
       e: React.KeyboardEvent<HTMLInputElement>,
-      suggestions: AirportDto[],
+      suggestions: AirportDropdownItem[],
       highlightedIndex: number,
       setHighlight: (i: number) => void,
-      onSelect: (airport: AirportDto) => void,
+      onSelect: (airport: AirportDropdownItem) => void,
       setOpen: (open: boolean) => void,
    ) => {
       if (!suggestions.length) return;
@@ -699,7 +803,7 @@ const BannerFormOne = () => {
                   }}
                   onFocus={() => {
                      setFromOpen(true); setFromSearch(""); setFromHighlight(-1);
-                     setFromSuggestions(allAirports.slice(0, 8));
+                     setFromSuggestions(getInitialSuggestions());
                   }}
                   onKeyDown={(e) => handleAirportKeyDown(e, fromSuggestions, fromHighlight, setFromHighlight, (airport) => {
                      setFrom(airport.iataCode); setFromCity(airport.city); setFromOpen(false); setFromSearch(""); setFromSuggestions([]);
@@ -748,7 +852,7 @@ const BannerFormOne = () => {
                   }}
                   onFocus={() => {
                      setToOpen(true); setToSearch(""); setToHighlight(-1);
-                     setToSuggestions(allAirports.slice(0, 8));
+                     setToSuggestions(getInitialSuggestions());
                   }}
                   onKeyDown={(e) => handleAirportKeyDown(e, toSuggestions, toHighlight, setToHighlight, (airport) => {
                      setTo(airport.iataCode); setToCity(airport.city); setToOpen(false); setToSearch(""); setToSuggestions([]);

@@ -53,6 +53,7 @@ export const tr = {
   cityOrAirport: "Şehir veya havalimanı",
   selectDate: "Tarih seçin",
   noResult: "Sonuç bulunamadı",
+  allAirports: "Tüm Havalimanları",
   flightN: "Uçuş",
   apply: "Uygula",
 

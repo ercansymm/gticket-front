@@ -1,5 +1,6 @@
 import apiClient from './client';
 import { airports as airportFallbackList } from '@/data/AirportData';
+import { normalizeForSearch } from '@/utils/normalizeForSearch';
 
 // Backend'den gelen ham havalimanı tipi
 interface AirportRaw {
@@ -90,11 +91,11 @@ export const searchAirports = async (query: string, lang: 'tr' | 'en' = 'tr'): P
     // Search endpoint 404 fallback: tüm havalimanlarını çekip frontend'de filtrele
     try {
       const all = await getAllAirports(lang);
-      const q = query.toLowerCase();
+      const q = normalizeForSearch(query);
       return all.filter(a =>
         a.iataCode?.toLowerCase().includes(q) ||
-        a.name?.toLowerCase().includes(q) ||
-        a.city?.toLowerCase().includes(q)
+        normalizeForSearch(a.name || '').includes(q) ||
+        normalizeForSearch(a.city || '').includes(q)
       );
     } catch {
       return [];

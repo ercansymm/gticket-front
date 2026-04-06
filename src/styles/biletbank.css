@@ -977,6 +977,33 @@ select.bb-flight-form__input {
   background: transparent !important;
 }
 
+/* ── City group (Tüm Havalimanları) item ── */
+.bb-dropdown-city-group {
+  background: #f0fdf4;
+  border-left: 3px solid #047857;
+  padding-left: 12px;
+}
+
+.bb-dropdown-city-group:hover {
+  background: #dcfce7 !important;
+}
+
+.bb-city-group-label {
+  color: #047857;
+  font-size: 15px;
+}
+
+.bb-city-group-codes {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.bb-city-group-sub {
+  color: #059669 !important;
+  font-weight: 500;
+}
+
 /* ── Passenger toggle & dropdown ── */
 .bb-flight-form__pax-toggle {
   display: flex;

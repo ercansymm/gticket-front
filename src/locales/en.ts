@@ -53,6 +53,7 @@ export const en = {
   cityOrAirport: "City or airport",
   selectDate: "Select date",
   noResult: "No results found",
+  allAirports: "All Airports",
   flightN: "Flight",
   apply: "Apply",
 
