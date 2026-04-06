@@ -74,26 +74,49 @@ const SearchResultsMain = () => {
   }, [searchResults?.flights, filters, sortBy]);
 
   // Gidiş-Dönüş: uçuşları yöne göre ayır
-  // Origin/destination multi-airport olabilir (örn: "IST,SAW"), f.originCode ise tekil airport kodu.
+  // BiletBank RT aramasında her T_FlightOption'da segment.sequenceNo=1 → gidiş, sequenceNo=2 → dönüş.
+  // Fallback olarak originCode/destinationCode karşılaştırması kullanılır (multi-airport için split+includes).
+  const hasDirectionalSequenceNos = useMemo(() => {
+    return displayedFlights.some(f => f.segments.some(s => s.sequenceNo === 2));
+  }, [displayedFlights]);
+
   const outboundFlights = useMemo(() => {
     if (!isRoundTrip || !searchParams) return displayedFlights;
+
+    if (hasDirectionalSequenceNos) {
+      // SequenceNo tabanlı: tüm segmentleri SequenceNo=1 olan uçuşlar gidiş yönüdür
+      return displayedFlights.filter(f =>
+        f.segments.length > 0 && f.segments.every(s => s.sequenceNo <= 1)
+      );
+    }
+
+    // Fallback — origin/destination kodu eşleştirmesi
     const originCodes = searchParams.origin.split(',').map(c => c.trim().toUpperCase());
     const destCodes = searchParams.destination.split(',').map(c => c.trim().toUpperCase());
     return displayedFlights.filter(f =>
       originCodes.includes((f.originCode ?? '').toUpperCase()) &&
       destCodes.includes((f.destinationCode ?? '').toUpperCase())
     );
-  }, [displayedFlights, isRoundTrip, searchParams]);
+  }, [displayedFlights, isRoundTrip, searchParams, hasDirectionalSequenceNos]);
 
   const returnFlights = useMemo(() => {
     if (!isRoundTrip || !searchParams) return [];
+
+    if (hasDirectionalSequenceNos) {
+      // SequenceNo tabanlı: herhangi bir segmenti SequenceNo=2 olan uçuşlar dönüş yönüdür
+      return displayedFlights.filter(f =>
+        f.segments.some(s => s.sequenceNo === 2)
+      );
+    }
+
+    // Fallback — origin/destination kodu eşleştirmesi (ters yön)
     const originCodes = searchParams.origin.split(',').map(c => c.trim().toUpperCase());
     const destCodes = searchParams.destination.split(',').map(c => c.trim().toUpperCase());
     return displayedFlights.filter(f =>
       destCodes.includes((f.originCode ?? '').toUpperCase()) &&
       originCodes.includes((f.destinationCode ?? '').toUpperCase())
     );
-  }, [displayedFlights, isRoundTrip, searchParams]);
+  }, [displayedFlights, isRoundTrip, searchParams, hasDirectionalSequenceNos]);
 
   // Tek yön uçuş seçimi (allocate + yönlendir)
   const handleSelectFlight = (flight: FlightResult, brandedFareItemId?: string | null) => {
