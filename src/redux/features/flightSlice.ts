@@ -28,6 +28,9 @@ interface FlightState {
   // Seçili uçuş
   selectedFlight: FlightResult | null;
 
+  // RT'de seçilen dönüş bacağı (bundle veya bağımsız)
+  selectedReturnFlight: FlightResult | null;
+
   // Seçili branded fare (paket seçimi)
   selectedBrandedFareItemId: string | null;
 
@@ -49,6 +52,7 @@ const initialState: FlightState = {
   searchLoading: false,
   searchError: null,
   selectedFlight: null,
+  selectedReturnFlight: null,
   selectedBrandedFareItemId: null,
   allocateResult: null,
   allocateLoading: false,
@@ -100,6 +104,9 @@ const flightSlice = createSlice({
     setSelectedFlight: (state, action: PayloadAction<FlightResult>) => {
       state.selectedFlight = action.payload;
     },
+    setSelectedReturnFlight: (state, action: PayloadAction<FlightResult | null>) => {
+      state.selectedReturnFlight = action.payload;
+    },
     setSelectedBrandedFareItemId: (state, action: PayloadAction<string | null>) => {
       state.selectedBrandedFareItemId = action.payload;
     },
@@ -107,6 +114,7 @@ const flightSlice = createSlice({
       state.searchResults = null;
       state.searchError = null;
       state.selectedFlight = null;
+      state.selectedReturnFlight = null;
       state.selectedBrandedFareItemId = null;
       state.allocateResult = null;
       state.searchId = null;
@@ -151,5 +159,5 @@ const flightSlice = createSlice({
   },
 });
 
-export const { setSearchParams, setSelectedFlight, setSelectedBrandedFareItemId, clearSearch, clearAllocate } = flightSlice.actions;
+export const { setSearchParams, setSelectedFlight, setSelectedReturnFlight, setSelectedBrandedFareItemId, clearSearch, clearAllocate } = flightSlice.actions;
 export default flightSlice.reducer;

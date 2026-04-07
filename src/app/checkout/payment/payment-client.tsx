@@ -26,7 +26,7 @@ export default function PaymentClient() {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
 
-  const { searchId, allocateResult, selectedFlight } = useSelector((state: RootState) => state.flight);
+  const { searchId, allocateResult, selectedFlight, selectedReturnFlight } = useSelector((state: RootState) => state.flight);
   const { preBookingResult, passengers } = useSelector((state: RootState) => state.booking);
   const {
     paymentResult, paymentLoading, paymentError,
@@ -297,6 +297,7 @@ export default function PaymentClient() {
                   <i className="fa-solid fa-plane" />
                   <span>Uçuş Detayı</span>
                 </div>
+                {/* Outbound leg */}
                 <div className="bb-pay-flight__body">
                   <div className="bb-pay-flight__airline">
                     <div className="bb-pay-flight__airline-logo">
@@ -357,6 +358,65 @@ export default function PaymentClient() {
                     </span>
                   </div>
                 </div>
+                {/* Return leg */}
+                {selectedReturnFlight && (
+                  <>
+                    <div style={{ borderTop: '1px dashed #e2e8f0', margin: '0 16px' }} />
+                    <div className="bb-pay-flight__body">
+                      <div className="bb-pay-flight__airline">
+                        <div className="bb-pay-flight__airline-logo">
+                          {selectedReturnFlight.airlineCode && (
+                            <img
+                              src={`/images/airlines/${selectedReturnFlight.airlineCode}.svg`}
+                              alt={selectedReturnFlight.airlineName ?? ''}
+                              width={32}
+                              height={32}
+                              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                            />
+                          )}
+                        </div>
+                        <div>
+                          <span className="bb-pay-flight__airline-name">{selectedReturnFlight.airlineName}</span>
+                          <span className="bb-pay-flight__flight-no">{selectedReturnFlight.flightNumber}</span>
+                        </div>
+                      </div>
+                      <div className="bb-pay-flight__route">
+                        <div className="bb-pay-flight__point">
+                          <span className="bb-pay-flight__time">{selectedReturnFlight.departureTime}</span>
+                          <span className="bb-pay-flight__code">{selectedReturnFlight.originCode}</span>
+                          <span className="bb-pay-flight__city">{selectedReturnFlight.originName}</span>
+                        </div>
+                        <div className="bb-pay-flight__line">
+                          <span className="bb-pay-flight__duration">{selectedReturnFlight.durationFormatted}</span>
+                          <div className="bb-pay-flight__line-bar">
+                            <span className="bb-pay-flight__line-dot" />
+                            <span className="bb-pay-flight__line-dash" />
+                            <i className="fa-solid fa-plane bb-pay-flight__line-plane" />
+                            <span className="bb-pay-flight__line-dash" />
+                            <span className="bb-pay-flight__line-dot" />
+                          </div>
+                          <span className="bb-pay-flight__stop">
+                            {selectedReturnFlight.isDirect
+                              ? <><i className="fa-solid fa-check" style={{ color: '#10b981', marginRight: 4 }} />Direkt Uçuş</>
+                              : selectedReturnFlight.stopText
+                            }
+                          </span>
+                        </div>
+                        <div className="bb-pay-flight__point">
+                          <span className="bb-pay-flight__time">{selectedReturnFlight.arrivalTime}</span>
+                          <span className="bb-pay-flight__code">{selectedReturnFlight.destinationCode}</span>
+                          <span className="bb-pay-flight__city">{selectedReturnFlight.destinationName}</span>
+                        </div>
+                      </div>
+                      <div className="bb-pay-flight__meta">
+                        <span><i className="fa-regular fa-calendar" /> {selectedReturnFlight.departureDate}</span>
+                        {selectedReturnFlight.cabinClassName && (
+                          <span><i className="fa-solid fa-chair" /> {selectedReturnFlight.cabinClassName}</span>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             )}
 

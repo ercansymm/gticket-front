@@ -30,7 +30,7 @@ export default function CheckoutClient() {
   const { data: session } = useSession();
   const { showWarning: sessionWarning, dismissWarning: dismissSessionWarning } = useSessionTimeout();
 
-  const { allocateResult, selectedFlight, searchId: allocateSearchId, searchResults, selectedBrandedFareItemId } = useSelector(
+  const { allocateResult, selectedFlight, selectedReturnFlight, searchId: allocateSearchId, searchResults, selectedBrandedFareItemId } = useSelector(
     (state: RootState) => state.flight
   );
   // searchId fallback: allocate response → search results
@@ -108,21 +108,10 @@ export default function CheckoutClient() {
     paxCounts.infant > 0 ? `${paxCounts.infant} Bebek` : '',
   ].filter(Boolean).join(', ');
 
-  // Detect international flight: primary source is allocate flightType, fallback to airport lookup
+  // Detect international flight
+  // Priority: airport country code check (reliable) → BiletBank flightType (fallback)
   const isInternational = useMemo(() => {
-    // 1. Primary: BiletBank flightType from allocate response ("I" = international, "D" = domestic)
-    const flightTypeDetected = airBookings.some(ab =>
-      ab.flightType?.toUpperCase() === 'I' || ab.flightType?.toUpperCase() === 'INTERNATIONAL'
-    );
-    if (flightTypeDetected) return true;
-
-    // If flightType explicitly says domestic, trust it
-    const allDomestic = airBookings.length > 0 && airBookings.every(ab =>
-      ab.flightType?.toUpperCase() === 'D' || ab.flightType?.toUpperCase() === 'DOMESTIC'
-    );
-    if (allDomestic) return false;
-
-    // 2. Fallback: check airport country codes from segments
+    // 1. Primary: airport country codes from segments (most reliable — not affected by BiletBank data quirks)
     const segments = airBookings.flatMap(ab => ab.segments ?? []);
     const codes = segments.length > 0
       ? segments.map(seg => ({ origin: seg.originCode, dest: seg.destinationCode }))
@@ -130,18 +119,28 @@ export default function CheckoutClient() {
         ? [{ origin: selectedFlight.originCode, dest: selectedFlight.destinationCode }]
         : [];
 
-    return codes.some(({ origin, dest }) => {
-      const originAirport = airports.find(a => a.code === origin);
-      const destAirport = airports.find(a => a.code === dest);
-      // If one airport is found (TR) and the other is NOT in the list → international
-      if (originAirport && !destAirport) return true;
-      if (!originAirport && destAirport) return true;
-      // If both found, compare country codes
-      if (originAirport && destAirport) {
-        return originAirport.countryCode !== destAirport.countryCode;
-      }
-      return false;
-    });
+    // Only trust the airport check when BOTH airports are found in our data
+    const resolvedPairs = codes.filter(({ origin, dest }) =>
+      origin !== null && dest !== null &&
+      airports.some(a => a.code === origin) && airports.some(a => a.code === dest)
+    );
+
+    if (resolvedPairs.length > 0) {
+      // We have enough data — ülke kodu farklıysa uluslararası
+      return resolvedPairs.some(({ origin, dest }) => {
+        const o = airports.find(a => a.code === origin);
+        const d = airports.find(a => a.code === dest);
+        return !!o && !!d && o.countryCode !== d.countryCode;
+      });
+    }
+
+    // 2. Fallback: BiletBank flightType from allocate response ("I" = international, "D" = domestic)
+    const flightTypes = airBookings.map(ab => ab.flightType?.toUpperCase() ?? '');
+    if (flightTypes.some(ft => ft === 'I' || ft === 'INTERNATIONAL')) return true;
+    if (flightTypes.some(ft => ft === 'D' || ft === 'DOMESTIC')) return false;
+
+    // 3. Hiçbir şey belirlenemedi → yurt içi kabul et (daha güvenli)
+    return false;
   }, [airBookings, selectedFlight]);
 
   /* ── Submit handler — chain: updatePassengers → makePreBooking → navigate ── */
@@ -309,6 +308,7 @@ export default function CheckoutClient() {
             {/* Flight summary card */}
             <div className="bb-checkout__card">
               <h3 className="bb-checkout__card-title">Uçuş Özeti</h3>
+              {/* Outbound flight */}
               <div className="bb-checkout__flight-mini">
                 <div className="bb-checkout__flight-mini-logo"
                   style={!logoPath ? { background: brandStyle.bg, color: brandStyle.color, border: 'none' } : undefined}
@@ -369,6 +369,53 @@ export default function CheckoutClient() {
                   )}
                 </div>
               </div>
+              {/* Return flight — RT bundle/non-bundle */}
+              {selectedReturnFlight && (
+                <>
+                  <div style={{ borderTop: '1px dashed #e5e7eb', margin: '10px 0' }} />
+                  <div className="bb-checkout__flight-mini">
+                    <div className="bb-checkout__flight-mini-logo"
+                      style={{ background: (AIRLINE_COLORS[selectedReturnFlight.airlineCode ?? ''] ?? FALLBACK_STYLE).bg, color: (AIRLINE_COLORS[selectedReturnFlight.airlineCode ?? ''] ?? FALLBACK_STYLE).color, border: 'none' }}
+                    >
+                      <img
+                        src={`/images/airlines/${selectedReturnFlight.airlineCode}.svg`}
+                        alt={selectedReturnFlight.airlineName ?? ''}
+                        width={36}
+                        height={36}
+                        style={{ display: 'block' }}
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    </div>
+                    <div>
+                      <div className="bb-checkout__flight-mini-airline">
+                        {selectedReturnFlight.airlineName}
+                        <span style={{ fontWeight: 400, color: '#6b7280', marginLeft: 8, fontSize: 13 }}>
+                          {selectedReturnFlight.flightNumber}
+                        </span>
+                      </div>
+                      <div className="bb-checkout__flight-mini-route">
+                        {selectedReturnFlight.departureTime}
+                        <span className="bb-checkout__flight-mini-arrow">→</span>
+                        {selectedReturnFlight.arrivalTime}
+                      </div>
+                      <div className="bb-checkout__flight-mini-detail">
+                        {selectedReturnFlight.originCode} — {selectedReturnFlight.destinationCode}
+                        {selectedReturnFlight.durationFormatted && (
+                          <span style={{ marginLeft: 12 }}>{selectedReturnFlight.durationFormatted}</span>
+                        )}
+                      </div>
+                      <div className="bb-checkout__flight-mini-detail">
+                        {selectedReturnFlight.departureDate}
+                      </div>
+                      {selectedReturnFlight.isDirect ? (
+                        <span style={{ fontSize: 12, color: '#22c55e', fontWeight: 500 }}>Direkt Uçuş</span>
+                      ) : (
+                        <span style={{ fontSize: 12, color: '#f59e0b', fontWeight: 500 }}>{selectedReturnFlight.stopText}</span>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
               <div style={{ fontSize: 13, color: '#6b7280', marginTop: 8 }}>
                 {paxSummaryText}
               </div>

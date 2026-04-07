@@ -192,7 +192,7 @@ export default function PassengerForm({ passengers, onSubmit, loading, disabled,
 
     // Identity document validation
     if (isInternational) {
-      // International flights: passport fields are always mandatory
+      // Uluslararası uçuş: pasaport her zaman zorunlu
       if (!form.passportNo || form.passportNo.trim().length < 5) {
         e.passportNo = 'Yurt dışı uçuşlarda pasaport numarası zorunludur';
       }
@@ -202,30 +202,38 @@ export default function PassengerForm({ passengers, onSubmit, loading, disabled,
       if (!form.passportExpiry) {
         e.passportExpiry = 'Pasaport geçerlilik tarihi zorunludur';
       } else {
-        // Passport must be valid after today
         const today = new Date().toISOString().split('T')[0];
         if (form.passportExpiry <= today) {
           e.passportExpiry = 'Pasaport geçerlilik tarihi uçuş tarihinden sonra olmalıdır';
         }
       }
-      // TC Kimlik is still required for Turkish citizens on international flights
+      // Türk vatandaşı ise TC kimlik de zorunlu
       if (form.isTurkishCitizen) {
         if (!form.citizenNo || !isValidTCKimlik(form.citizenNo)) {
           e.citizenNo = 'TC kimlik no 11 haneli olmalıdır';
         }
       }
     } else {
-      // Domestic flights: TC Kimlik or Passport based on citizenship
+      // Yurt içi uçuş: TC vatandaşı → sadece TC kimlik; yabancı → sadece pasaport
       if (form.isTurkishCitizen) {
         if (!form.citizenNo || !isValidTCKimlik(form.citizenNo)) {
           e.citizenNo = 'TC kimlik no 11 haneli olmalıdır';
         }
+        // Pasaport alanları yurt içi TC vatandaşında validate edilmez
       } else {
         if (!form.passportNo || form.passportNo.trim().length < 5) {
           e.passportNo = 'Pasaport numarası gereklidir';
         }
         if (!form.passportCountry || form.passportCountry.length !== 2) {
           e.passportCountry = 'Pasaport ülkesi seçiniz';
+        }
+        if (!form.passportExpiry) {
+          e.passportExpiry = 'Pasaport geçerlilik tarihi gereklidir';
+        } else {
+          const today = new Date().toISOString().split('T')[0];
+          if (form.passportExpiry <= today) {
+            e.passportExpiry = 'Pasaport geçerlilik tarihi bugünden sonra olmalıdır';
+          }
         }
       }
     }
@@ -280,16 +288,21 @@ export default function PassengerForm({ passengers, onSubmit, loading, disabled,
       const form = forms[i];
       const paxType = normalizePaxType(pax.type);
 
-      const citizenNo = form.isTurkishCitizen && form.citizenNo
+      // Yurt içi TC vatandaşı: sadece citizenNo gönderilir, pasaport null
+      // Yurt içi yabancı: sadece pasaport gönderilir, citizenNo null
+      // Yurt dışı Türk: citizenNo + pasaport ikisi birden gönderilir
+      const isTurkishDomestic = form.isTurkishCitizen && !isInternational;
+
+      const citizenNo = (form.isTurkishCitizen && form.citizenNo)
         ? form.citizenNo
         : null;
-      const passportNo = (!form.isTurkishCitizen || isInternational) && form.passportNo
+      const passportNo = !isTurkishDomestic && form.passportNo
         ? form.passportNo.toUpperCase()
         : null;
-      const passportCountry = (!form.isTurkishCitizen || isInternational) && form.passportCountry
+      const passportCountry = !isTurkishDomestic && form.passportCountry
         ? form.passportCountry.toUpperCase()
         : null;
-      const passportExpiry = (!form.isTurkishCitizen || isInternational) && form.passportExpiry
+      const passportExpiry = !isTurkishDomestic && form.passportExpiry
         ? form.passportExpiry
         : null;
 
@@ -510,10 +523,34 @@ export default function PassengerForm({ passengers, onSubmit, loading, disabled,
                     type="checkbox"
                     checked={form.isTurkishCitizen}
                     onChange={e => {
-                      updateField(index, 'isTurkishCitizen', e.target.checked);
-                      if (e.target.checked) {
-                        updateField(index, 'nationality', 'TR');
-                      }
+                      const isTurkish = e.target.checked;
+                      setForms(prev => {
+                        const next = [...prev];
+                        next[index] = {
+                          ...next[index],
+                          isTurkishCitizen: isTurkish,
+                          nationality: isTurkish ? 'TR' : next[index].nationality,
+                          // TC seçilince pasaport alanları sıfırlanır
+                          passportNo: isTurkish ? '' : next[index].passportNo,
+                          passportCountry: isTurkish ? '' : next[index].passportCountry,
+                          passportExpiry: isTurkish ? '' : next[index].passportExpiry,
+                          // Yabancı seçilince TC kimlik sıfırlanır (sadece yurt içi; yurt dışında TC de gerekli)
+                          citizenNo: (!isTurkish && !isInternational) ? '' : next[index].citizenNo,
+                        };
+                        return next;
+                      });
+                      // İlgili hataları da temizle
+                      setErrors(prev => {
+                        const next = [...prev];
+                        next[index] = {
+                          ...next[index],
+                          citizenNo: '',
+                          passportNo: '',
+                          passportCountry: '',
+                          passportExpiry: '',
+                        };
+                        return next;
+                      });
                     }}
                   />
                   Türk vatandaşı
@@ -614,38 +651,54 @@ export default function PassengerForm({ passengers, onSubmit, loading, disabled,
                   </div>
                 </div>
             ) : (
-              <div className="bb-pax-panel__row">
-                <div className={`bb-pax-panel__field ${err.passportNo ? 'bb-pax-panel__field--error' : ''}`}>
-                  <label className="bb-pax-panel__label">Pasaport No</label>
-                  <input
-                    type="text"
-                    className="bb-pax-panel__input"
-                    placeholder="Pasaport numarası"
-                    value={form.passportNo}
-                    onChange={e => updateField(index, 'passportNo', e.target.value)}
-                    maxLength={20}
-                    autoComplete="off"
-                  />
-                  {err.passportNo && <span className="bb-pax-panel__error">{err.passportNo}</span>}
+              <>
+                <div className="bb-pax-panel__row">
+                  <div className={`bb-pax-panel__field ${err.passportNo ? 'bb-pax-panel__field--error' : ''}`}>
+                    <label className="bb-pax-panel__label">Pasaport No</label>
+                    <input
+                      type="text"
+                      className="bb-pax-panel__input"
+                      placeholder="Pasaport numarası"
+                      value={form.passportNo}
+                      onChange={e => updateField(index, 'passportNo', e.target.value.toUpperCase())}
+                      maxLength={20}
+                      autoComplete="off"
+                    />
+                    {err.passportNo && <span className="bb-pax-panel__error">{err.passportNo}</span>}
+                  </div>
+                  <div className={`bb-pax-panel__field ${err.passportCountry ? 'bb-pax-panel__field--error' : ''}`}>
+                    <label className="bb-pax-panel__label">Pasaport Ülkesi</label>
+                    <input
+                      type="text"
+                      className="bb-pax-panel__input"
+                      placeholder="Ülke kodu (ör: DE, US)"
+                      value={form.passportCountry}
+                      onChange={e => {
+                        const val = e.target.value.replace(/[^A-Za-z]/g, '').slice(0, 2).toUpperCase();
+                        updateField(index, 'passportCountry', val);
+                        updateField(index, 'nationality', val);
+                      }}
+                      maxLength={2}
+                      autoComplete="off"
+                    />
+                    {err.passportCountry && <span className="bb-pax-panel__error">{err.passportCountry}</span>}
+                  </div>
                 </div>
-                <div className={`bb-pax-panel__field ${err.passportCountry ? 'bb-pax-panel__field--error' : ''}`}>
-                  <label className="bb-pax-panel__label">Pasaport Ülkesi</label>
-                  <input
-                    type="text"
-                    className="bb-pax-panel__input"
-                    placeholder="Ülke kodu (ör: DE, US)"
-                    value={form.passportCountry}
-                    onChange={e => {
-                      const val = e.target.value.replace(/[^A-Za-z]/g, '').slice(0, 2).toUpperCase();
-                      updateField(index, 'passportCountry', val);
-                      updateField(index, 'nationality', val);
-                    }}
-                    maxLength={2}
-                    autoComplete="off"
-                  />
-                  {err.passportCountry && <span className="bb-pax-panel__error">{err.passportCountry}</span>}
+                <div className="bb-pax-panel__row">
+                  <div className={`bb-pax-panel__field ${err.passportExpiry ? 'bb-pax-panel__field--error' : ''}`}>
+                    <label className="bb-pax-panel__label">Pasaport Geçerlilik Tarihi</label>
+                    <input
+                      type="date"
+                      className="bb-pax-panel__input"
+                      value={form.passportExpiry}
+                      onChange={e => updateField(index, 'passportExpiry', e.target.value)}
+                      min={new Date().toISOString().split('T')[0]}
+                      autoComplete="off"
+                    />
+                    {err.passportExpiry && <span className="bb-pax-panel__error">{err.passportExpiry}</span>}
+                  </div>
                 </div>
-              </div>
+              </>
             )}
 
             {/* Miles&Smiles hint (visual only) */}

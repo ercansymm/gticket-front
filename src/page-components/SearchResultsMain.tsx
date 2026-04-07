@@ -7,7 +7,7 @@ import FlightCard from '../components/booking/FlightCard';
 import FilterSidebar from '../components/booking/FilterSidebar';
 import SortBar from '../components/booking/SortBar';
 import PriceCalendar, { generateMockPrices } from '../components/flight/PriceCalendar';
-import { searchFlightsThunk, setSelectedFlight, setSelectedBrandedFareItemId, allocateFlightThunk, clearAllocate } from '../redux/features/flightSlice';
+import { searchFlightsThunk, setSelectedFlight, setSelectedReturnFlight, setSelectedBrandedFareItemId, allocateFlightThunk, clearAllocate } from '../redux/features/flightSlice';
 import { filterFlights, sortFlights, INITIAL_FILTERS } from '../utils/flightFilters';
 import type { RootState, AppDispatch } from '../redux/store';
 import type { FlightResult, FlightFilters, FlightSortBy, AllocateResponse } from '@/types';
@@ -153,6 +153,7 @@ const SearchResultsMain = () => {
 
     setRtAllocating(true);
     dispatch(setSelectedFlight(selectedOutbound.flight));
+    dispatch(setSelectedReturnFlight(flight));
 
     try {
       if (flight.isRoundTripBundle && flight.bundleProductId) {
