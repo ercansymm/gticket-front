@@ -6,6 +6,7 @@ import type {
   AllocateClientRequest, AllocateResponse,
   FlightResult
 } from '@/types';
+import type { RootState } from '../store';
 
 /** Backend'den gelen 4 farklı hata formatını tek mesaja çevirir */
 function extractErrorMessage(error: any, fallback: string): string {
@@ -69,12 +70,19 @@ export const searchFlightsThunk = createAsyncThunk(
   }
 );
 
-// Uçuş tahsis — istemci sadece searchId + productId gönderir
+// Uçuş tahsis — state'ten session bilgisini alıp backend'e gönderir
 export const allocateFlightThunk = createAsyncThunk(
   'flight/allocate',
-  async (params: AllocateClientRequest, { rejectWithValue }) => {
+  async (params: AllocateClientRequest, { getState, rejectWithValue }) => {
     try {
-      const result = await allocateFlight(params);
+      const state = getState() as RootState;
+      const searchResults = state.flight.searchResults;
+      const enrichedParams: AllocateClientRequest = {
+        ...params,
+        sessionId: params.sessionId ?? searchResults?.sessionId ?? null,
+        sessionToken: params.sessionToken ?? searchResults?.sessionToken ?? null,
+      };
+      const result = await allocateFlight(enrichedParams);
       return result;
     } catch (error: any) {
       return rejectWithValue(extractErrorMessage(error, 'Uçuş tahsisi başarısız'));

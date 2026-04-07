@@ -29,16 +29,10 @@ export interface FlightSearchResponse {
   hasError: boolean;
   errorMessage: string | null;
   searchId: string | null;
-  flights: FlightResult[];
-  filterOptions: FilterOptions | null;
-  /** DEV only — geçici, canlıda kaldırılacak */
-  __devSessionId?: string | null;
-}
-
-// Server-side'da kullanılan ham backend response — istemciye GİTMEZ
-export interface FlightSearchBackendResponse extends FlightSearchResponse {
   sessionId: string | null;
   sessionToken: string | null;
+  flights: FlightResult[];
+  filterOptions: FilterOptions | null;
 }
 
 export interface FlightResult {
@@ -317,6 +311,8 @@ export interface AllocateClientRequest {
   searchId: string;
   productId: string;
   brandedFareItemId?: string | null;
+  sessionId?: string | null;
+  sessionToken?: string | null;
 }
 
 // Server-side'da backend'e gönderilen tam request
