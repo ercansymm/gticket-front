@@ -76,6 +76,8 @@ const BannerFormOne = () => {
    const [errors, setErrors] = useState<Record<string, string>>({});
    const [fromCity, setFromCity] = useState('');
    const [toCity, setToCity] = useState('');
+   const [fromCountryCode, setFromCountryCode] = useState('');
+   const [toCountryCode, setToCountryCode] = useState('');
    const [fromSuggestions, setFromSuggestions] = useState<AirportDropdownItem[]>([]);
    const [toSuggestions, setToSuggestions] = useState<AirportDropdownItem[]>([]);
    const [allAirports, setAllAirports] = useState<AirportDto[]>(staticFallback);
@@ -344,10 +346,14 @@ const BannerFormOne = () => {
       const tempTo = to;
       const tempFromCity = fromCity;
       const tempToCity = toCity;
+      const tempFromCountryCode = fromCountryCode;
+      const tempToCountryCode = toCountryCode;
       setFrom(tempTo);
       setTo(tempFrom);
       setFromCity(tempToCity);
       setToCity(tempFromCity);
+      setFromCountryCode(tempToCountryCode);
+      setToCountryCode(tempFromCountryCode);
       if (tempFromCity && tempToCity && isSameCity(tempToCity, tempFromCity)) {
          setErrors(prev => ({ ...prev, to: t.sameCityError }));
       } else {
@@ -448,8 +454,8 @@ const BannerFormOne = () => {
       const searchRequest: FlightSearchRequest = {
          origin: from,
          destination: to,
-         originCountryCode: 'TR',
-         destinationCountryCode: 'TR',
+         originCountryCode: fromCountryCode || 'TR',
+         destinationCountryCode: toCountryCode || 'TR',
          originIsCity: false,
          destinationIsCity: false,
          departureDate: formatDateForApi(departDate!),
@@ -806,7 +812,7 @@ const BannerFormOne = () => {
                      setFromSuggestions(getInitialSuggestions());
                   }}
                   onKeyDown={(e) => handleAirportKeyDown(e, fromSuggestions, fromHighlight, setFromHighlight, (airport) => {
-                     setFrom(airport.iataCode); setFromCity(airport.city); setFromOpen(false); setFromSearch(""); setFromSuggestions([]);
+                     setFrom(airport.iataCode); setFromCity(airport.city); setFromCountryCode(airport.countryCode ?? ''); setFromOpen(false); setFromSearch(""); setFromSuggestions([]);
                      if (toCity && isSameCity(airport.city, toCity)) {
                         setErrors(prev => ({ ...prev, to: t.sameCityError }));
                      } else {
@@ -821,7 +827,7 @@ const BannerFormOne = () => {
                />
                {errors.from && <span className="bb-flight-form__error">{errors.from}</span>}
                {fromOpen && fromSuggestions.length > 0 && renderAirportDropdown(fromSuggestions, (airport) => {
-                  setFrom(airport.iataCode); setFromCity(airport.city); setFromOpen(false); setFromSearch(""); setFromSuggestions([]);
+                  setFrom(airport.iataCode); setFromCity(airport.city); setFromCountryCode(airport.countryCode ?? ''); setFromOpen(false); setFromSearch(""); setFromSuggestions([]);
                   if (toCity && isSameCity(airport.city, toCity)) {
                      setErrors(prev => ({ ...prev, to: t.sameCityError }));
                   } else {
@@ -855,7 +861,7 @@ const BannerFormOne = () => {
                      setToSuggestions(getInitialSuggestions());
                   }}
                   onKeyDown={(e) => handleAirportKeyDown(e, toSuggestions, toHighlight, setToHighlight, (airport) => {
-                     setTo(airport.iataCode); setToCity(airport.city); setToOpen(false); setToSearch(""); setToSuggestions([]);
+                     setTo(airport.iataCode); setToCity(airport.city); setToCountryCode(airport.countryCode ?? ''); setToOpen(false); setToSearch(""); setToSuggestions([]);
                      if (fromCity && isSameCity(fromCity, airport.city)) {
                         setErrors(prev => ({ ...prev, to: t.sameCityError }));
                      } else {
@@ -870,7 +876,7 @@ const BannerFormOne = () => {
                />
                {errors.to && <span className="bb-flight-form__error">{errors.to}</span>}
                {toOpen && toSuggestions.length > 0 && renderAirportDropdown(toSuggestions, (airport) => {
-                  setTo(airport.iataCode); setToCity(airport.city); setToOpen(false); setToSearch(""); setToSuggestions([]);
+                  setTo(airport.iataCode); setToCity(airport.city); setToCountryCode(airport.countryCode ?? ''); setToOpen(false); setToSearch(""); setToSuggestions([]);
                   if (fromCity && isSameCity(fromCity, airport.city)) {
                      setErrors(prev => ({ ...prev, to: t.sameCityError }));
                   } else {
