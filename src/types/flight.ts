@@ -88,6 +88,8 @@ export interface FlightResult {
   isReturnLeg: boolean;
   /** Dönüş bacağı için asıl RecommendationBox ProductId'si — allocate bu ID ile yapılır */
   bundleProductId: string | null;
+  /** RecommendationBox gidiş+dönüş FlightId listesi — Allocate SubOptions için */
+  subOptionFlightIds?: string[] | null;
 }
 
 export interface FarePackage {
@@ -313,6 +315,8 @@ export interface AllocateClientRequest {
   brandedFareItemId?: string | null;
   sessionId?: string | null;
   sessionToken?: string | null;
+  /** RecommendationBox RT sonuçları için gidiş+dönüş FlightId listesi — Allocate SubOptions */
+  subOptions?: string[] | null;
 }
 
 // Server-side'da backend'e gönderilen tam request

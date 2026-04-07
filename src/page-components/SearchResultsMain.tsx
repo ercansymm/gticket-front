@@ -161,6 +161,7 @@ const SearchResultsMain = () => {
           searchId: searchResults.searchId!,
           productId: flight.bundleProductId,
           brandedFareItemId: brandedFareItemId ?? undefined,
+          subOptions: flight.subOptionFlightIds ?? undefined,
         })).unwrap();
 
         if (bundleResult.isPriceChanged) {
