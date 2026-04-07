@@ -155,24 +155,38 @@ const SearchResultsMain = () => {
     dispatch(setSelectedFlight(selectedOutbound.flight));
 
     try {
-      // 1. Gidiş uçuşunu tahsis et
-      await dispatch(allocateFlightThunk({
-        searchId: searchResults.searchId!,
-        productId: selectedOutbound.flight.productId!,
-        brandedFareItemId: selectedOutbound.brandedFareItemId ?? undefined,
-      })).unwrap();
+      if (flight.isRoundTripBundle && flight.bundleProductId) {
+        // RecommendationBox bundle: gidiş+dönüş tek ProductId ile tek seferde allocate edilir.
+        const bundleResult = await dispatch(allocateFlightThunk({
+          searchId: searchResults.searchId!,
+          productId: flight.bundleProductId,
+          brandedFareItemId: brandedFareItemId ?? undefined,
+        })).unwrap();
 
-      // 2. Dönüş uçuşunu tahsis et (aynı oturumda)
-      const retResult = await dispatch(allocateFlightThunk({
-        searchId: searchResults.searchId!,
-        productId: returnSelection.flight.productId!,
-        brandedFareItemId: returnSelection.brandedFareItemId ?? undefined,
-      })).unwrap();
-
-      if (retResult.isPriceChanged) {
-        setPriceChangedData(retResult);
+        if (bundleResult.isPriceChanged) {
+          setPriceChangedData(bundleResult);
+        } else {
+          router.push('/checkout');
+        }
       } else {
-        router.push('/checkout');
+        // Bağımsız FlightOption: önce gidiş sonra dönüşü ayrı ayrı allocate et
+        await dispatch(allocateFlightThunk({
+          searchId: searchResults.searchId!,
+          productId: selectedOutbound.flight.productId!,
+          brandedFareItemId: selectedOutbound.brandedFareItemId ?? undefined,
+        })).unwrap();
+
+        const retResult = await dispatch(allocateFlightThunk({
+          searchId: searchResults.searchId!,
+          productId: returnSelection.flight.productId!,
+          brandedFareItemId: returnSelection.brandedFareItemId ?? undefined,
+        })).unwrap();
+
+        if (retResult.isPriceChanged) {
+          setPriceChangedData(retResult);
+        } else {
+          router.push('/checkout');
+        }
       }
     } catch {
       // Redux hata yönetimi zaten çalışıyor

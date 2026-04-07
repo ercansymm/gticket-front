@@ -86,6 +86,14 @@ export interface FlightResult {
   cabinClassName: string | null;
   defaultBrandedFareItemId: string | null;
   // NOT: customerCommission* alanları güvenlik gereği backend tarafından filtrelenir, frontend tipinde tutulmaz
+
+  // RecommendationBox (RT bundle) alanları
+  /** true ise bu uçuş BiletBank T_RecommendationBox'tan geldi — gidiş+dönüş tek üründe paketli */
+  isRoundTripBundle: boolean;
+  /** true ise bu DTO dönüş bacağını temsil ediyor */
+  isReturnLeg: boolean;
+  /** Dönüş bacağı için asıl RecommendationBox ProductId'si — allocate bu ID ile yapılır */
+  bundleProductId: string | null;
 }
 
 export interface FarePackage {
