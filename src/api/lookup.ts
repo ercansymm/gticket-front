@@ -15,6 +15,7 @@ interface AirportRaw {
   countryEn: string;
   countryCode: string;
   timezone: string;
+  cityCode: string | null;
   isCity: boolean;
   isDomestic: boolean;
   isActive: boolean;
@@ -26,6 +27,7 @@ export interface AirportDto {
   iataCode: string;        // "IST"
   name: string;            // Aktif dile göre
   city: string;            // Aktif dile göre
+  cityCode: string;        // IATA şehir kodu — "IST", "LON", "IZM" vb.
   countryCode: string;     // "TR"
   isDomestic: boolean;
 }
@@ -53,6 +55,7 @@ const mapAirport = (a: AirportRaw, lang: 'tr' | 'en' = 'tr'): AirportDto => {
     iataCode: a.iataCode,
     name,
     city,
+    cityCode: a.cityCode || a.iataCode,
     countryCode: a.countryCode || 'TR',
     isDomestic: a.isDomestic ?? true,
   };

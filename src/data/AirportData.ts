@@ -6,8 +6,8 @@ import type { Airport } from '@/types';
  */
 export const airports: Airport[] = [
   // ── İstanbul ──
-  { code: 'IST', nameTr: 'İstanbul Havalimanı', nameEn: 'Istanbul Airport', cityTr: 'İstanbul', cityEn: 'Istanbul', countryCode: 'TR', isDomestic: true },
-  { code: 'SAW', nameTr: 'Sabiha Gökçen Havalimanı', nameEn: 'Sabiha Gokcen Airport', cityTr: 'İstanbul', cityEn: 'Istanbul', countryCode: 'TR', isDomestic: true },
+  { code: 'IST', nameTr: 'İstanbul Havalimanı', nameEn: 'Istanbul Airport', cityTr: 'İstanbul', cityEn: 'Istanbul', countryCode: 'TR', isDomestic: true, cityCode: 'IST' },
+  { code: 'SAW', nameTr: 'Sabiha Gökçen Havalimanı', nameEn: 'Sabiha Gokcen Airport', cityTr: 'İstanbul', cityEn: 'Istanbul', countryCode: 'TR', isDomestic: true, cityCode: 'IST' },
 
   // ── Ankara ──
   { code: 'ESB', nameTr: 'Esenboğa Havalimanı', nameEn: 'Esenboga Airport', cityTr: 'Ankara', cityEn: 'Ankara', countryCode: 'TR', isDomestic: true },

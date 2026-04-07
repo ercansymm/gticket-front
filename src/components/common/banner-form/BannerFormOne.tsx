@@ -18,6 +18,7 @@ const toAirportDto = (a: Airport, lang: 'tr' | 'en' = 'tr'): AirportDto => ({
    iataCode: a.code,
    name: lang === 'tr' ? a.nameTr : a.nameEn,
    city: lang === 'tr' ? a.cityTr : a.cityEn,
+   cityCode: a.cityCode || a.code,
    countryCode: a.countryCode,
    isDomestic: a.isDomestic,
 });
@@ -78,6 +79,8 @@ const BannerFormOne = () => {
    const [toCity, setToCity] = useState('');
    const [fromCountryCode, setFromCountryCode] = useState('');
    const [toCountryCode, setToCountryCode] = useState('');
+   const [fromIsCity, setFromIsCity] = useState(false);
+   const [toIsCity, setToIsCity] = useState(false);
    const [fromSuggestions, setFromSuggestions] = useState<AirportDropdownItem[]>([]);
    const [toSuggestions, setToSuggestions] = useState<AirportDropdownItem[]>([]);
    const [allAirports, setAllAirports] = useState<AirportDto[]>(staticFallback);
@@ -191,14 +194,6 @@ const BannerFormOne = () => {
 
    const getAirportLabel = (code: string) => {
       if (!code) return "";
-      // Şehir grubu (virgülle ayrılmış kodlar) — "İstanbul (IST, SAW)"
-      if (code.includes(',')) {
-         const codes = code.split(',');
-         const first = allAirports.find(ap => ap.iataCode === codes[0]);
-         const trInfo = getTurkishAirportInfo(codes[0]);
-         const city = trInfo?.cityName ?? first?.city ?? codes[0];
-         return `${city} (${codes.join(', ')})`;
-      }
       const a = allAirports.find(ap => ap.iataCode === code);
       const trInfo = getTurkishAirportInfo(code);
       const city = trInfo?.cityName ?? a?.city ?? code;
@@ -241,10 +236,12 @@ const BannerFormOne = () => {
          const allInCity = cityIndex.get(cityKey);
          if (allInCity && allInCity.length >= 2) {
             const codes = allInCity.map(ap => ap.iataCode);
+            const groupCityCode = allInCity[0].cityCode || codes[0];
             groups.push({
-               iataCode: codes.join(','),
+               iataCode: groupCityCode,
                name: `${allInCity[0].city} - ${t.allAirports}`,
                city: allInCity[0].city,
+               cityCode: groupCityCode,
                countryCode: allInCity[0].countryCode,
                isDomestic: allInCity[0].isDomestic,
                isCityGroup: true,
@@ -268,10 +265,12 @@ const BannerFormOne = () => {
          const allInCity = cityIndex.get(cityKey);
          if (allInCity && allInCity.length >= 2) {
             const codes = allInCity.map(ap => ap.iataCode);
+            const groupCityCode = allInCity[0].cityCode || codes[0];
             groups.push({
-               iataCode: codes.join(','),
+               iataCode: groupCityCode,
                name: `${allInCity[0].city} - ${t.allAirports}`,
                city: allInCity[0].city,
+               cityCode: groupCityCode,
                countryCode: allInCity[0].countryCode,
                isDomestic: allInCity[0].isDomestic,
                isCityGroup: true,
@@ -348,12 +347,16 @@ const BannerFormOne = () => {
       const tempToCity = toCity;
       const tempFromCountryCode = fromCountryCode;
       const tempToCountryCode = toCountryCode;
+      const tempFromIsCity = fromIsCity;
+      const tempToIsCity = toIsCity;
       setFrom(tempTo);
       setTo(tempFrom);
       setFromCity(tempToCity);
       setToCity(tempFromCity);
       setFromCountryCode(tempToCountryCode);
       setToCountryCode(tempFromCountryCode);
+      setFromIsCity(tempToIsCity);
+      setToIsCity(tempFromIsCity);
       if (tempFromCity && tempToCity && isSameCity(tempToCity, tempFromCity)) {
          setErrors(prev => ({ ...prev, to: t.sameCityError }));
       } else {
@@ -456,8 +459,8 @@ const BannerFormOne = () => {
          destination: to,
          originCountryCode: fromCountryCode || 'TR',
          destinationCountryCode: toCountryCode || 'TR',
-         originIsCity: false,
-         destinationIsCity: false,
+         originIsCity: fromIsCity,
+         destinationIsCity: toIsCity,
          departureDate: formatDateForApi(departDate!),
          returnDate: tripType === 'roundtrip' && returnDate ? formatDateForApi(returnDate) : null,
          flightType: tripType === 'oneway' ? 'OW' : 'RT',
@@ -812,7 +815,7 @@ const BannerFormOne = () => {
                      setFromSuggestions(getInitialSuggestions());
                   }}
                   onKeyDown={(e) => handleAirportKeyDown(e, fromSuggestions, fromHighlight, setFromHighlight, (airport) => {
-                     setFrom(airport.iataCode); setFromCity(airport.city); setFromCountryCode(airport.countryCode ?? ''); setFromOpen(false); setFromSearch(""); setFromSuggestions([]);
+                     setFrom(airport.iataCode); setFromCity(airport.city); setFromCountryCode(airport.countryCode ?? ''); setFromIsCity(!!airport.isCityGroup); setFromOpen(false); setFromSearch(""); setFromSuggestions([]);
                      if (toCity && isSameCity(airport.city, toCity)) {
                         setErrors(prev => ({ ...prev, to: t.sameCityError }));
                      } else {
@@ -827,7 +830,7 @@ const BannerFormOne = () => {
                />
                {errors.from && <span className="bb-flight-form__error">{errors.from}</span>}
                {fromOpen && fromSuggestions.length > 0 && renderAirportDropdown(fromSuggestions, (airport) => {
-                  setFrom(airport.iataCode); setFromCity(airport.city); setFromCountryCode(airport.countryCode ?? ''); setFromOpen(false); setFromSearch(""); setFromSuggestions([]);
+                  setFrom(airport.iataCode); setFromCity(airport.city); setFromCountryCode(airport.countryCode ?? ''); setFromIsCity(!!airport.isCityGroup); setFromOpen(false); setFromSearch(""); setFromSuggestions([]);
                   if (toCity && isSameCity(airport.city, toCity)) {
                      setErrors(prev => ({ ...prev, to: t.sameCityError }));
                   } else {
@@ -861,7 +864,7 @@ const BannerFormOne = () => {
                      setToSuggestions(getInitialSuggestions());
                   }}
                   onKeyDown={(e) => handleAirportKeyDown(e, toSuggestions, toHighlight, setToHighlight, (airport) => {
-                     setTo(airport.iataCode); setToCity(airport.city); setToCountryCode(airport.countryCode ?? ''); setToOpen(false); setToSearch(""); setToSuggestions([]);
+                     setTo(airport.iataCode); setToCity(airport.city); setToCountryCode(airport.countryCode ?? ''); setToIsCity(!!airport.isCityGroup); setToOpen(false); setToSearch(""); setToSuggestions([]);
                      if (fromCity && isSameCity(fromCity, airport.city)) {
                         setErrors(prev => ({ ...prev, to: t.sameCityError }));
                      } else {
@@ -876,7 +879,7 @@ const BannerFormOne = () => {
                />
                {errors.to && <span className="bb-flight-form__error">{errors.to}</span>}
                {toOpen && toSuggestions.length > 0 && renderAirportDropdown(toSuggestions, (airport) => {
-                  setTo(airport.iataCode); setToCity(airport.city); setToCountryCode(airport.countryCode ?? ''); setToOpen(false); setToSearch(""); setToSuggestions([]);
+                  setTo(airport.iataCode); setToCity(airport.city); setToCountryCode(airport.countryCode ?? ''); setToIsCity(!!airport.isCityGroup); setToOpen(false); setToSearch(""); setToSuggestions([]);
                   if (fromCity && isSameCity(fromCity, airport.city)) {
                      setErrors(prev => ({ ...prev, to: t.sameCityError }));
                   } else {

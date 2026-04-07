@@ -8,6 +8,7 @@ export interface Airport {
   cityEn: string;
   countryCode: string;
   isDomestic: boolean;
+  cityCode?: string;   // IATA şehir kodu — yoksa code ile aynı sayılır
 }
 
 export interface PopularRoute {
