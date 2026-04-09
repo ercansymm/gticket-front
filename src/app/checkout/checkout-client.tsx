@@ -9,9 +9,9 @@ import HeaderOne from '@/layouts/headers/HeaderOne';
 import FooterOne from '@/layouts/footers/FooterOne';
 import PassengerForm from '@/components/booking/PassengerForm';
 import { updatePassengersThunk, makePreBookingThunk } from '@/redux/features/bookingSlice';
-import { setStep, setPassengers, setContactInfo } from '@/redux/features/bookingSlice';
+import { setStep, setPassengers, setContactInfo, resetBooking } from '@/redux/features/bookingSlice';
 import type { RootState, AppDispatch } from '@/redux/store';
-import type { PassengerItem, ContactInfo } from '@/types/booking';
+import type { PassengerItem, ContactInfo, MakePreBookingResponse } from '@/types/booking';
 import { useSessionTimeout } from '@/hooks/UseSessionTimeout';
 import { airports } from '@/data/AirportData';
 
@@ -29,6 +29,7 @@ export default function CheckoutClient() {
   const dispatch = useDispatch<AppDispatch>();
   const { data: session } = useSession();
   const { showWarning: sessionWarning, dismissWarning: dismissSessionWarning } = useSessionTimeout();
+  const [priceChangedResult, setPriceChangedResult] = useState<MakePreBookingResponse | null>(null);
 
   const { allocateResult, selectedFlight, selectedReturnFlight, searchId: allocateSearchId, searchResults, selectedBrandedFareItemId, searchParams } = useSelector(
     (state: RootState) => state.flight
@@ -172,7 +173,7 @@ export default function CheckoutClient() {
         })).unwrap();
 
         // 2. Ön rezervasyon oluştur
-        await dispatch(makePreBookingThunk({
+        const prebookingResult = await dispatch(makePreBookingThunk({
           searchId,
           productId,
           brandedFareItemId,
@@ -180,7 +181,13 @@ export default function CheckoutClient() {
           contact,
         })).unwrap();
 
-        // 3. Başarılı → ödeme sayfasına yönlendir
+        // 3. Fiyat değişikliği kontrolü
+        if (prebookingResult?.isPriceChanged) {
+          setPriceChangedResult(prebookingResult);
+          return; // Modal göster, kullanıcı onaylarsa payment'a geç
+        }
+
+        // 4. Başarılı → ödeme sayfasına yönlendir
         dispatch(setStep('payment'));
         router.push('/checkout/payment');
       } catch (err) {
@@ -197,6 +204,18 @@ export default function CheckoutClient() {
     },
     [dispatch, searchId, productId, productItemId, brandedFareItemId, router]
   );
+
+  const handleAcceptPriceChange = useCallback(() => {
+    setPriceChangedResult(null);
+    dispatch(setStep('payment'));
+    router.push('/checkout/payment');
+  }, [dispatch, router]);
+
+  const handleRejectPriceChange = useCallback(() => {
+    setPriceChangedResult(null);
+    dispatch(resetBooking());
+    router.push('/search-results');
+  }, [dispatch, router]);
 
   // Guard: render nothing until allocate data is ready
   if (!allocateResult || !selectedFlight) return null;
@@ -270,11 +289,10 @@ export default function CheckoutClient() {
             {preBookingError && (
               <div className="bb-checkout__price-warning">
                 <p>{preBookingError}</p>
-                <div style={{ display: 'flex', gap: 12, marginTop: 10, flexWrap: 'wrap' }}>
+                <div className="flex gap-3 mt-2.5 flex-wrap">
                   <button
                     type="button"
                     className="bb-checkout__btn bb-checkout__btn--next"
-                    style={{ padding: '8px 20px', fontSize: 14 }}
                     disabled={preBookingLoading}
                     onClick={() => {
                       const form = document.querySelector('.bb-passenger-form') as HTMLFormElement;
@@ -286,7 +304,6 @@ export default function CheckoutClient() {
                   <button
                     type="button"
                     className="bb-checkout__btn bb-checkout__btn--back"
-                    style={{ padding: '8px 20px', fontSize: 14 }}
                     onClick={() => router.push('/search-results')}
                   >
                     Farklı Uçuş Seç
@@ -495,6 +512,37 @@ export default function CheckoutClient() {
         </div>
       </main>
       <FooterOne />
+
+      {/* Fiyat Değişikliği Modalı — MakePreBooking */}
+      {priceChangedResult && (
+        <div className="bb-modal-overlay" role="dialog" aria-modal="true" aria-label="Fiyat degisikligi bildirimi">
+          <div className="bb-modal bb-modal--price-change">
+            <div className="bb-modal__header">
+              <h3 className="bb-modal__title">Fiyat Guncellemesi</h3>
+            </div>
+            <div className="bb-modal__body">
+              <p>Sectiginiz ucusun fiyati havayolu tarafindan guncellenmistir.</p>
+              <div className="bb-modal__price-compare">
+                <div className="bb-modal__price-new">
+                  <span className="bb-modal__price-label">Yeni Fiyat</span>
+                  <span className="bb-modal__price-amount bb-modal__price-amount--new">
+                    {priceChangedResult.totalFare?.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} {priceChangedResult.currency ?? 'TRY'}
+                  </span>
+                </div>
+              </div>
+              <p className="bb-modal__price-note">Devam etmek istiyor musunuz?</p>
+            </div>
+            <div className="bb-modal__footer">
+              <button className="bb-modal__btn bb-modal__btn--secondary" onClick={handleRejectPriceChange}>
+                Vazgec, Aramaya Don
+              </button>
+              <button className="bb-modal__btn bb-modal__btn--primary" onClick={handleAcceptPriceChange}>
+                Yeni Fiyatla Devam Et
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
