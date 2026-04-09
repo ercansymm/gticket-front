@@ -107,7 +107,6 @@ export interface PassengerFormProps {
   isInternational?: boolean;
 }
 
-/* ───────── component ───────── */
 
 export default function PassengerForm({ passengers, onSubmit, loading, disabled, isInternational = false }: PassengerFormProps) {
   const sortedPassengers = useMemo(() =>

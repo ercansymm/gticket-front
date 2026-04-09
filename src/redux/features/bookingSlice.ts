@@ -58,10 +58,16 @@ function extractErrorMessage(error: any, fallback: string): string {
 function mapProviderError(rawMsg: string | null | undefined, fallback: string): string {
   if (!rawMsg) return fallback;
   const lower = rawMsg.toLowerCase();
+
+  // Specific provider errors → Turkish user-friendly messages
+  if (lower.includes('not enough seat'))
+    return 'Seçilen uçuşta yeterli koltuk kalmamış. Lütfen farklı bir uçuş veya tarife seçin.';
+  if (lower.includes('check flight number') || lower.includes('enhancedairbookrq'))
+    return 'Havayolu uçuş bilgilerini doğrulayamadı. Lütfen yeni arama yapıp tekrar deneyin.';
   if (lower.includes('nullable object must have a value'))
     return 'Havayolu sağlayıcısında beklenmeyen bir hata oluştu. Lütfen farklı bir uçuş deneyin.';
   if (lower.includes('providermakereservationerror') || lower.includes('provider'))
-    return 'Havayolu sağlayıcısında beklenmeyen bir hata oluştu. Lütfen farklı bir uçuş deneyin.';
+    return 'Havayolu sağlayıcısında bir hata oluştu. Lütfen farklı bir uçuş veya tarife deneyin.';
   if (lower.includes('timeout') || lower.includes('zaman asimi'))
     return 'İşlem zaman aşımına uğradı. Lütfen tekrar deneyin.';
   if (lower.includes('session') && (lower.includes('expired') || lower.includes('suresi')))
@@ -118,17 +124,41 @@ export const updatePassengersThunk = createAsyncThunk(
 export const makePreBookingThunk = createAsyncThunk(
   'booking/makePreBooking',
   async (params: MakePreBookingClientRequest, { rejectWithValue }) => {
-    try {
+    const attempt = async () => {
       const result = await makePreBooking(params);
       if (!result) {
-        return rejectWithValue('Ön rezervasyon oluşturulamadı: Sunucudan yanıt alınamadı');
+        return { ok: false as const, msg: 'Ön rezervasyon oluşturulamadı: Sunucudan yanıt alınamadı' };
       }
       if (result?.hasError) {
-        return rejectWithValue(mapProviderError(result?.errorMessage, 'Ön rezervasyon oluşturulamadı'));
+        const raw = result?.errorMessage ?? '';
+        console.warn('[MakePreBooking] Provider error:', raw);
+        return { ok: false as const, msg: raw };
       }
-      return result;
+      return { ok: true as const, data: result };
+    };
+
+    try {
+      // First attempt
+      const first = await attempt();
+      if (first.ok) return first.data;
+
+      // Transient provider errors → one automatic retry
+      const lower = (first.msg ?? '').toLowerCase();
+      const isTransient = lower.includes('provider') || lower.includes('nullable object')
+        || lower.includes('check flight number') || lower.includes('not enough seat');
+
+      if (isTransient) {
+        console.info('[MakePreBooking] Transient error, retrying once...');
+        await new Promise(r => setTimeout(r, 1500));
+        const retry = await attempt();
+        if (retry.ok) return retry.data;
+        return rejectWithValue(mapProviderError(retry.msg, 'Ön rezervasyon oluşturulamadı'));
+      }
+
+      return rejectWithValue(mapProviderError(first.msg, 'Ön rezervasyon oluşturulamadı'));
     } catch (error: any) {
       const raw = extractErrorMessage(error, 'Ön rezervasyon oluşturulamadı');
+      console.warn('[MakePreBooking] Exception:', raw);
       return rejectWithValue(mapProviderError(raw, 'Ön rezervasyon oluşturulamadı'));
     }
   }

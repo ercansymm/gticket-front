@@ -7,7 +7,7 @@ import FlightCard from '../components/booking/FlightCard';
 import BundleFlightCard from '../components/booking/BundleFlightCard';
 import FilterSidebar from '../components/booking/FilterSidebar';
 import SortBar from '../components/booking/SortBar';
-import PriceCalendar, { generateMockPrices } from '../components/flight/PriceCalendar';
+// import PriceCalendar, { generateMockPrices } from '../components/flight/PriceCalendar';
 import { searchFlightsThunk, setSelectedFlight, setSelectedReturnFlight, setSelectedBrandedFareItemId, allocateFlightThunk, clearAllocate } from '../redux/features/flightSlice';
 import { filterFlights, sortFlights, INITIAL_FILTERS } from '../utils/flightFilters';
 import type { RootState, AppDispatch } from '../redux/store';
@@ -42,20 +42,20 @@ const SearchResultsMain = () => {
   const [mobileSortOpen, setMobileSortOpen] = useState(false);
   const [priceChangedData, setPriceChangedData] = useState<AllocateResponse | null>(null);
 
-  // Günlük tahmini fiyatlar (mock data)
-  const mockPrices = useMemo(
-    () => (searchParams?.departureDate ? generateMockPrices(searchParams.departureDate) : []),
-    [searchParams?.departureDate]
-  );
+  // // Günlük tahmini fiyatlar (mock data)
+  // const mockPrices = useMemo(
+  //   () => (searchParams?.departureDate ? generateMockPrices(searchParams.departureDate) : []),
+  //   [searchParams?.departureDate]
+  // );
 
-  const handlePriceDateSelect = useCallback(
-    (date: string) => {
-      if (searchParams) {
-        dispatch(searchFlightsThunk({ ...searchParams, departureDate: date }));
-      }
-    },
-    [dispatch, searchParams]
-  );
+  // const handlePriceDateSelect = useCallback(
+  //   (date: string) => {
+  //     if (searchParams) {
+  //       dispatch(searchFlightsThunk({ ...searchParams, departureDate: date }));
+  //     }
+  //   },
+  //   [dispatch, searchParams]
+  // );
 
   // Gidiş-dönüş seçimleri
   const [selectedOutbound, setSelectedOutbound] = useState<{ flight: FlightResult; brandedFareItemId: string | null } | null>(null);
@@ -242,7 +242,7 @@ const SearchResultsMain = () => {
   };
 
   // Bundle (RecommendationBox) paketi seç — tek allocate çağrısıyla gidiş+dönüş
-  const handleSelectBundle = async (pkg: BundlePackage) => {
+  const handleSelectBundle = async (pkg: BundlePackage, brandedFareItemId?: string | null) => {
     if (!searchResults) return;
     setRtAllocating(true);
     dispatch(setSelectedFlight(pkg.outbound));
@@ -252,7 +252,7 @@ const SearchResultsMain = () => {
       const result = await dispatch(allocateFlightThunk({
         searchId: searchResults.searchId!,
         productId: pkg.bundleProductId,
-        brandedFareItemId: pkg.outbound.defaultBrandedFareItemId ?? undefined,
+        brandedFareItemId: brandedFareItemId ?? pkg.outbound.defaultBrandedFareItemId ?? undefined,
         subOptions: pkg.outbound.subOptionFlightIds ?? undefined,
       })).unwrap();
 
@@ -520,8 +520,8 @@ const SearchResultsMain = () => {
           ))}
         </div>
 
-        {/* Günlük Tahmini Fiyatlar */}
-        {mockPrices.length > 0 && searchParams?.departureDate && (
+        {/* Günlük Tahmini Fiyatlar — devre dışı */}
+        {/* {mockPrices.length > 0 && searchParams?.departureDate && (
           <div className="px-4 lg:px-6 mt-3">
             <PriceCalendar
               prices={mockPrices}
@@ -529,7 +529,7 @@ const SearchResultsMain = () => {
               onDateSelect={handlePriceDateSelect}
             />
           </div>
-        )}
+        )} */}
 
         <div className="bb-search-results__layout">
           {/* Sidebar — desktop only */}
@@ -585,7 +585,7 @@ const SearchResultsMain = () => {
                         key={pkg.bundleProductId}
                         outbound={pkg.outbound}
                         returnFlight={pkg.returnFlight}
-                        onSelect={() => handleSelectBundle(pkg)}
+                        onSelect={(fareItemId) => handleSelectBundle(pkg, fareItemId)}
                         loading={rtAllocating}
                       />
                     ))}

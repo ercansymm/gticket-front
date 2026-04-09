@@ -62,6 +62,7 @@ export async function POST(request: NextRequest) {
         'Content-Type': 'application/json; charset=utf-8',
         'Accept': 'application/json; charset=utf-8',
         'X-Transaction-Id': crypto.randomUUID(),
+        'X-Search-Id': searchId,
       },
       body: JSON.stringify(backendBody),
       signal,

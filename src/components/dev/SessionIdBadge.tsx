@@ -8,7 +8,7 @@ const SessionIdBadge = () => {
   const [copied, setCopied] = useState(false);
 
   const sessionId = useSelector((state: RootState) =>
-    state.flight.searchResults?.__devSessionId ?? null
+    state.flight.searchResults?.__devSessionId ?? state.flight.searchResults?.sessionId ?? null
   );
   const searchId = useSelector((state: RootState) =>
     state.flight.searchId ?? state.flight.searchResults?.searchId ?? null

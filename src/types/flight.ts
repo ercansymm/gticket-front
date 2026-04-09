@@ -33,6 +33,8 @@ export interface FlightSearchResponse {
   sessionToken: string | null;
   flights: FlightResult[];
   filterOptions: FilterOptions | null;
+  /** DEV only — filterSensitiveFields sessionId'yi siler, bu geçici field ile badge'a aktarılır */
+  __devSessionId?: string | null;
 }
 
 export interface FlightResult {

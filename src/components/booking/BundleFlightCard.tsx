@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import type { FlightResult } from "@/types";
+import type { FlightResult, FarePackage } from "@/types";
 
 interface BundleFlightCardProps {
   outbound: FlightResult;
   /** Gidiş ile aynı bundleProductId paylaşan dönüş bacağı */
   returnFlight: FlightResult;
-  onSelect: () => void;
+  onSelect: (brandedFareItemId?: string | null) => void;
   loading?: boolean;
 }
 
@@ -117,6 +117,83 @@ function LegRow({ flight, label, labelColor }: LegRowProps) {
   );
 }
 
+// ── Fare paketi satır bileşeni ────────────────────────────────────
+interface FarePkgRowProps {
+  pkg: FarePackage;
+  isSelected: boolean;
+  isDefault: boolean;
+  onPick: (pkg: FarePackage) => void;
+  onContinue: (pkg: FarePackage) => void;
+  loading: boolean;
+}
+
+function FarePkgRow({ pkg, isSelected, isDefault, onPick, onContinue, loading }: FarePkgRowProps) {
+  const diffText = pkg.priceDifferenceFormatted
+    ? `+${pkg.priceDifferenceFormatted}`
+    : null;
+
+  return (
+    <div
+      className={`bb-bundle-card__fare-row ${
+        isSelected ? "bb-bundle-card__fare-row--selected" : ""
+      }`}
+      onClick={() => onPick(pkg)}
+      role="radio"
+      aria-checked={isSelected}
+      tabIndex={0}
+      onKeyDown={(e) => e.key === "Enter" && onPick(pkg)}
+    >
+      {/* Radyo göstergesi */}
+      <div className="bb-bundle-card__fare-radio">
+        {isSelected && <div className="bb-bundle-card__fare-radio-dot" />}
+      </div>
+
+      {/* Paket adı + Önerilen rozeti */}
+      <div className="bb-bundle-card__fare-info">
+        <span className="bb-bundle-card__fare-name">
+          {pkg.brandName ?? (isDefault ? "En Ucuz" : "Paket")}
+        </span>
+        {isDefault && (
+          <span className="bb-bundle-card__fare-badge bb-bundle-card__fare-badge--cheapest">
+            En Ucuz
+          </span>
+        )}
+        {!isDefault && (
+          <span className="bb-bundle-card__fare-badge bb-bundle-card__fare-badge--recommended">
+            Önerilen
+          </span>
+        )}
+      </div>
+
+      {/* Fiyat */}
+      <div className="bb-bundle-card__fare-price">
+        <span className="bb-bundle-card__fare-price-amount">
+          {pkg.totalFareFormatted ?? pkg.totalFare.toLocaleString("tr-TR")}
+        </span>
+        <span className="bb-bundle-card__fare-price-currency">{pkg.currency ?? "TRY"}</span>
+        {diffText && (
+          <span className="bb-bundle-card__fare-price-diff">{diffText}</span>
+        )}
+      </div>
+
+      {/* Seç butonu (seçiliyse) */}
+      {isSelected && (
+        <button
+          className="bb-bundle-card__fare-select-btn"
+          onClick={(e) => { e.stopPropagation(); onContinue(pkg); }}
+          disabled={loading}
+        >
+          {loading ? (
+            <span className="bb-spinner bb-spinner--sm" />
+          ) : (
+            "Devam →"
+          )}
+        </button>
+      )}
+    </div>
+  );
+}
+
 /** Gidiş + dönüş bacağını tek kart içinde gösteren bundle bileşeni */
 export default function BundleFlightCard({
   outbound,
@@ -124,12 +201,31 @@ export default function BundleFlightCard({
   onSelect,
   loading = false,
 }: BundleFlightCardProps) {
-  // Toplam fiyat: outbound.totalFare zaten gidiş+dönüş toplamını içeriyor (RecommendationBox)
-  const totalFare = outbound.totalFare ?? 0;
   const currency = outbound.currency ?? "TRY";
-  const totalFormatted = totalFare.toLocaleString("tr-TR", {
-    minimumFractionDigits: 0,
-  });
+  const farePackages = outbound.farePackages ?? [];
+  const hasFares = farePackages.length > 1;
+
+  // Varsayılan seçili paket: isDefault=true veya ilk paket
+  const defaultPkg = hasFares
+    ? (farePackages.find((p) => p.isDefault) ?? farePackages[0])
+    : null;
+  const [selectedPkg, setSelectedPkg] = useState<FarePackage | null>(defaultPkg);
+
+  // Görüntülenecek fiyat: seçili paket varsa onun fiyatı, yoksa outbound.totalFare
+  const displayFare = (hasFares && selectedPkg)
+    ? selectedPkg.totalFare
+    : (outbound.totalFare ?? 0);
+  const displayFormatted = (hasFares && selectedPkg?.totalFareFormatted)
+    ? selectedPkg.totalFareFormatted
+    : displayFare.toLocaleString("tr-TR", { minimumFractionDigits: 0 });
+
+  const handleContinue = (pkg: FarePackage) => {
+    onSelect(pkg.brandedFareItemId);
+  };
+
+  const handleSelectNoFares = () => {
+    onSelect(null);
+  };
 
   return (
     <div className="bb-bundle-card">
@@ -158,44 +254,51 @@ export default function BundleFlightCard({
         <LegRow flight={returnFlight} label="Dönüş" labelColor="#0369a1" />
       </div>
 
-      {/* Alt kısım: fiyat + seç butonu */}
-      <div className="bb-bundle-card__footer">
-        <div className="bb-bundle-card__price-wrap">
-          <span className="bb-bundle-card__price-label">Toplam (2 kişilik)</span>
-          <div className="bb-bundle-card__price">
-            <span className="bb-bundle-card__price-amount">{totalFormatted}</span>
-            <span className="bb-bundle-card__price-currency">{currency}</span>
-          </div>
-          <span className="bb-bundle-card__price-note">Gidiş + dönüş dahil</span>
+      {/* Fare seçenekleri (varsa) */}
+      {hasFares ? (
+        <div className="bb-bundle-card__fares">
+          <div className="bb-bundle-card__fares-header">Tarife Seçin</div>
+          {farePackages.map((pkg) => (
+            <FarePkgRow
+              key={pkg.brandedFareItemId}
+              pkg={pkg}
+              isSelected={selectedPkg?.brandedFareItemId === pkg.brandedFareItemId}
+              isDefault={!!pkg.isDefault}
+              onPick={setSelectedPkg}
+              onContinue={handleContinue}
+              loading={loading}
+            />
+          ))}
         </div>
-
-        <button
-          className="bb-bundle-card__select-btn"
-          onClick={onSelect}
-          disabled={loading}
-        >
-          {loading ? (
-            <span className="bb-spinner bb-spinner--sm" />
-          ) : (
-            <>
-              Paketi Seç
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                style={{ marginLeft: 6 }}
-              >
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
-            </>
-          )}
-        </button>
-      </div>
+      ) : (
+        /* Fare yok — sadece fiyat ve tek buton */
+        <div className="bb-bundle-card__footer">
+          <div className="bb-bundle-card__price-wrap">
+            <span className="bb-bundle-card__price-label">Toplam</span>
+            <div className="bb-bundle-card__price">
+              <span className="bb-bundle-card__price-amount">{displayFormatted}</span>
+              <span className="bb-bundle-card__price-currency">{currency}</span>
+            </div>
+            <span className="bb-bundle-card__price-note">Gidiş + dönüş dahil</span>
+          </div>
+          <button
+            className="bb-bundle-card__select-btn"
+            onClick={handleSelectNoFares}
+            disabled={loading}
+          >
+            {loading ? (
+              <span className="bb-spinner bb-spinner--sm" />
+            ) : (
+              <>
+                Paketi Seç
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 6 }}>
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </>
+            )}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

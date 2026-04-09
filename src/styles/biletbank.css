@@ -8165,6 +8165,150 @@ footer,
   cursor: not-allowed;
 }
 
+/* ── Bundle Fare Package Rows ─────────────────────────────────────── */
+.bb-bundle-card__fares {
+  border-top: 1px solid #e2e8f0;
+  padding: 0 20px 16px;
+}
+
+.bb-bundle-card__fares-header {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  padding: 12px 0 8px;
+}
+
+.bb-bundle-card__fare-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1.5px solid #e2e8f0;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  background: #f8fafc;
+}
+
+.bb-bundle-card__fare-row:hover {
+  border-color: #94a3b8;
+  background: #f1f5f9;
+}
+
+.bb-bundle-card__fare-row--selected {
+  border-color: #047857;
+  background: #ecfdf5;
+}
+
+.bb-bundle-card__fare-radio {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid #94a3b8;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.15s;
+}
+
+.bb-bundle-card__fare-row--selected .bb-bundle-card__fare-radio {
+  border-color: #047857;
+}
+
+.bb-bundle-card__fare-radio-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #047857;
+}
+
+.bb-bundle-card__fare-info {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.bb-bundle-card__fare-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #1e293b;
+  white-space: nowrap;
+}
+
+.bb-bundle-card__fare-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.bb-bundle-card__fare-badge--cheapest {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.bb-bundle-card__fare-badge--recommended {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.bb-bundle-card__fare-price {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.bb-bundle-card__fare-price-amount {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.bb-bundle-card__fare-price-currency {
+  font-size: 10px;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.bb-bundle-card__fare-price-diff {
+  font-size: 11px;
+  color: #dc2626;
+  margin-top: 2px;
+}
+
+.bb-bundle-card__fare-select-btn {
+  flex-shrink: 0;
+  background: #047857;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.bb-bundle-card__fare-select-btn:hover {
+  background: #065f46;
+}
+
+.bb-bundle-card__fare-select-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* Bundle direction header variant */
 .bb-direction-header--bundle {
   background: linear-gradient(135deg, #064e3b 0%, #047857 100%);

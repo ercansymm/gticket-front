@@ -269,7 +269,29 @@ export default function CheckoutClient() {
             {/* PreBooking error */}
             {preBookingError && (
               <div className="bb-checkout__price-warning">
-                {preBookingError}
+                <p>{preBookingError}</p>
+                <div style={{ display: 'flex', gap: 12, marginTop: 10, flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    className="bb-checkout__btn bb-checkout__btn--next"
+                    style={{ padding: '8px 20px', fontSize: 14 }}
+                    disabled={preBookingLoading}
+                    onClick={() => {
+                      const form = document.querySelector('.bb-passenger-form') as HTMLFormElement;
+                      if (form) form.requestSubmit();
+                    }}
+                  >
+                    Tekrar Dene
+                  </button>
+                  <button
+                    type="button"
+                    className="bb-checkout__btn bb-checkout__btn--back"
+                    style={{ padding: '8px 20px', fontSize: 14 }}
+                    onClick={() => router.push('/search-results')}
+                  >
+                    Farklı Uçuş Seç
+                  </button>
+                </div>
               </div>
             )}
 
