@@ -31,8 +31,8 @@ const AY_ADLARI_UZUN = [
 
 // ── Sabitler ────────────────────────────────────────────────
 
-const MAX_BAR_H = 52;
-const MIN_BAR_H = 6;
+const MAX_BAR_H = 100;
+const MIN_BAR_H = 10;
 
 // ── Helpers ─────────────────────────────────────────────────
 
@@ -136,7 +136,7 @@ export default function PriceCalendar({
   const showBanner = cheapestBannerOpen && cheapest && cheapest.date !== selectedDate;
 
   return (
-    <div className="relative mb-3 rounded-xl bg-white shadow-[0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)] ring-1 ring-black/[0.04] overflow-visible">
+    <div className="relative mb-3 rounded-xl bg-white shadow-[0_2px_8px_rgba(0,0,0,0.07),0_1px_3px_rgba(0,0,0,0.05)] ring-1 ring-black/[0.05] overflow-visible">
       {/* ── Header ── */}
       <div className="flex items-center justify-between px-4 py-2.5">
         <div className="flex items-center gap-2">
@@ -163,9 +163,9 @@ export default function PriceCalendar({
       </div>
 
       {/* ── Chart Area ── */}
-      <div className="relative px-3 pb-2">
+      <div className="relative px-3 pb-3">
         {/* Month labels */}
-        <div className="flex items-center justify-between px-8 mb-1.5">
+        <div className="flex items-center justify-between px-8 mb-2">
           <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">
             {months.l}
           </span>
@@ -206,7 +206,7 @@ export default function PriceCalendar({
 
         {/* Bars */}
         <div className="mx-8">
-          <div className="flex items-end gap-[3px]">
+          <div className="flex items-end gap-[4px]">
             {window_.map((day) => {
               const isSel = day.date === selectedDate;
               const isCheap = cheapest !== null && day.date === cheapest.date && !isSel;
@@ -255,14 +255,14 @@ export default function PriceCalendar({
 
                   {/* Bar */}
                   <div
-                    className={`w-full rounded-t-[3px] transition-all duration-200 ${
+                    className={`w-full rounded-t-[4px] transition-all duration-200 ${
                       isSel
-                        ? "bg-gradient-to-t from-emerald-700 to-emerald-500 shadow-sm shadow-emerald-600/20"
+                        ? "bg-gradient-to-t from-emerald-700 to-emerald-500 shadow-md shadow-emerald-600/25"
                         : isCheap
-                        ? "bg-gradient-to-t from-emerald-400 to-emerald-300"
+                        ? "bg-gradient-to-t from-emerald-500 to-emerald-300"
                         : isHov
-                        ? "bg-gradient-to-t from-blue-300 to-blue-200"
-                        : "bg-gradient-to-t from-blue-200/80 to-blue-100/60"
+                        ? "bg-gradient-to-t from-sky-400 to-sky-300"
+                        : "bg-gradient-to-t from-slate-300 to-slate-200"
                     }`}
                     style={{ height: `${h}px` }}
                   />
@@ -277,10 +277,10 @@ export default function PriceCalendar({
                   )}
 
                   {/* Day label */}
-                  <span className={`text-[10px] font-semibold leading-none ${isSel ? "mt-[3px]" : "mt-[6px]"} ${isSel ? "text-emerald-700" : "text-slate-600"}`}>
+                  <span className={`text-[10px] font-semibold leading-none mt-[4px] ${isSel ? "text-emerald-700" : "text-slate-600"}`}>
                     {d.getDate()}
                   </span>
-                  <span className={`text-[8px] leading-none mt-[1px] font-medium ${isSel ? "text-emerald-500" : "text-slate-400"}`}>
+                  <span className={`text-[9px] leading-none mt-[2px] font-medium ${isSel ? "text-emerald-500" : "text-slate-400"}`}>
                     {GUN_ADLARI[d.getDay()]}
                   </span>
                 </button>

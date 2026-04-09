@@ -7886,3 +7886,311 @@ footer,
     min-width: 200px;
   }
 }
+
+/* ══════════════════════════════════════════════════════
+   BUNDLE FLIGHT CARD (RecommendationBox gidiş+dönüş paketi)
+   ══════════════════════════════════════════════════════ */
+
+.bb-bundle-card {
+  background: #fff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.bb-bundle-card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.09);
+  border-color: #cbd5e1;
+}
+
+/* Üst paket etiketi */
+.bb-bundle-card__banner {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 18px;
+  background: linear-gradient(90deg, #047857 0%, #059669 100%);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
+
+/* Bacak listesi */
+.bb-bundle-card__legs {
+  padding: 0 18px;
+}
+
+.bb-bundle-card__divider {
+  height: 1px;
+  background: #f1f5f9;
+  margin: 0 -18px;
+}
+
+/* Tek bacak satırı */
+.bb-bundle-card__leg {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 0;
+  position: relative;
+}
+
+.bb-bundle-card__leg-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  padding: 3px 8px;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  letter-spacing: 0.3px;
+  min-width: 44px;
+  text-align: center;
+}
+
+.bb-bundle-card__leg-logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.bb-bundle-card__leg-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 90px;
+  flex-shrink: 0;
+}
+
+.bb-bundle-card__leg-airline {
+  font-size: 12px;
+  font-weight: 600;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100px;
+}
+
+.bb-bundle-card__leg-flno {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+/* Time track */
+.bb-bundle-card__leg-track {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.bb-bundle-card__leg-endpoint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.bb-bundle-card__leg-time {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.5px;
+}
+
+.bb-bundle-card__leg-code {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  letter-spacing: 0.5px;
+}
+
+.bb-bundle-card__leg-line {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.bb-bundle-card__leg-duration {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.bb-bundle-card__leg-bar-wrap {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  position: relative;
+}
+
+.bb-bundle-card__leg-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #94a3b8;
+  flex-shrink: 0;
+}
+
+.bb-bundle-card__leg-bar {
+  flex: 1;
+  height: 1.5px;
+  background: #cbd5e1;
+  margin: 0 2px;
+}
+
+.bb-bundle-card__leg-bar--stops {
+  background: repeating-linear-gradient(
+    90deg,
+    #cbd5e1 0,
+    #cbd5e1 6px,
+    transparent 6px,
+    transparent 10px
+  );
+}
+
+.bb-bundle-card__leg-stop-dot {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  background: #f59e0b;
+  border-radius: 50%;
+  border: 1.5px solid #fff;
+}
+
+.bb-bundle-card__leg-direct {
+  font-size: 10px;
+  color: #10b981;
+  font-weight: 600;
+}
+
+.bb-bundle-card__leg-stops {
+  font-size: 10px;
+  color: #f59e0b;
+  font-weight: 600;
+}
+
+/* Alt fiyat + seç butonu */
+.bb-bundle-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px;
+  background: #f8fafc;
+  border-top: 1px solid #f1f5f9;
+}
+
+.bb-bundle-card__price-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bb-bundle-card__price-label {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.bb-bundle-card__price {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.bb-bundle-card__price-amount {
+  font-size: 24px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.5px;
+}
+
+.bb-bundle-card__price-currency {
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.bb-bundle-card__price-note {
+  font-size: 10px;
+  color: #94a3b8;
+}
+
+.bb-bundle-card__select-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 24px;
+  background: #047857;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.bb-bundle-card__select-btn:hover {
+  background: #065f46;
+}
+
+.bb-bundle-card__select-btn:active {
+  transform: scale(0.98);
+}
+
+.bb-bundle-card__select-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Bundle direction header variant */
+.bb-direction-header--bundle {
+  background: linear-gradient(135deg, #064e3b 0%, #047857 100%);
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .bb-bundle-card__leg {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .bb-bundle-card__leg-time {
+    font-size: 15px;
+  }
+
+  .bb-bundle-card__price-amount {
+    font-size: 20px;
+  }
+
+  .bb-bundle-card__select-btn {
+    padding: 10px 18px;
+    font-size: 13px;
+  }
+
+  .bb-bundle-card__leg-info {
+    min-width: 70px;
+  }
+}

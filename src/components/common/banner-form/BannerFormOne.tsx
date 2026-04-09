@@ -115,6 +115,7 @@ const BannerFormOne = () => {
    const fromRef = useRef<HTMLDivElement>(null);
    const toRef = useRef<HTMLDivElement>(null);
    const paxRef = useRef<HTMLDivElement>(null);
+   const urlCountryCodeResolvedRef = useRef(false);
 
    // Calendar open helpers
    const openCalendar = useCallback((target: "depart" | "return") => {
@@ -170,6 +171,47 @@ const BannerFormOne = () => {
       if (urlClass === "first") setFlightClass("first");
       if (urlType === "roundtrip" || urlType === "oneway") setTripType(urlType);
    }, [searchParams]);
+
+   // allAirports yüklenince URL'deki from/to kodlarının countryCode ve isCity'sini resolve et
+   // (Dropdown seçiminde zaten set ediliyor; bu effect URL ile gelip allAirports hazır olmadan
+   //  mount olan form için çalışır.)
+   useEffect(() => {
+      if (allAirports.length === 0 || urlCountryCodeResolvedRef.current) return;
+      const urlFrom = searchParams?.get("from");
+      const urlTo = searchParams?.get("to");
+      if (!urlFrom && !urlTo) return;
+
+      urlCountryCodeResolvedRef.current = true;
+
+      const resolveCode = (rawCode: string): { countryCode: string; isCity: boolean } => {
+         const code = rawCode.toUpperCase();
+         // Önce city group kodu olarak bak (cityCode === code, farklı bir IATA koduna sahip)
+         const cityGroupMembers = allAirports.filter(
+            a => a.cityCode && a.cityCode === code && a.iataCode !== code
+         );
+         if (cityGroupMembers.length >= 1) {
+            return { countryCode: cityGroupMembers[0].countryCode ?? 'TR', isCity: true };
+         }
+         // Doğrudan IATA kodu ekleştir
+         const airport = allAirports.find(a => a.iataCode === code);
+         if (airport) {
+            return { countryCode: airport.countryCode ?? 'TR', isCity: false };
+         }
+         return { countryCode: 'TR', isCity: false };
+      };
+
+      if (urlFrom) {
+         const { countryCode, isCity } = resolveCode(urlFrom);
+         setFromCountryCode(countryCode);
+         setFromIsCity(isCity);
+      }
+      if (urlTo) {
+         const { countryCode, isCity } = resolveCode(urlTo);
+         setToCountryCode(countryCode);
+         setToIsCity(isCity);
+      }
+   // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, [allAirports]);
 
    // Dışarı tıklanınca dropdown kapat
    useEffect(() => {

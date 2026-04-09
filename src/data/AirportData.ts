@@ -81,10 +81,10 @@ export const airports: Airport[] = [
   // ══════════════════════════════════════
 
   // ── Londra ──
-  { code: 'LHR', nameTr: 'Heathrow Havalimanı', nameEn: 'Heathrow Airport', cityTr: 'Londra', cityEn: 'London', countryCode: 'GB', isDomestic: false },
-  { code: 'LGW', nameTr: 'Gatwick Havalimanı', nameEn: 'Gatwick Airport', cityTr: 'Londra', cityEn: 'London', countryCode: 'GB', isDomestic: false },
-  { code: 'STN', nameTr: 'Stansted Havalimanı', nameEn: 'Stansted Airport', cityTr: 'Londra', cityEn: 'London', countryCode: 'GB', isDomestic: false },
-  { code: 'LTN', nameTr: 'Luton Havalimanı', nameEn: 'Luton Airport', cityTr: 'Londra', cityEn: 'London', countryCode: 'GB', isDomestic: false },
+  { code: 'LHR', nameTr: 'Heathrow Havalimanı', nameEn: 'Heathrow Airport', cityTr: 'Londra', cityEn: 'London', countryCode: 'GB', isDomestic: false, cityCode: 'LON' },
+  { code: 'LGW', nameTr: 'Gatwick Havalimanı', nameEn: 'Gatwick Airport', cityTr: 'Londra', cityEn: 'London', countryCode: 'GB', isDomestic: false, cityCode: 'LON' },
+  { code: 'STN', nameTr: 'Stansted Havalimanı', nameEn: 'Stansted Airport', cityTr: 'Londra', cityEn: 'London', countryCode: 'GB', isDomestic: false, cityCode: 'LON' },
+  { code: 'LTN', nameTr: 'Luton Havalimanı', nameEn: 'Luton Airport', cityTr: 'Londra', cityEn: 'London', countryCode: 'GB', isDomestic: false, cityCode: 'LON' },
 
   // ── Paris ──
   { code: 'CDG', nameTr: 'Charles de Gaulle Havalimanı', nameEn: 'Charles de Gaulle Airport', cityTr: 'Paris', cityEn: 'Paris', countryCode: 'FR', isDomestic: false },

@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import HeaderOne from '../layouts/headers/HeaderOne';
 import FooterOne from '../layouts/footers/FooterOne';
 import FlightCard from '../components/booking/FlightCard';
+import BundleFlightCard from '../components/booking/BundleFlightCard';
 import FilterSidebar from '../components/booking/FilterSidebar';
 import SortBar from '../components/booking/SortBar';
 import PriceCalendar, { generateMockPrices } from '../components/flight/PriceCalendar';
@@ -11,6 +12,12 @@ import { searchFlightsThunk, setSelectedFlight, setSelectedReturnFlight, setSele
 import { filterFlights, sortFlights, INITIAL_FILTERS } from '../utils/flightFilters';
 import type { RootState, AppDispatch } from '../redux/store';
 import type { FlightResult, FlightFilters, FlightSortBy, AllocateResponse } from '@/types';
+
+interface BundlePackage {
+  bundleProductId: string;
+  outbound: FlightResult;
+  returnFlight: FlightResult;
+}
 
 const SORT_OPTIONS: { value: FlightSortBy; label: string }[] = [
   { value: 'cheapest', label: 'En Ucuz' },
@@ -118,6 +125,37 @@ const SearchResultsMain = () => {
     );
   }, [displayedFlights, isRoundTrip, searchParams, hasDirectionalSequenceNos]);
 
+  // ── RT Bundle (RecommendationBox) paketleri ──
+  // isRoundTripBundle=true olan uçuşları bundleProductId'ye göre eşleştir
+  const bundlePackages = useMemo((): BundlePackage[] => {
+    if (!isRoundTrip) return [];
+    const outbounds = displayedFlights.filter(f => f.isRoundTripBundle && !f.isReturnLeg);
+    const returns = displayedFlights.filter(f => f.isRoundTripBundle && f.isReturnLeg);
+
+    const packages: BundlePackage[] = [];
+    for (const ob of outbounds) {
+      const pid = ob.bundleProductId;
+      if (!pid) continue;
+      const ret = returns.find(r => r.bundleProductId === pid);
+      if (ret) {
+        packages.push({ bundleProductId: pid, outbound: ob, returnFlight: ret });
+      }
+    }
+    return packages;
+  }, [displayedFlights, isRoundTrip]);
+
+  // Bundle olmayan (normal FlightOption) gidiş ve dönüş uçuşları
+  const regularOutbound = useMemo(
+    () => outboundFlights.filter(f => !f.isRoundTripBundle),
+    [outboundFlights]
+  );
+  const regularReturn = useMemo(
+    () => returnFlights.filter(f => !f.isRoundTripBundle),
+    [returnFlights]
+  );
+
+  const hasBundles = bundlePackages.length > 0;
+
   // Tek yön uçuş seçimi (allocate + yönlendir)
   const handleSelectFlight = (flight: FlightResult, brandedFareItemId?: string | null) => {
     if (allocateLoading || !searchResults) return;
@@ -161,7 +199,7 @@ const SearchResultsMain = () => {
         const bundleResult = await dispatch(allocateFlightThunk({
           searchId: searchResults.searchId!,
           productId: flight.bundleProductId,
-          brandedFareItemId: brandedFareItemId ?? undefined,
+          brandedFareItemId: brandedFareItemId ?? flight.defaultBrandedFareItemId ?? undefined,
           subOptions: flight.subOptionFlightIds ?? undefined,
         })).unwrap();
 
@@ -201,6 +239,33 @@ const SearchResultsMain = () => {
   const handleClearOutbound = () => {
     setSelectedOutbound(null);
     setSelectedReturn(null);
+  };
+
+  // Bundle (RecommendationBox) paketi seç — tek allocate çağrısıyla gidiş+dönüş
+  const handleSelectBundle = async (pkg: BundlePackage) => {
+    if (!searchResults) return;
+    setRtAllocating(true);
+    dispatch(setSelectedFlight(pkg.outbound));
+    dispatch(setSelectedReturnFlight(pkg.returnFlight));
+
+    try {
+      const result = await dispatch(allocateFlightThunk({
+        searchId: searchResults.searchId!,
+        productId: pkg.bundleProductId,
+        brandedFareItemId: pkg.outbound.defaultBrandedFareItemId ?? undefined,
+        subOptions: pkg.outbound.subOptionFlightIds ?? undefined,
+      })).unwrap();
+
+      if (result.isPriceChanged) {
+        setPriceChangedData(result);
+      } else {
+        router.push('/checkout');
+      }
+    } catch {
+      // Redux hata yönetimi çalışıyor
+    } finally {
+      setRtAllocating(false);
+    }
   };
 
   const handleAcceptPriceChange = () => {
@@ -494,83 +559,129 @@ const SearchResultsMain = () => {
             ) : isRoundTrip ? (
               /* ═══ Gidiş-Dönüş Modu ═══ */
               <div className="bb-search-results__list">
-                {/* ── Gidiş bölümü ── */}
-                <div className="bb-direction-header">
-                  <div className="bb-direction-header__icon">
-                    <i className="fa-solid fa-plane-departure" />
-                  </div>
-                  <div className="bb-direction-header__info">
-                    <h3 className="bb-direction-header__title">Gidiş Uçuşu</h3>
-                    <span className="bb-direction-header__route">
-                      {searchParams?.origin} → {searchParams?.destination}
-                      <span className="bb-direction-header__date">{searchParams?.departureDate}</span>
-                    </span>
-                  </div>
-                  <span className="bb-direction-header__count">{outboundFlights.length} uçuş</span>
-                </div>
 
-                {/* Seçili gidiş özeti */}
-                {selectedOutbound ? (
-                  <div className="bb-selected-summary">
-                    <div className="bb-selected-summary__badge">
-                      <i className="fa-solid fa-check-circle" /> Gidiş Seçildi
-                    </div>
-                    <div className="bb-selected-summary__info">
-                      <span className="bb-selected-summary__airline">{selectedOutbound.flight.airlineName}</span>
-                      <span className="bb-selected-summary__flight">{selectedOutbound.flight.flightNumber}</span>
-                      <span className="bb-selected-summary__time">
-                        {selectedOutbound.flight.departureTime} → {selectedOutbound.flight.arrivalTime}
-                      </span>
-                      <span className="bb-selected-summary__price">
-                        {selectedOutbound.flight.totalFare?.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} {selectedOutbound.flight.currency ?? 'TRY'}
-                      </span>
-                    </div>
-                    <button className="bb-selected-summary__change" onClick={handleClearOutbound}>
-                      Değiştir
-                    </button>
-                  </div>
-                ) : (
-                  /* Gidiş uçuşları listesi */
-                  outboundFlights.map((flight) => (
-                    <FlightCard
-                      key={flight.productId}
-                      flight={flight}
-                      onSelect={(fareItemId) => handleSelectOutbound(flight, fareItemId)}
-                    />
-                  ))
-                )}
-
-                {/* ── Dönüş bölümü (gidiş seçildikten sonra) ── */}
-                {selectedOutbound && (
+                {/* ── Paket Uçuşlar (RecommendationBox bundles) ── */}
+                {hasBundles && (
                   <>
-                    <div className="bb-direction-header bb-direction-header--return">
-                      <div className="bb-direction-header__icon">
-                        <i className="fa-solid fa-plane-arrival" />
+                    <div className="bb-direction-header bb-direction-header--bundle">
+                      <div className="bb-direction-header__icon" style={{ background: '#047857' }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+                          <line x1="7" y1="7" x2="7.01" y2="7" />
+                        </svg>
                       </div>
                       <div className="bb-direction-header__info">
-                        <h3 className="bb-direction-header__title">Dönüş Uçuşu</h3>
+                        <h3 className="bb-direction-header__title">Gidiş + Dönüş Paketleri</h3>
                         <span className="bb-direction-header__route">
-                          {searchParams?.destination} → {searchParams?.origin}
-                          <span className="bb-direction-header__date">{searchParams?.returnDate}</span>
+                          {searchParams?.origin} ⇄ {searchParams?.destination}
+                          <span className="bb-direction-header__date">{searchParams?.departureDate} – {searchParams?.returnDate}</span>
                         </span>
                       </div>
-                      <span className="bb-direction-header__count">{returnFlights.length} uçuş</span>
+                      <span className="bb-direction-header__count">{bundlePackages.length} paket</span>
                     </div>
 
-                    {returnFlights.length === 0 ? (
-                      <div className="bb-empty-state" style={{ marginTop: 12 }}>
-                        <p className="bb-empty-state__text">Bu güzergâh için dönüş uçuşu bulunamadı.</p>
+                    {bundlePackages.map((pkg) => (
+                      <BundleFlightCard
+                        key={pkg.bundleProductId}
+                        outbound={pkg.outbound}
+                        returnFlight={pkg.returnFlight}
+                        onSelect={() => handleSelectBundle(pkg)}
+                        loading={rtAllocating}
+                      />
+                    ))}
+                  </>
+                )}
+
+                {/* ── Ayrı gidiş/dönüş seçimi (regular FlightOptions) ── */}
+                {regularOutbound.length > 0 && (
+                  <>
+                    <div className="bb-direction-header" style={{ marginTop: hasBundles ? 24 : 0 }}>
+                      <div className="bb-direction-header__icon">
+                        <i className="fa-solid fa-plane-departure" />
+                      </div>
+                      <div className="bb-direction-header__info">
+                        <h3 className="bb-direction-header__title">Gidiş Uçuşu</h3>
+                        <span className="bb-direction-header__route">
+                          {searchParams?.origin} → {searchParams?.destination}
+                          <span className="bb-direction-header__date">{searchParams?.departureDate}</span>
+                        </span>
+                      </div>
+                      <span className="bb-direction-header__count">{regularOutbound.length} uçuş</span>
+                    </div>
+
+                    {/* Seçili gidiş özeti */}
+                    {selectedOutbound ? (
+                      <div className="bb-selected-summary">
+                        <div className="bb-selected-summary__badge">
+                          <i className="fa-solid fa-check-circle" /> Gidiş Seçildi
+                        </div>
+                        <div className="bb-selected-summary__info">
+                          <span className="bb-selected-summary__airline">{selectedOutbound.flight.airlineName}</span>
+                          <span className="bb-selected-summary__flight">{selectedOutbound.flight.flightNumber}</span>
+                          <span className="bb-selected-summary__time">
+                            {selectedOutbound.flight.departureTime} → {selectedOutbound.flight.arrivalTime}
+                          </span>
+                          <span className="bb-selected-summary__price">
+                            {selectedOutbound.flight.totalFare?.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} {selectedOutbound.flight.currency ?? 'TRY'}
+                          </span>
+                        </div>
+                        <button className="bb-selected-summary__change" onClick={handleClearOutbound}>
+                          Değiştir
+                        </button>
                       </div>
                     ) : (
-                      returnFlights.map((flight) => (
+                      regularOutbound.map((flight) => (
                         <FlightCard
                           key={flight.productId}
                           flight={flight}
-                          onSelect={(fareItemId) => handleSelectReturn(flight, fareItemId)}
+                          onSelect={(fareItemId) => handleSelectOutbound(flight, fareItemId)}
                         />
                       ))
                     )}
+
+                    {/* ── Dönüş bölümü (gidiş seçildikten sonra) ── */}
+                    {selectedOutbound && (
+                      <>
+                        <div className="bb-direction-header bb-direction-header--return">
+                          <div className="bb-direction-header__icon">
+                            <i className="fa-solid fa-plane-arrival" />
+                          </div>
+                          <div className="bb-direction-header__info">
+                            <h3 className="bb-direction-header__title">Dönüş Uçuşu</h3>
+                            <span className="bb-direction-header__route">
+                              {searchParams?.destination} → {searchParams?.origin}
+                              <span className="bb-direction-header__date">{searchParams?.returnDate}</span>
+                            </span>
+                          </div>
+                          <span className="bb-direction-header__count">{regularReturn.length} uçuş</span>
+                        </div>
+
+                        {regularReturn.length === 0 ? (
+                          <div className="bb-empty-state" style={{ marginTop: 12 }}>
+                            <p className="bb-empty-state__text">Bu güzergâh için dönüş uçuşu bulunamadı.</p>
+                          </div>
+                        ) : (
+                          regularReturn.map((flight) => (
+                            <FlightCard
+                              key={flight.productId}
+                              flight={flight}
+                              onSelect={(fareItemId) => handleSelectReturn(flight, fareItemId)}
+                            />
+                          ))
+                        )}
+                      </>
+                    )}
                   </>
+                )}
+
+                {/* Hiç uçuş yoksa */}
+                {!hasBundles && regularOutbound.length === 0 && (
+                  <div className="bb-empty-state">
+                    <div className="bb-empty-state__icon"><i className="fa-solid fa-magnifying-glass"></i></div>
+                    <h2 className="bb-empty-state__title">Filtre Sonucu Bulunamadı</h2>
+                    <p className="bb-empty-state__text">Seçili filtrelere uygun uçuş yok. Filtreleri değiştirmeyi deneyin.</p>
+                    <button className="bb-empty-state__btn" onClick={() => setFilters(INITIAL_FILTERS)}>Filtreleri Temizle</button>
+                  </div>
                 )}
               </div>
             ) : (

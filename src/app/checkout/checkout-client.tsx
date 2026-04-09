@@ -30,7 +30,7 @@ export default function CheckoutClient() {
   const { data: session } = useSession();
   const { showWarning: sessionWarning, dismissWarning: dismissSessionWarning } = useSessionTimeout();
 
-  const { allocateResult, selectedFlight, selectedReturnFlight, searchId: allocateSearchId, searchResults, selectedBrandedFareItemId } = useSelector(
+  const { allocateResult, selectedFlight, selectedReturnFlight, searchId: allocateSearchId, searchResults, selectedBrandedFareItemId, searchParams } = useSelector(
     (state: RootState) => state.flight
   );
   // searchId fallback: allocate response → search results
@@ -109,9 +109,14 @@ export default function CheckoutClient() {
   ].filter(Boolean).join(', ');
 
   // Detect international flight
-  // Priority: airport country code check (reliable) → BiletBank flightType (fallback)
+  // Priority: searchParams country codes (most reliable) → airport lookup → BiletBank flightType
   const isInternational = useMemo(() => {
-    // 1. Primary: airport country codes from segments (most reliable — not affected by BiletBank data quirks)
+    // 1. Primary: Search params have explicit country codes set at search time
+    if (searchParams?.originCountryCode && searchParams?.destinationCountryCode) {
+      return searchParams.originCountryCode !== searchParams.destinationCountryCode;
+    }
+
+    // 2. Airport country code lookup from segments
     const segments = airBookings.flatMap(ab => ab.segments ?? []);
     const codes = segments.length > 0
       ? segments.map(seg => ({ origin: seg.originCode, dest: seg.destinationCode }))
@@ -119,14 +124,12 @@ export default function CheckoutClient() {
         ? [{ origin: selectedFlight.originCode, dest: selectedFlight.destinationCode }]
         : [];
 
-    // Only trust the airport check when BOTH airports are found in our data
     const resolvedPairs = codes.filter(({ origin, dest }) =>
       origin !== null && dest !== null &&
       airports.some(a => a.code === origin) && airports.some(a => a.code === dest)
     );
 
     if (resolvedPairs.length > 0) {
-      // We have enough data — ülke kodu farklıysa uluslararası
       return resolvedPairs.some(({ origin, dest }) => {
         const o = airports.find(a => a.code === origin);
         const d = airports.find(a => a.code === dest);
@@ -134,14 +137,14 @@ export default function CheckoutClient() {
       });
     }
 
-    // 2. Fallback: BiletBank flightType from allocate response ("I" = international, "D" = domestic)
+    // 3. Fallback: BiletBank flightType from allocate response ("I" = international, "D" = domestic)
     const flightTypes = airBookings.map(ab => ab.flightType?.toUpperCase() ?? '');
     if (flightTypes.some(ft => ft === 'I' || ft === 'INTERNATIONAL')) return true;
     if (flightTypes.some(ft => ft === 'D' || ft === 'DOMESTIC')) return false;
 
-    // 3. Hiçbir şey belirlenemedi → yurt içi kabul et (daha güvenli)
+    // 4. Belirlenemedi → yurt içi kabul et
     return false;
-  }, [airBookings, selectedFlight]);
+  }, [searchParams, airBookings, selectedFlight]);
 
   /* ── Submit handler — chain: updatePassengers → makePreBooking → navigate ── */
   const submitRef = useRef(false);
