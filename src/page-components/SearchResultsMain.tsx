@@ -11,7 +11,7 @@ import SortBar from '../components/booking/SortBar';
 import { searchFlightsThunk, setSelectedFlight, setSelectedReturnFlight, setSelectedBrandedFareItemId, allocateFlightThunk, clearAllocate } from '../redux/features/flightSlice';
 import { filterFlights, sortFlights, INITIAL_FILTERS } from '../utils/flightFilters';
 import type { RootState, AppDispatch } from '../redux/store';
-import type { FlightResult, FlightFilters, FlightSortBy, AllocateResponse } from '@/types';
+import type { FlightResult, FlightFilters, FlightSortBy, AllocateResponse, FarePackage } from '@/types';
 
 interface BundlePackage {
   bundleProductId: string;
@@ -72,6 +72,13 @@ const SearchResultsMain = () => {
     document.body.style.overflow = mobileFilterOpen ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
   }, [mobileFilterOpen]);
+
+  // Auto-select cabin class filter from search params when results arrive
+  useEffect(() => {
+    if (searchResults?.flights && searchParams?.flightClass) {
+      setFilters(prev => ({ ...prev, cabinClasses: [searchParams.flightClass] }));
+    }
+  }, [searchResults, searchParams?.flightClass]);
 
   // Client-side filtreleme + sıralama — API çağrısı yok
   const displayedFlights = useMemo(() => {
@@ -156,6 +163,47 @@ const SearchResultsMain = () => {
 
   const hasBundles = bundlePackages.length > 0;
 
+  /**
+   * BiletBank, farklı branded fare seçildiğinde IsPriceChanged=true döner
+   * çünkü orijinal ShoppingFile fiyatıyla karşılaştırır. Kullanıcı bile bile
+   * farklı tarife seçtiğinde bu "fiyat değişikliği" değil, tarife farkıdır.
+   * Gerçek fiyat değişikliği: allocate fiyatı ≠ seçilen tarifeye ait bilinen fiyat.
+   */
+  const isRealPriceChange = (
+    result: AllocateResponse,
+    flight: FlightResult,
+    brandedFareItemId?: string | null,
+  ): boolean => {
+    if (!result.isPriceChanged) return false;
+
+    const allocateTotal = result.priceSummary?.grandTotal
+      ?? result.airBookings?.reduce((s, ab) => s + (ab.totalFare ?? 0), 0)
+      ?? 0;
+
+    // Seçilen branded fare'in bilinen fiyatını bul
+    if (brandedFareItemId) {
+      const selectedPkg = (flight.farePackages ?? [])
+        .find((fp: FarePackage) => fp.brandedFareItemId === brandedFareItemId);
+      if (selectedPkg && selectedPkg.totalFare > 0) {
+        // %2 tolerans — küçük kuruş farkları yok sayılır
+        const tolerance = selectedPkg.totalFare * 0.02;
+        if (Math.abs(allocateTotal - selectedPkg.totalFare) <= tolerance) {
+          return false; // tarife farkı, gerçek fiyat değişikliği değil
+        }
+      }
+    }
+
+    // BrandedFareItemId yok veya eşleşmedi → orijinal uçuş fiyatıyla karşılaştır
+    if (flight.totalFare && flight.totalFare > 0) {
+      const tolerance = flight.totalFare * 0.02;
+      if (Math.abs(allocateTotal - flight.totalFare) <= tolerance) {
+        return false;
+      }
+    }
+
+    return true; // gerçekten fiyat değişmiş
+  };
+
   // Tek yön uçuş seçimi (allocate + yönlendir)
   const handleSelectFlight = (flight: FlightResult, brandedFareItemId?: string | null) => {
     if (allocateLoading || !searchResults) return;
@@ -167,7 +215,7 @@ const SearchResultsMain = () => {
       brandedFareItemId: brandedFareItemId ?? undefined,
     })).unwrap()
       .then((result: AllocateResponse) => {
-        if (result.isPriceChanged) {
+        if (isRealPriceChange(result, flight, brandedFareItemId)) {
           setPriceChangedData(result);
         } else {
           router.push('/checkout');
@@ -203,7 +251,7 @@ const SearchResultsMain = () => {
           subOptions: flight.subOptionFlightIds ?? undefined,
         })).unwrap();
 
-        if (bundleResult.isPriceChanged) {
+        if (isRealPriceChange(bundleResult, flight, brandedFareItemId)) {
           setPriceChangedData(bundleResult);
         } else {
           router.push('/checkout');
@@ -222,7 +270,7 @@ const SearchResultsMain = () => {
           brandedFareItemId: returnSelection.brandedFareItemId ?? undefined,
         })).unwrap();
 
-        if (retResult.isPriceChanged) {
+        if (isRealPriceChange(retResult, returnSelection.flight, returnSelection.brandedFareItemId)) {
           setPriceChangedData(retResult);
         } else {
           router.push('/checkout');
@@ -247,6 +295,7 @@ const SearchResultsMain = () => {
     setRtAllocating(true);
     dispatch(setSelectedFlight(pkg.outbound));
     dispatch(setSelectedReturnFlight(pkg.returnFlight));
+    dispatch(setSelectedBrandedFareItemId(brandedFareItemId ?? pkg.outbound.defaultBrandedFareItemId ?? null));
 
     try {
       const result = await dispatch(allocateFlightThunk({
@@ -256,7 +305,7 @@ const SearchResultsMain = () => {
         subOptions: pkg.outbound.subOptionFlightIds ?? undefined,
       })).unwrap();
 
-      if (result.isPriceChanged) {
+      if (isRealPriceChange(result, pkg.outbound, brandedFareItemId ?? pkg.outbound.defaultBrandedFareItemId)) {
         setPriceChangedData(result);
       } else {
         router.push('/checkout');
