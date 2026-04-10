@@ -80,6 +80,7 @@ export interface MakePreBookingResponse {
   serviceFee: number;
   currency: string | null;
   isPriceChanged: boolean;
+  oldPrice: number;
   prebookingExpiresAt: string | null;
   reservationExpiresAt: string | null;
   segments: PreBookingSegment[];

@@ -39,8 +39,16 @@ export const updatePassengers = async (params: UpdatePassengersClientRequest): P
 };
 
 export const makePreBooking = async (params: MakePreBookingClientRequest): Promise<MakePreBookingResponse> => {
-  const response = await apiClient.post<MakePreBookingResponse>('/flight/make-prebooking', params);
-  return response.data;
+  try {
+    const response = await apiClient.post<MakePreBookingResponse>('/flight/make-prebooking', params);
+    return response.data;
+  } catch (error: any) {
+    // 409 Conflict = fiyat degisikligi — response body icindeki data'yi normal response olarak don
+    if (error.response?.status === 409 && error.response?.data?.code === 'PRICE_CHANGED') {
+      return error.response.data.data as MakePreBookingResponse;
+    }
+    throw error;
+  }
 };
 
 // Sepetten ürün kaldırma

@@ -790,6 +790,14 @@ export default function CheckoutClient() {
             <div className="bb-modal__body">
               <p>Sectiginiz ucusun fiyati havayolu tarafindan guncellenmistir.</p>
               <div className="bb-modal__price-compare">
+                {priceChangedResult.oldPrice > 0 && (
+                  <div className="bb-modal__price-old">
+                    <span className="bb-modal__price-label">Onceki Fiyat</span>
+                    <span className="bb-modal__price-amount bb-modal__price-amount--old">
+                      {priceChangedResult.oldPrice.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} {priceChangedResult.currency ?? 'TRY'}
+                    </span>
+                  </div>
+                )}
                 <div className="bb-modal__price-new">
                   <span className="bb-modal__price-label">Yeni Fiyat</span>
                   <span className="bb-modal__price-amount bb-modal__price-amount--new">
