@@ -10,6 +10,7 @@ import FooterOne from '@/layouts/footers/FooterOne';
 import PassengerForm from '@/components/booking/PassengerForm';
 import { updatePassengersThunk, makePreBookingThunk } from '@/redux/features/bookingSlice';
 import { setStep, setPassengers, setContactInfo, resetBooking } from '@/redux/features/bookingSlice';
+import { makePaymentThunk, finalizeShoppingThunk, clearFinalizeError } from '@/redux/features/paymentSlice';
 import type { RootState, AppDispatch } from '@/redux/store';
 import type { PassengerItem, ContactInfo, MakePreBookingResponse } from '@/types/booking';
 import { useSessionTimeout } from '@/hooks/UseSessionTimeout';
@@ -31,6 +32,24 @@ export default function CheckoutClient() {
   const { showWarning: sessionWarning, dismissWarning: dismissSessionWarning } = useSessionTimeout();
   const [priceChangedResult, setPriceChangedResult] = useState<MakePreBookingResponse | null>(null);
 
+  /* ── Payment state ── */
+  const [paymentMethod, setPaymentMethod] = useState<'running_account' | 'credit_card'>('running_account');
+  const [agreed, setAgreed] = useState(false);
+  const [agreementError, setAgreementError] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [cardForm, setCardForm] = useState({
+    cardHolderName: '',
+    cardNumber: '',
+    expiryMonth: '',
+    expiryYear: '',
+    cvv: '',
+  });
+  const [cardErrors, setCardErrors] = useState<Record<string, string>>({});
+  const [threeDSRedirecting, setThreeDSRedirecting] = useState(false);
+  const [threeDSError, setThreeDSError] = useState<string | null>(null);
+  const hasFinalized = useRef(false);
+  const finalizeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const { allocateResult, selectedFlight, selectedReturnFlight, searchId: allocateSearchId, searchResults, selectedBrandedFareItemId, searchParams } = useSelector(
     (state: RootState) => state.flight
   );
@@ -42,6 +61,15 @@ export default function CheckoutClient() {
     preBookingLoading,
     preBookingError,
   } = useSelector((state: RootState) => state.booking);
+
+  const {
+    paymentResult, paymentLoading, paymentError,
+    finalizeResult, finalizeLoading, finalizeError,
+    is3DSecureRequired, threeDSecureUrl, threeDSecureHtml,
+  } = useSelector((state: RootState) => state.payment);
+
+  const finalizeResultRef = useRef(finalizeResult);
+  finalizeResultRef.current = finalizeResult;
 
   // No allocate → back to home
   useEffect(() => {
@@ -147,18 +175,135 @@ export default function CheckoutClient() {
     return false;
   }, [searchParams, airBookings, selectedFlight]);
 
-  /* ── Submit handler — chain: updatePassengers → makePreBooking → navigate ── */
+  /* ── Card validation ── */
+  const validateCard = useCallback((): boolean => {
+    const errs: Record<string, string> = {};
+    if (!cardForm.cardHolderName.trim() || cardForm.cardHolderName.trim().length < 3) errs.cardHolderName = 'Kart sahibi adı gereklidir';
+    if (!/^\d{15,16}$/.test(cardForm.cardNumber.replace(/\s/g, ''))) errs.cardNumber = 'Geçerli bir kart numarası giriniz';
+    if (!/^(0[1-9]|1[0-2])$/.test(cardForm.expiryMonth)) errs.expiryMonth = 'Geçersiz ay';
+    if (!/^\d{4}$/.test(cardForm.expiryYear) || parseInt(cardForm.expiryYear) < new Date().getFullYear()) errs.expiryYear = 'Geçersiz yıl';
+    if (!/^\d{3,4}$/.test(cardForm.cvv)) errs.cvv = 'Geçersiz CVV';
+    setCardErrors(errs);
+    return Object.keys(errs).length === 0;
+  }, [cardForm]);
+
+  /* ── 3D Secure flow ── */
+  useEffect(() => {
+    if (is3DSecureRequired && (threeDSecureUrl || threeDSecureHtml)) {
+      setThreeDSRedirecting(true);
+      setThreeDSError(null);
+
+      const paymentSession = {
+        searchId,
+        shoppingFileId: paymentResult?.shoppingFileId ?? null,
+        paymentReferenceId: paymentResult?.paymentReferenceId ?? null,
+        amount: paymentResult?.grandTotal ?? paymentResult?.paymentAmount ?? 0,
+        currency: paymentResult?.currency ?? 'TRY',
+        pnr: paymentResult?.pnr ?? null,
+      };
+      sessionStorage.setItem('payment_3ds_session', JSON.stringify(paymentSession));
+
+      if (threeDSecureUrl) {
+        const timer = setTimeout(() => { window.location.href = threeDSecureUrl; }, 1500);
+        return () => clearTimeout(timer);
+      } else if (threeDSecureHtml) {
+        const win = window.open('', '_blank', 'width=500,height=700,scrollbars=yes');
+        if (win) {
+          win.document.open();
+          win.document.write(threeDSecureHtml);
+          win.document.close();
+        } else {
+          setThreeDSRedirecting(false);
+          setIsProcessing(false);
+          setThreeDSError('Tarayıcınız popup penceresini engelledi. Lütfen popup engelleyiciyi devre dışı bırakıp tekrar deneyin.');
+        }
+      }
+    }
+  }, [is3DSecureRequired, threeDSecureUrl, threeDSecureHtml, searchId, paymentResult]);
+
+  /* ── Auto-finalize after successful payment ── */
+  const isPaymentSuccessful = paymentResult && paymentResult.hasError === false &&
+    paymentResult.isPaymentSuccessful === true && !paymentResult.is3DSecureRequired;
+
+  useEffect(() => {
+    if (isPaymentSuccessful && searchId && !hasFinalized.current && !finalizeResult && !finalizeError) {
+      hasFinalized.current = true;
+      if (finalizeTimeoutRef.current) clearTimeout(finalizeTimeoutRef.current);
+      finalizeTimeoutRef.current = setTimeout(() => {
+        if (!finalizeResultRef.current) dispatch({ type: 'payment/finalizeTimeout' });
+      }, 60_000);
+      const timer = setTimeout(() => {
+        dispatch(finalizeShoppingThunk({ searchId }));
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [isPaymentSuccessful, searchId, dispatch, finalizeResult, finalizeError]);
+
+  useEffect(() => {
+    return () => { if (finalizeTimeoutRef.current) clearTimeout(finalizeTimeoutRef.current); };
+  }, []);
+
+  /* ── After finalize → success page ── */
+  useEffect(() => {
+    if (!hasFinalized.current) return;
+    const successStatuses = ['Booking', 'Ticketed', 'Reservation'];
+    const isFinalized = finalizeResult && finalizeResult.hasError === false &&
+      (finalizeResult.isFinalized === true || successStatuses.includes(finalizeResult.status ?? ''));
+    if (isFinalized) {
+      if (finalizeTimeoutRef.current) { clearTimeout(finalizeTimeoutRef.current); finalizeTimeoutRef.current = null; }
+      setIsProcessing(false);
+      dispatch(setStep('confirmation'));
+      router.push('/checkout/success');
+    }
+  }, [finalizeResult, dispatch, router]);
+
+  /* ── Handle "Duplicate call" as potential success ── */
+  useEffect(() => {
+    if (finalizeError && /duplicate|zaten biletlen/i.test(finalizeError) && searchId) {
+      if (finalizeTimeoutRef.current) { clearTimeout(finalizeTimeoutRef.current); finalizeTimeoutRef.current = null; }
+      setIsProcessing(false);
+      const timer = setTimeout(() => { router.push('/bilet-sorgula'); }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [finalizeError, searchId, router]);
+
+  /* ── Clear processing on errors ── */
+  useEffect(() => {
+    if (paymentError || (finalizeError && !/duplicate|zaten biletlen/i.test(finalizeError))) {
+      setIsProcessing(false);
+    }
+  }, [paymentError, finalizeError]);
+
+  /* ── Submit handler — full chain: updatePassengers → preBooking → payment ── */
   const submitRef = useRef(false);
   const handlePassengerSubmit = useCallback(
     async (passengerItems: PassengerItem[], contact: ContactInfo) => {
-      if (submitRef.current) return; // double-submit guard
+      if (submitRef.current) return;
       if (!searchId || !productId || !productItemId) {
         console.error('Missing booking data:', { searchId: !!searchId, productId: !!productId, productItemId: !!productItemId });
         return;
       }
-      submitRef.current = true;
 
-      // Save to redux
+      // Validate payment form first
+      if (!agreed) {
+        setAgreementError(true);
+        setTimeout(() => {
+          const el = document.querySelector('.bb-agreement');
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+        return;
+      }
+      if (paymentMethod === 'credit_card' && !validateCard()) {
+        setTimeout(() => {
+          const el = document.querySelector('.bb-card-form__field--error');
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+        return;
+      }
+
+      submitRef.current = true;
+      setIsProcessing(true);
+
       dispatch(setPassengers(passengerItems));
       dispatch(setContactInfo(contact));
 
@@ -183,17 +328,32 @@ export default function CheckoutClient() {
 
         // 3. Fiyat değişikliği kontrolü
         if (prebookingResult?.isPriceChanged) {
+          setIsProcessing(false);
           setPriceChangedResult(prebookingResult);
-          return; // Modal göster, kullanıcı onaylarsa payment'a geç
+          return;
         }
 
-        // 4. Başarılı → ödeme sayfasına yönlendir
-        dispatch(setStep('payment'));
-        router.push('/checkout/payment');
+        // 4. Ödeme yap
+        if (paymentMethod === 'credit_card') {
+          dispatch(makePaymentThunk({
+            searchId,
+            paymentType: 'CreditCard',
+            cardHolderName: cardForm.cardHolderName.trim().toUpperCase(),
+            cardNumber: cardForm.cardNumber.replace(/\s/g, ''),
+            expiryMonth: cardForm.expiryMonth,
+            expiryYear: cardForm.expiryYear,
+            cvv: cardForm.cvv,
+          }));
+        } else {
+          dispatch(makePaymentThunk({
+            searchId,
+            paymentType: 'RunningAccount',
+          }));
+        }
+        // Auto-finalize handled by effects above
       } catch (err) {
-        console.error('[Checkout] Passenger/PreBooking chain failed:', err);
-        // Error is already mapped to user-friendly Turkish in the thunk via mapProviderError
-        // and stored in Redux (preBookingError / updatePassengersError). Just scroll to show it.
+        console.error('[Checkout] Submit chain failed:', err);
+        setIsProcessing(false);
         setTimeout(() => {
           const errorEl = document.querySelector('.bb-checkout__price-warning');
           if (errorEl) errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -202,14 +362,30 @@ export default function CheckoutClient() {
         submitRef.current = false;
       }
     },
-    [dispatch, searchId, productId, productItemId, brandedFareItemId, router]
+    [dispatch, searchId, productId, productItemId, brandedFareItemId, router, paymentMethod, cardForm, agreed, validateCard]
   );
 
   const handleAcceptPriceChange = useCallback(() => {
     setPriceChangedResult(null);
-    dispatch(setStep('payment'));
-    router.push('/checkout/payment');
-  }, [dispatch, router]);
+    // Re-trigger payment with accepted price
+    setIsProcessing(true);
+    if (paymentMethod === 'credit_card') {
+      dispatch(makePaymentThunk({
+        searchId: searchId!,
+        paymentType: 'CreditCard',
+        cardHolderName: cardForm.cardHolderName.trim().toUpperCase(),
+        cardNumber: cardForm.cardNumber.replace(/\s/g, ''),
+        expiryMonth: cardForm.expiryMonth,
+        expiryYear: cardForm.expiryYear,
+        cvv: cardForm.cvv,
+      }));
+    } else {
+      dispatch(makePaymentThunk({
+        searchId: searchId!,
+        paymentType: 'RunningAccount',
+      }));
+    }
+  }, [dispatch, searchId, paymentMethod, cardForm]);
 
   const handleRejectPriceChange = useCallback(() => {
     setPriceChangedResult(null);
@@ -227,183 +403,148 @@ export default function CheckoutClient() {
   return (
     <>
       <HeaderOne />
-      <main className="bb-checkout">
+      <main className="bb-checkout bb-checkout--full">
         {/* Session timeout warning */}
         {sessionWarning && (
           <div className="bb-countdown">
-            <span className="bb-countdown__icon">⏱</span>
+            <span className="bb-countdown__icon">&#9201;</span>
             <span className="bb-countdown__text">Oturumunuz sona ermek üzere. Lütfen işleminizi tamamlayın.</span>
-            <button type="button" onClick={dismissSessionWarning} style={{ background: 'none', border: 'none', fontWeight: 700, cursor: 'pointer', color: '#92400e', fontSize: 16 }}>✕</button>
+            <button type="button" onClick={dismissSessionWarning} style={{ background: 'none', border: 'none', fontWeight: 700, cursor: 'pointer', color: '#92400e', fontSize: 16 }}>&#10005;</button>
           </div>
         )}
 
-        <div className="bb-checkout__layout">
-          {/* ──── LEFT: Main content ──── */}
-          <div className="bb-checkout__main">
-            {/* Auth banner — automatic guest/member detection */}
-            {session?.user ? (
-              <div className="bb-checkout__auth-banner bb-checkout__auth-banner--member">
-                Hoş geldiniz, <strong>{session.user.name || session.user.email}</strong>
-              </div>
-            ) : (
-              <div className="bb-checkout__auth-banner bb-checkout__auth-banner--guest">
-                Misafir olarak devam ediyorsunuz. Biletlerinizi takip etmek için
-                <a href={`/login?callbackUrl=/checkout`} style={{ fontWeight: 600, marginLeft: 4, color: 'inherit', textDecoration: 'underline' }}>
-                  giriş yapabilirsiniz
-                </a>.
-              </div>
-            )}
+        {/* Auth banner */}
+        {session?.user ? (
+          <div className="bb-checkout__auth-banner bb-checkout__auth-banner--member">
+            Hoş geldiniz, <strong>{session.user.name || session.user.email}</strong>
+          </div>
+        ) : (
+          <div className="bb-checkout__auth-banner bb-checkout__auth-banner--guest">
+            Misafir olarak devam ediyorsunuz. Biletlerinizi takip etmek için
+            <a href={`/login?callbackUrl=/checkout`} style={{ fontWeight: 600, marginLeft: 4, color: 'inherit', textDecoration: 'underline' }}>
+              giriş yapabilirsiniz
+            </a>.
+          </div>
+        )}
 
-            {/* Price changed warning */}
-            {isPriceChanged && (
-              <div className="bb-checkout__price-warning">
-                ⚠ Fiyat güncellenmiştir. Lütfen yeni fiyatı kontrol ediniz.
-              </div>
-            )}
+        {/* Warnings */}
+        {isPriceChanged && (
+          <div className="bb-checkout__price-warning">
+            Fiyat güncellenmiştir. Lütfen yeni fiyatı kontrol ediniz.
+          </div>
+        )}
+        {(!productId || !productItemId || !searchId) && (
+          <div className="bb-checkout__price-warning">
+            Uçuş tahsis bilgileri eksik. Lütfen geri dönüp tekrar uçuş seçiniz.
+          </div>
+        )}
+        {updatePassengersError && (
+          <div className="bb-checkout__price-warning">{updatePassengersError}</div>
+        )}
+        {preBookingError && !isProcessing && (
+          <div className="bb-checkout__price-warning">
+            <p>{preBookingError}</p>
+            <div style={{ display: 'flex', gap: 12, marginTop: 10, flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                className="bb-checkout__btn bb-checkout__btn--next"
+                disabled={preBookingLoading}
+                onClick={() => {
+                  const form = document.querySelector('.bb-passenger-form') as HTMLFormElement;
+                  if (form) form.requestSubmit();
+                }}
+              >Tekrar Dene</button>
+              <button type="button" className="bb-checkout__btn bb-checkout__btn--back" onClick={() => router.push('/search-results')}>Farklı Uçuş Seç</button>
+            </div>
+          </div>
+        )}
+        {paymentError && !isProcessing && (
+          <div className="bb-checkout__price-warning">
+            <i className="fa-solid fa-circle-exclamation" style={{ marginRight: 8 }} />{paymentError}
+          </div>
+        )}
+        {threeDSError && (
+          <div className="bb-checkout__price-warning">
+            <i className="fa-solid fa-circle-exclamation" style={{ marginRight: 8 }} />{threeDSError}
+          </div>
+        )}
+        {finalizeError && !isProcessing && (
+          <div className="bb-checkout__price-warning">
+            <i className="fa-solid fa-circle-exclamation" style={{ marginRight: 8 }} />
+            {/duplicate|zaten biletlen/i.test(finalizeError)
+              ? 'Biletleme işlemi zaten tamamlanmış görünüyor. Bilet sorgulama sayfasına yönlendiriliyorsunuz...'
+              : finalizeError}
+            <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
+              <button type="button" className="bb-checkout__btn bb-checkout__btn--next" style={{ fontSize: 13, padding: '6px 16px' }} onClick={() => router.push('/bilet-sorgula')}>Bilet Sorgula</button>
+              {!/duplicate|zaten biletlen/i.test(finalizeError) && (
+                <button
+                  type="button"
+                  className="bb-checkout__btn bb-checkout__btn--back"
+                  style={{ fontSize: 13, padding: '6px 16px' }}
+                  onClick={() => {
+                    if (finalizeTimeoutRef.current) { clearTimeout(finalizeTimeoutRef.current); finalizeTimeoutRef.current = null; }
+                    dispatch(clearFinalizeError());
+                    hasFinalized.current = false;
+                  }}
+                >Tekrar Dene</button>
+              )}
+            </div>
+          </div>
+        )}
 
-            {/* Missing data guard */}
-            {(!productId || !productItemId || !searchId) && (
-              <div className="bb-checkout__price-warning">
-                Uçuş tahsis bilgileri eksik. Lütfen geri dönüp tekrar uçuş seçiniz.
-              </div>
-            )}
-
-            {/* API Error — updatePassengers */}
-            {updatePassengersError && (
-              <div className="bb-checkout__price-warning">
-                {updatePassengersError}
-              </div>
-            )}
-
-            {/* PreBooking loading */}
-            {preBookingLoading && (
-              <div className="bb-spinner-overlay" style={{ position: 'relative', minHeight: 120, borderRadius: 12 }}>
-                <div className="bb-spinner-wrapper">
-                  <div className="bb-spinner bb-spinner--large"></div>
-                  <p className="bb-spinner-text">Ön rezervasyon oluşturuluyor...</p>
-                </div>
-              </div>
-            )}
-
-            {/* PreBooking error */}
-            {preBookingError && (
-              <div className="bb-checkout__price-warning">
-                <p>{preBookingError}</p>
-                <div className="flex gap-3 mt-2.5 flex-wrap">
-                  <button
-                    type="button"
-                    className="bb-checkout__btn bb-checkout__btn--next"
-                    disabled={preBookingLoading}
-                    onClick={() => {
-                      const form = document.querySelector('.bb-passenger-form') as HTMLFormElement;
-                      if (form) form.requestSubmit();
-                    }}
-                  >
-                    Tekrar Dene
-                  </button>
-                  <button
-                    type="button"
-                    className="bb-checkout__btn bb-checkout__btn--back"
-                    onClick={() => router.push('/search-results')}
-                  >
-                    Farklı Uçuş Seç
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Passenger Form */}
+        {/* ═════ TWO-COLUMN LAYOUT ═════ */}
+        <div className="bb-checkout__two-col">
+          {/* ──── LEFT COLUMN: Passenger Form ──── */}
+          <div className="bb-checkout__col-left">
             <PassengerForm
               passengers={passengers}
               onSubmit={handlePassengerSubmit}
               loading={updatePassengersLoading}
               isInternational={isInternational}
             />
-
-            {/* Action buttons */}
-            <div className="bb-checkout__actions">
-              <button
-                type="button"
-                className="bb-checkout__btn bb-checkout__btn--back"
-                onClick={() => router.push('/search-results')}
-              >
-                ← Geri Dön
-              </button>
-              <button
-                type="button"
-                className="bb-checkout__btn bb-checkout__btn--next"
-                disabled={updatePassengersLoading || preBookingLoading || !productId || !productItemId || !searchId}
-                onClick={() => {
-                  const form = document.querySelector('.bb-passenger-form') as HTMLFormElement;
-                  if (form) {
-                    form.requestSubmit();
-                  }
-                }}
-              >
-                {updatePassengersLoading ? 'Kaydediliyor...' : preBookingLoading ? 'Rezervasyon oluşturuluyor...' : 'Devam Et →'}
-              </button>
-            </div>
           </div>
 
-          {/* ──── RIGHT: Sidebar ──── */}
-          <aside className="bb-checkout__sidebar">
-            {/* Flight summary card */}
+          {/* ──── VISUAL DIVIDER ──── */}
+          <div className="bb-checkout__divider" />
+
+          {/* ──── RIGHT COLUMN: Payment ──── */}
+          <div className="bb-checkout__col-right">
+            {/* Flight Summary — compact */}
             <div className="bb-checkout__card">
               <h3 className="bb-checkout__card-title">Uçuş Özeti</h3>
-              {/* Outbound flight */}
               <div className="bb-checkout__flight-mini">
                 <div className="bb-checkout__flight-mini-logo"
                   style={!logoPath ? { background: brandStyle.bg, color: brandStyle.color, border: 'none' } : undefined}
                 >
                   {logoPath ? (
-                    <Image
-                      src={logoPath}
-                      alt={selectedFlight.airlineName ?? 'airline'}
-                      width={36}
-                      height={36}
+                    <Image src={logoPath} alt={selectedFlight.airlineName ?? 'airline'} width={36} height={36}
                       onError={(e) => {
                         const target = e.currentTarget.parentElement;
-                        if (target) {
-                          target.style.background = brandStyle.bg;
-                          target.style.color = brandStyle.color;
-                          target.style.border = 'none';
-                        }
+                        if (target) { target.style.background = brandStyle.bg; target.style.color = brandStyle.color; target.style.border = 'none'; }
                         e.currentTarget.style.display = 'none';
                         const fallback = document.createElement('span');
-                        fallback.style.fontWeight = '700';
-                        fallback.style.fontSize = '13px';
-                        fallback.style.letterSpacing = '1px';
+                        fallback.style.fontWeight = '700'; fallback.style.fontSize = '13px'; fallback.style.letterSpacing = '1px';
                         fallback.textContent = airlineCode ?? '??';
                         target?.appendChild(fallback);
                       }}
                     />
                   ) : (
-                    <span style={{ fontWeight: 700, fontSize: 13, letterSpacing: 1 }}>
-                      {airlineCode ?? '??'}
-                    </span>
+                    <span style={{ fontWeight: 700, fontSize: 13, letterSpacing: 1 }}>{airlineCode ?? '??'}</span>
                   )}
                 </div>
                 <div>
                   <div className="bb-checkout__flight-mini-airline">
                     {selectedFlight.airlineName}
-                    <span style={{ fontWeight: 400, color: '#6b7280', marginLeft: 8, fontSize: 13 }}>
-                      {selectedFlight.flightNumber}
-                    </span>
+                    <span style={{ fontWeight: 400, color: '#6b7280', marginLeft: 8, fontSize: 13 }}>{selectedFlight.flightNumber}</span>
                   </div>
                   <div className="bb-checkout__flight-mini-route">
-                    {selectedFlight.departureTime}
-                    <span className="bb-checkout__flight-mini-arrow">→</span>
-                    {selectedFlight.arrivalTime}
+                    {selectedFlight.departureTime}<span className="bb-checkout__flight-mini-arrow">→</span>{selectedFlight.arrivalTime}
                   </div>
                   <div className="bb-checkout__flight-mini-detail">
                     {selectedFlight.originCode} — {selectedFlight.destinationCode}
-                    {selectedFlight.durationFormatted && (
-                      <span style={{ marginLeft: 12 }}>{selectedFlight.durationFormatted}</span>
-                    )}
+                    {selectedFlight.durationFormatted && <span style={{ marginLeft: 12 }}>{selectedFlight.durationFormatted}</span>}
                   </div>
-                  <div className="bb-checkout__flight-mini-detail">
-                    {selectedFlight.departureDate}
-                  </div>
+                  <div className="bb-checkout__flight-mini-detail">{selectedFlight.departureDate}</div>
                   {selectedFlight.isDirect ? (
                     <span style={{ fontSize: 12, color: '#22c55e', fontWeight: 500 }}>Direkt Uçuş</span>
                   ) : (
@@ -411,7 +552,6 @@ export default function CheckoutClient() {
                   )}
                 </div>
               </div>
-              {/* Return flight — RT bundle/non-bundle */}
               {selectedReturnFlight && (
                 <>
                   <div style={{ borderTop: '1px dashed #e5e7eb', margin: '10px 0' }} />
@@ -419,36 +559,23 @@ export default function CheckoutClient() {
                     <div className="bb-checkout__flight-mini-logo"
                       style={{ background: (AIRLINE_COLORS[selectedReturnFlight.airlineCode ?? ''] ?? FALLBACK_STYLE).bg, color: (AIRLINE_COLORS[selectedReturnFlight.airlineCode ?? ''] ?? FALLBACK_STYLE).color, border: 'none' }}
                     >
-                      <img
-                        src={`/images/airlines/${selectedReturnFlight.airlineCode}.svg`}
-                        alt={selectedReturnFlight.airlineName ?? ''}
-                        width={36}
-                        height={36}
-                        style={{ display: 'block' }}
+                      <img src={`/images/airlines/${selectedReturnFlight.airlineCode}.svg`} alt={selectedReturnFlight.airlineName ?? ''} width={36} height={36} style={{ display: 'block' }}
                         onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                       />
                     </div>
                     <div>
                       <div className="bb-checkout__flight-mini-airline">
                         {selectedReturnFlight.airlineName}
-                        <span style={{ fontWeight: 400, color: '#6b7280', marginLeft: 8, fontSize: 13 }}>
-                          {selectedReturnFlight.flightNumber}
-                        </span>
+                        <span style={{ fontWeight: 400, color: '#6b7280', marginLeft: 8, fontSize: 13 }}>{selectedReturnFlight.flightNumber}</span>
                       </div>
                       <div className="bb-checkout__flight-mini-route">
-                        {selectedReturnFlight.departureTime}
-                        <span className="bb-checkout__flight-mini-arrow">→</span>
-                        {selectedReturnFlight.arrivalTime}
+                        {selectedReturnFlight.departureTime}<span className="bb-checkout__flight-mini-arrow">→</span>{selectedReturnFlight.arrivalTime}
                       </div>
                       <div className="bb-checkout__flight-mini-detail">
                         {selectedReturnFlight.originCode} — {selectedReturnFlight.destinationCode}
-                        {selectedReturnFlight.durationFormatted && (
-                          <span style={{ marginLeft: 12 }}>{selectedReturnFlight.durationFormatted}</span>
-                        )}
+                        {selectedReturnFlight.durationFormatted && <span style={{ marginLeft: 12 }}>{selectedReturnFlight.durationFormatted}</span>}
                       </div>
-                      <div className="bb-checkout__flight-mini-detail">
-                        {selectedReturnFlight.departureDate}
-                      </div>
+                      <div className="bb-checkout__flight-mini-detail">{selectedReturnFlight.departureDate}</div>
                       {selectedReturnFlight.isDirect ? (
                         <span style={{ fontSize: 12, color: '#22c55e', fontWeight: 500 }}>Direkt Uçuş</span>
                       ) : (
@@ -458,62 +585,201 @@ export default function CheckoutClient() {
                   </div>
                 </>
               )}
-              <div style={{ fontSize: 13, color: '#6b7280', marginTop: 8 }}>
-                {paxSummaryText}
+              <div style={{ fontSize: 13, color: '#6b7280', marginTop: 8 }}>{paxSummaryText}</div>
+            </div>
+
+            {/* ── Payment Method Selection ── */}
+            <div className="bb-pay-methods">
+              <div className="bb-pay-methods__header">
+                <i className="fa-solid fa-credit-card" />
+                <span>Ödeme Yöntemi Seçin</span>
+              </div>
+              <div className="bb-pay-methods__body">
+                {/* Running Account */}
+                <div
+                  className={`bb-payment-method ${paymentMethod === 'running_account' ? 'bb-payment-method--active' : ''}`}
+                  onClick={() => setPaymentMethod('running_account')}
+                >
+                  <div className="bb-payment-method__radio" />
+                  <div className="bb-payment-method__icon"><i className="fa-solid fa-building-columns" /></div>
+                  <div className="bb-payment-method__info">
+                    <p className="bb-payment-method__name">Cari Hesap ile Ödeme</p>
+                    <p className="bb-payment-method__desc">Acente cari hesabınızdan tahsil edilir</p>
+                  </div>
+                </div>
+
+                {/* Credit Card */}
+                <div
+                  className={`bb-payment-method ${paymentMethod === 'credit_card' ? 'bb-payment-method--active' : ''}`}
+                  onClick={() => setPaymentMethod('credit_card')}
+                >
+                  <div className="bb-payment-method__radio" />
+                  <div className="bb-payment-method__icon"><i className="fa-regular fa-credit-card" /></div>
+                  <div className="bb-payment-method__info">
+                    <p className="bb-payment-method__name">Kredi Kartı ile Ödeme</p>
+                    <p className="bb-payment-method__desc">Visa, Mastercard, Amex</p>
+                  </div>
+                </div>
+
+                {/* Credit Card Form */}
+                {paymentMethod === 'credit_card' && (
+                  <div className="bb-card-form">
+                    <div className="bb-card-form__row">
+                      <div className={`bb-card-form__field ${cardErrors.cardHolderName ? 'bb-card-form__field--error' : ''}`}>
+                        <label className="bb-card-form__label">Kart Üzerindeki İsim</label>
+                        <input type="text" className="bb-card-form__input" placeholder="AD SOYAD"
+                          value={cardForm.cardHolderName}
+                          onChange={e => { setCardForm(prev => ({ ...prev, cardHolderName: e.target.value })); setCardErrors(prev => ({ ...prev, cardHolderName: '' })); }}
+                          maxLength={100} autoComplete="cc-name"
+                        />
+                        {cardErrors.cardHolderName && <span className="bb-card-form__error">{cardErrors.cardHolderName}</span>}
+                      </div>
+                    </div>
+                    <div className="bb-card-form__row">
+                      <div className={`bb-card-form__field ${cardErrors.cardNumber ? 'bb-card-form__field--error' : ''}`}>
+                        <label className="bb-card-form__label">Kart Numarası</label>
+                        <div className="bb-card-form__input-wrap">
+                          <input type="text" inputMode="numeric" className="bb-card-form__input" placeholder="0000 0000 0000 0000"
+                            value={cardForm.cardNumber.replace(/(\d{4})(?=\d)/g, '$1 ')}
+                            onChange={e => { const v = e.target.value.replace(/\D/g, '').slice(0, 16); setCardForm(prev => ({ ...prev, cardNumber: v })); setCardErrors(prev => ({ ...prev, cardNumber: '' })); }}
+                            maxLength={19} autoComplete="cc-number"
+                          />
+                          <i className="fa-regular fa-credit-card bb-card-form__card-icon" />
+                        </div>
+                        {cardErrors.cardNumber && <span className="bb-card-form__error">{cardErrors.cardNumber}</span>}
+                      </div>
+                    </div>
+                    <div className="bb-card-form__row bb-card-form__row--triple">
+                      <div className={`bb-card-form__field ${cardErrors.expiryMonth ? 'bb-card-form__field--error' : ''}`}>
+                        <label className="bb-card-form__label">Ay</label>
+                        <select className="bb-card-form__input bb-card-form__select" value={cardForm.expiryMonth}
+                          onChange={e => { setCardForm(prev => ({ ...prev, expiryMonth: e.target.value })); setCardErrors(prev => ({ ...prev, expiryMonth: '' })); }}
+                          autoComplete="cc-exp-month"
+                        >
+                          <option value="">Ay</option>
+                          {Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0')).map(m => (
+                            <option key={m} value={m}>{m}</option>
+                          ))}
+                        </select>
+                        {cardErrors.expiryMonth && <span className="bb-card-form__error">{cardErrors.expiryMonth}</span>}
+                      </div>
+                      <div className={`bb-card-form__field ${cardErrors.expiryYear ? 'bb-card-form__field--error' : ''}`}>
+                        <label className="bb-card-form__label">Yıl</label>
+                        <select className="bb-card-form__input bb-card-form__select" value={cardForm.expiryYear}
+                          onChange={e => { setCardForm(prev => ({ ...prev, expiryYear: e.target.value })); setCardErrors(prev => ({ ...prev, expiryYear: '' })); }}
+                          autoComplete="cc-exp-year"
+                        >
+                          <option value="">Yıl</option>
+                          {Array.from({ length: 10 }, (_, i) => String(new Date().getFullYear() + i)).map(y => (
+                            <option key={y} value={y}>{y}</option>
+                          ))}
+                        </select>
+                        {cardErrors.expiryYear && <span className="bb-card-form__error">{cardErrors.expiryYear}</span>}
+                      </div>
+                      <div className={`bb-card-form__field ${cardErrors.cvv ? 'bb-card-form__field--error' : ''}`}>
+                        <label className="bb-card-form__label">CVV</label>
+                        <input type="password" inputMode="numeric" className="bb-card-form__input" placeholder="•••"
+                          value={cardForm.cvv}
+                          onChange={e => { const v = e.target.value.replace(/\D/g, '').slice(0, 4); setCardForm(prev => ({ ...prev, cvv: v })); setCardErrors(prev => ({ ...prev, cvv: '' })); }}
+                          maxLength={4} autoComplete="cc-csc"
+                        />
+                        {cardErrors.cvv && <span className="bb-card-form__error">{cardErrors.cvv}</span>}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Price summary card */}
+            {/* Price summary */}
             <div className="bb-checkout__card">
               <h3 className="bb-checkout__card-title">Fiyat Detayı</h3>
-              <div className="bb-checkout__price-row">
-                <span>Bilet Ücreti</span>
-                <span>{priceSummary.totalBaseFare.toFixed(2)} {priceSummary.currency}</span>
-              </div>
-              <div className="bb-checkout__price-row">
-                <span>Vergiler &amp; Harçlar</span>
-                <span>{priceSummary.totalTaxes.toFixed(2)} {priceSummary.currency}</span>
-              </div>
+              <div className="bb-checkout__price-row"><span>Bilet Ücreti</span><span>{priceSummary.totalBaseFare.toFixed(2)} {priceSummary.currency}</span></div>
+              <div className="bb-checkout__price-row"><span>Vergiler &amp; Harçlar</span><span>{priceSummary.totalTaxes.toFixed(2)} {priceSummary.currency}</span></div>
               {priceSummary.totalServiceFee > 0 && (
-                <div className="bb-checkout__price-row">
-                  <span>Hizmet Bedeli</span>
-                  <span>{priceSummary.totalServiceFee.toFixed(2)} {priceSummary.currency}</span>
-                </div>
+                <div className="bb-checkout__price-row"><span>Hizmet Bedeli</span><span>{priceSummary.totalServiceFee.toFixed(2)} {priceSummary.currency}</span></div>
               )}
-              <div className="bb-checkout__price-row bb-checkout__price-row--total">
-                <span>Genel Toplam</span>
-                <span>{priceSummary.grandTotal.toFixed(2)} {priceSummary.currency}</span>
-              </div>
+              <div className="bb-checkout__price-row bb-checkout__price-row--total"><span>Genel Toplam</span><span>{priceSummary.grandTotal.toFixed(2)} {priceSummary.currency}</span></div>
             </div>
-          </aside>
+
+            {/* Agreement */}
+            <div className={`bb-agreement ${agreementError && !agreed ? 'bb-agreement--error' : ''}`}>
+              <input type="checkbox" className="bb-agreement__checkbox" id="paymentAgreement" checked={agreed}
+                onChange={(e) => { setAgreed(e.target.checked); if (e.target.checked) setAgreementError(false); }}
+              />
+              <label htmlFor="paymentAgreement" className="bb-agreement__text">
+                Satış koşullarını ve <span className="bb-agreement__link">mesafeli satış sözleşmesini</span> okudum, kabul ediyorum.
+                Yolcu bilgilerinin doğruluğunu onaylıyorum.
+              </label>
+            </div>
+
+            {/* Secure badge */}
+            <div className="bb-pay-price__secure">
+              <i className="fa-solid fa-shield-halved" />
+              <span>256-bit SSL ile güvenli ödeme</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Action buttons */}
+        <div className="bb-checkout__actions">
+          <button type="button" className="bb-checkout__btn bb-checkout__btn--back" onClick={() => router.push('/search-results')}
+            disabled={isProcessing}>
+            ← Geri Dön
+          </button>
+          <button
+            type="button"
+            className="bb-checkout__btn bb-checkout__btn--next"
+            disabled={isProcessing || !productId || !productItemId || !searchId}
+            onClick={() => {
+              const form = document.querySelector('.bb-passenger-form') as HTMLFormElement;
+              if (form) form.requestSubmit();
+            }}
+          >
+            {isProcessing ? 'İşlem Yapılıyor...' : <><i className="fa-solid fa-lock" style={{ marginRight: 6 }} />Ödemeyi Tamamla</>}
+          </button>
         </div>
 
         {/* Mobile bottom sticky bar */}
         <div className="bb-checkout__bottom-bar">
           <div>
             <div className="bb-checkout__bottom-bar-info">{paxSummaryText} toplam tutar</div>
-            <div className="bb-checkout__bottom-bar-price">
-              {priceSummary.grandTotal.toFixed(2)} {priceSummary.currency}
-            </div>
+            <div className="bb-checkout__bottom-bar-price">{priceSummary.grandTotal.toFixed(2)} {priceSummary.currency}</div>
           </div>
           <button
             type="button"
             className="bb-checkout__bottom-bar-btn"
-            disabled={updatePassengersLoading || preBookingLoading || !productId || !productItemId || !searchId}
+            disabled={isProcessing || !productId || !productItemId || !searchId}
             onClick={() => {
               const form = document.querySelector('.bb-passenger-form') as HTMLFormElement;
-              if (form) {
-                form.requestSubmit();
-              }
+              if (form) form.requestSubmit();
             }}
           >
-            {updatePassengersLoading ? 'Kaydediliyor...' : preBookingLoading ? 'Rezervasyon...' : 'Devam'}
+            {isProcessing ? 'İşlem...' : 'Öde'}
           </button>
         </div>
       </main>
       <FooterOne />
 
-      {/* Fiyat Değişikliği Modalı — MakePreBooking */}
+      {/* ── Loading Overlay — same design as flight search ── */}
+      {isProcessing && (
+        <div className="bb-flight-loading-overlay">
+          <div className="bb-flight-loading__card">
+            <div className="bb-flight-loading__logo">
+              <span style={{ color: '#DC2626' }}>Ata</span>
+              <span style={{ color: '#0F172A' }}>Bilet</span>
+            </div>
+            <div className="bb-flight-loading__bar">
+              <div className="bb-flight-loading__bar-fill"></div>
+            </div>
+            <p className="bb-flight-loading__text">
+              Uçuşunuz rezerve ediliyor, bu birkaç dakika sürebilir<span className="bb-flight-loading__dots"></span>
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Fiyat Değişikliği Modalı */}
       {priceChangedResult && (
         <div className="bb-modal-overlay" role="dialog" aria-modal="true" aria-label="Fiyat degisikligi bildirimi">
           <div className="bb-modal bb-modal--price-change">

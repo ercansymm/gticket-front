@@ -80,6 +80,43 @@ function isValidTCKimlik(tc: string): boolean {
   return true;
 }
 
+/** Convert Turkish characters to Latin equivalents (live input conversion) */
+function turkishToLatin(s: string): string {
+  return s
+    .replace(/ç/g, 'c').replace(/Ç/g, 'C')
+    .replace(/ğ/g, 'g').replace(/Ğ/g, 'G')
+    .replace(/ı/g, 'i').replace(/İ/g, 'I')
+    .replace(/ö/g, 'o').replace(/Ö/g, 'O')
+    .replace(/ş/g, 's').replace(/Ş/g, 'S')
+    .replace(/ü/g, 'u').replace(/Ü/g, 'U');
+}
+
+/** Format phone digits as 555-555-55-55 for display */
+function formatPhoneDisplay(digits: string): string {
+  const d = digits.replace(/\D/g, '');
+  if (d.length <= 3) return d;
+  if (d.length <= 6) return `${d.slice(0, 3)}-${d.slice(3)}`;
+  if (d.length <= 8) return `${d.slice(0, 3)}-${d.slice(3, 6)}-${d.slice(6)}`;
+  return `${d.slice(0, 3)}-${d.slice(3, 6)}-${d.slice(6, 8)}-${d.slice(8, 10)}`;
+}
+
+/** Format raw digit string as GG/AA/YYYY for passport expiry masked input */
+function formatPassportDate(input: string): string {
+  const d = input.replace(/\D/g, '').slice(0, 8);
+  if (d.length <= 2) return d;
+  if (d.length <= 4) return `${d.slice(0, 2)}/${d.slice(2)}`;
+  return `${d.slice(0, 2)}/${d.slice(2, 4)}/${d.slice(4, 8)}`;
+}
+
+/** Convert GG/AA/YYYY masked string to YYYY-MM-DD ISO format */
+function maskedDateToISO(masked: string): string {
+  const parts = masked.split('/');
+  if (parts.length === 3 && parts[0].length === 2 && parts[1].length === 2 && parts[2].length === 4) {
+    return `${parts[2]}-${parts[1]}-${parts[0]}`;
+  }
+  return '';
+}
+
 /* ───────── types ───────── */
 
 interface PassengerFormData {
@@ -201,9 +238,14 @@ export default function PassengerForm({ passengers, onSubmit, loading, disabled,
       if (!form.passportExpiry) {
         e.passportExpiry = 'Pasaport geçerlilik tarihi zorunludur';
       } else {
-        const today = new Date().toISOString().split('T')[0];
-        if (form.passportExpiry <= today) {
-          e.passportExpiry = 'Pasaport geçerlilik tarihi uçuş tarihinden sonra olmalıdır';
+        const isoExpiry = maskedDateToISO(form.passportExpiry);
+        if (!isoExpiry) {
+          e.passportExpiry = 'Geçerli bir tarih giriniz (GG/AA/YYYY)';
+        } else {
+          const today = new Date().toISOString().split('T')[0];
+          if (isoExpiry <= today) {
+            e.passportExpiry = 'Pasaport geçerlilik tarihi uçuş tarihinden sonra olmalıdır';
+          }
         }
       }
       // Türk vatandaşı ise TC kimlik de zorunlu
@@ -229,9 +271,14 @@ export default function PassengerForm({ passengers, onSubmit, loading, disabled,
         if (!form.passportExpiry) {
           e.passportExpiry = 'Pasaport geçerlilik tarihi gereklidir';
         } else {
-          const today = new Date().toISOString().split('T')[0];
-          if (form.passportExpiry <= today) {
-            e.passportExpiry = 'Pasaport geçerlilik tarihi bugünden sonra olmalıdır';
+          const isoExpiry = maskedDateToISO(form.passportExpiry);
+          if (!isoExpiry) {
+            e.passportExpiry = 'Geçerli bir tarih giriniz (GG/AA/YYYY)';
+          } else {
+            const today = new Date().toISOString().split('T')[0];
+            if (isoExpiry <= today) {
+              e.passportExpiry = 'Pasaport geçerlilik tarihi bugünden sonra olmalıdır';
+            }
           }
         }
       }
@@ -302,7 +349,7 @@ export default function PassengerForm({ passengers, onSubmit, loading, disabled,
         ? form.passportCountry.toUpperCase()
         : null;
       const passportExpiry = !isTurkishDomestic && form.passportExpiry
-        ? form.passportExpiry
+        ? maskedDateToISO(form.passportExpiry)
         : null;
 
       const item: PassengerItem = {
@@ -416,12 +463,12 @@ export default function PassengerForm({ passengers, onSubmit, loading, disabled,
                       <label className={`bb-pax-panel__gender-btn ${form.gender === 'M' ? 'bb-pax-panel__gender-btn--active' : ''}`}>
                         <input type="radio" name={`gender-${index}`} value="M" checked={form.gender === 'M'}
                           onChange={() => updateField(index, 'gender', 'M')} />
-                        Bay
+                        Erkek
                       </label>
                       <label className={`bb-pax-panel__gender-btn ${form.gender === 'F' ? 'bb-pax-panel__gender-btn--active' : ''}`}>
                         <input type="radio" name={`gender-${index}`} value="F" checked={form.gender === 'F'}
                           onChange={() => updateField(index, 'gender', 'F')} />
-                        Bayan
+                        Kadın
                       </label>
                     </>
                   )}
@@ -439,7 +486,7 @@ export default function PassengerForm({ passengers, onSubmit, loading, disabled,
                   className="bb-pax-panel__input"
                   placeholder="Ad / İkinci ad (kimlikte yazıldığı gibi)"
                   value={form.firstName}
-                  onChange={e => updateField(index, 'firstName', e.target.value)}
+                  onChange={e => updateField(index, 'firstName', turkishToLatin(e.target.value).toUpperCase())}
                   maxLength={50}
                   autoComplete="given-name"
                 />
@@ -452,7 +499,7 @@ export default function PassengerForm({ passengers, onSubmit, loading, disabled,
                   className="bb-pax-panel__input"
                   placeholder="Soyadı (kimlikte yazıldığı gibi)"
                   value={form.lastName}
-                  onChange={e => updateField(index, 'lastName', e.target.value)}
+                  onChange={e => updateField(index, 'lastName', turkishToLatin(e.target.value).toUpperCase())}
                   maxLength={50}
                   autoComplete="family-name"
                 />
@@ -618,11 +665,13 @@ export default function PassengerForm({ passengers, onSubmit, loading, disabled,
                   <div className={`bb-pax-panel__field ${err.passportExpiry ? 'bb-pax-panel__field--error' : ''}`}>
                     <label className="bb-pax-panel__label">Pasaport Geçerlilik Tarihi <span className="bb-pax-panel__required">*</span></label>
                     <input
-                      type="date"
+                      type="text"
+                      inputMode="numeric"
                       className="bb-pax-panel__input"
+                      placeholder="GG/AA/YYYY"
                       value={form.passportExpiry}
-                      onChange={e => updateField(index, 'passportExpiry', e.target.value)}
-                      min={new Date().toISOString().split('T')[0]}
+                      onChange={e => updateField(index, 'passportExpiry', formatPassportDate(e.target.value))}
+                      maxLength={10}
                       autoComplete="off"
                     />
                     {err.passportExpiry && <span className="bb-pax-panel__error">{err.passportExpiry}</span>}
@@ -687,11 +736,13 @@ export default function PassengerForm({ passengers, onSubmit, loading, disabled,
                   <div className={`bb-pax-panel__field ${err.passportExpiry ? 'bb-pax-panel__field--error' : ''}`}>
                     <label className="bb-pax-panel__label">Pasaport Geçerlilik Tarihi</label>
                     <input
-                      type="date"
+                      type="text"
+                      inputMode="numeric"
                       className="bb-pax-panel__input"
+                      placeholder="GG/AA/YYYY"
                       value={form.passportExpiry}
-                      onChange={e => updateField(index, 'passportExpiry', e.target.value)}
-                      min={new Date().toISOString().split('T')[0]}
+                      onChange={e => updateField(index, 'passportExpiry', formatPassportDate(e.target.value))}
+                      maxLength={10}
                       autoComplete="off"
                     />
                     {err.passportExpiry && <span className="bb-pax-panel__error">{err.passportExpiry}</span>}
@@ -718,28 +769,7 @@ export default function PassengerForm({ passengers, onSubmit, loading, disabled,
       onSubmit={e => { e.preventDefault(); handleSubmit(); }}
       noValidate
     >
-      {/* Stepper bar */}
-      <div className="bb-stepper">
-        <div className="bb-stepper__step bb-stepper__step--done">
-          <span className="bb-stepper__icon">✓</span>
-          <span className="bb-stepper__text">Uçuş seçimi</span>
-        </div>
-        <div className="bb-stepper__connector bb-stepper__connector--done" />
-        <div className="bb-stepper__step bb-stepper__step--active">
-          <span className="bb-stepper__icon">2</span>
-          <span className="bb-stepper__text">Yolcu bilgileri</span>
-        </div>
-        <div className="bb-stepper__connector" />
-        <div className="bb-stepper__step">
-          <span className="bb-stepper__icon">3</span>
-          <span className="bb-stepper__text">Ek hizmetler</span>
-        </div>
-        <div className="bb-stepper__connector" />
-        <div className="bb-stepper__step">
-          <span className="bb-stepper__icon">4</span>
-          <span className="bb-stepper__text">Ödeme</span>
-        </div>
-      </div>
+
 
       {/* Section title */}
       <div className="bb-passenger-form__header">
@@ -799,14 +829,14 @@ export default function PassengerForm({ passengers, onSubmit, loading, disabled,
                 <input
                   type="tel"
                   className="bb-pax-panel__input bb-pax-panel__input--phone"
-                  placeholder="5XX XXX XX XX"
-                  value={contact.phone}
+                  placeholder="555-555-55-55"
+                  value={formatPhoneDisplay(contact.phone)}
                   onChange={e => {
-                    const val = e.target.value.replace(/[^\d\s()-+]/g, '');
+                    const val = e.target.value.replace(/\D/g, '').slice(0, 10);
                     setContact(prev => ({ ...prev, phone: val }));
                     setContactErrors(prev => ({ ...prev, phone: undefined }));
                   }}
-                  maxLength={20}
+                  maxLength={13}
                   autoComplete="tel"
                 />
               </div>

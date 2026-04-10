@@ -73,13 +73,12 @@ const SearchResultsMain = () => {
     return () => { document.body.style.overflow = ''; };
   }, [mobileFilterOpen]);
 
-  // Auto-select cabin class filter from search params when results arrive
+  // Reset filters when new search results arrive so no filter is active initially
   useEffect(() => {
-    const fc = searchParams?.flightClass;
-    if (searchResults?.flights && fc) {
-      setFilters(prev => ({ ...prev, cabinClasses: [fc as string] }));
+    if (searchResults?.flights) {
+      setFilters(INITIAL_FILTERS);
     }
-  }, [searchResults, searchParams?.flightClass]);
+  }, [searchResults]);
 
   // Client-side filtreleme + sıralama — API çağrısı yok
   const displayedFlights = useMemo(() => {
