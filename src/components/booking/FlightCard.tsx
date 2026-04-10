@@ -6,6 +6,7 @@ import FarePackageSelector from './FarePackageSelector';
 interface FlightCardProps {
   flight: FlightResult;
   onSelect: (brandedFareItemId?: string | null) => void;
+  onOpenPackages?: () => void;
   isSelected?: boolean;
   allocateLoading?: boolean;
 }

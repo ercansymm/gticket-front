@@ -75,8 +75,9 @@ const SearchResultsMain = () => {
 
   // Auto-select cabin class filter from search params when results arrive
   useEffect(() => {
-    if (searchResults?.flights && searchParams?.flightClass) {
-      setFilters(prev => ({ ...prev, cabinClasses: [searchParams.flightClass] }));
+    const fc = searchParams?.flightClass;
+    if (searchResults?.flights && fc) {
+      setFilters(prev => ({ ...prev, cabinClasses: [fc as string] }));
     }
   }, [searchResults, searchParams?.flightClass]);
 

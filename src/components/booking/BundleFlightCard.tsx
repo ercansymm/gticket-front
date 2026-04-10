@@ -9,6 +9,7 @@ interface BundleFlightCardProps {
   /** Gidiş ile aynı bundleProductId paylaşan dönüş bacağı */
   returnFlight: FlightResult;
   onSelect: (brandedFareItemId?: string | null) => void;
+  onOpenPackages?: () => void;
   loading?: boolean;
 }
 
