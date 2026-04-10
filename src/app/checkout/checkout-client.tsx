@@ -246,6 +246,7 @@ export default function CheckoutClient() {
   /* ── After finalize → success page ── */
   useEffect(() => {
     if (!hasFinalized.current) return;
+    
     const successStatuses = ['Booking', 'Ticketed', 'Reservation'];
     const isFinalized = finalizeResult && finalizeResult.hasError === false &&
       (finalizeResult.isFinalized === true || successStatuses.includes(finalizeResult.status ?? ''));
