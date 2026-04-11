@@ -50,7 +50,7 @@ export default function CheckoutClient() {
   const hasFinalized = useRef(false);
   const finalizeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const { allocateResult, selectedFlight, selectedReturnFlight, searchId: allocateSearchId, searchResults, selectedBrandedFareItemId, searchParams } = useSelector(
+  const { allocateResult, selectedFlight, selectedReturnFlight, selectedLegFlights, searchId: allocateSearchId, searchResults, selectedBrandedFareItemId, searchParams } = useSelector(
     (state: RootState) => state.flight
   );
   // searchId fallback: allocate response → search results
@@ -401,6 +401,16 @@ export default function CheckoutClient() {
   const logoPath = airlineCode ? `/images/airlines/${airlineCode}.svg` : null;
   const brandStyle = (airlineCode && AIRLINE_COLORS[airlineCode]) || FALLBACK_STYLE;
 
+  // Multi-city: ordered list of leg flights
+  const isMultiCity = searchParams?.flightType === 'MP';
+  const legFlightsList = isMultiCity
+    ? Object.keys(selectedLegFlights)
+        .map(Number)
+        .sort((a, b) => a - b)
+        .map(idx => selectedLegFlights[idx])
+        .filter(Boolean)
+    : [];
+
   return (
     <>
       <HeaderOne />
@@ -493,225 +503,341 @@ export default function CheckoutClient() {
           </div>
         )}
 
-        {/* ═════ TWO-COLUMN LAYOUT ═════ */}
-        <div className="bb-checkout__two-col">
-          {/* ──── LEFT COLUMN: Passenger Form ──── */}
-          <div className="bb-checkout__col-left">
-            <PassengerForm
-              passengers={passengers}
-              onSubmit={handlePassengerSubmit}
-              loading={updatePassengersLoading}
-              isInternational={isInternational}
-            />
-          </div>
+        {/* ═════ TWO-COLUMN PRO LAYOUT ═════ */}
+        <div className="bb-checkout__pro-grid">
+          {/* ── Main Column ── */}
+          <div className="bb-checkout__col-main">
 
-          {/* ──── VISUAL DIVIDER ──── */}
-          <div className="bb-checkout__divider" />
+          {/* Flight Summary */}
+          <div className="bb-checkout__card">
+            <h3 className="bb-checkout__card-title">
+              <i className="fa-solid fa-plane" />
+              Uçuş Özeti
+            </h3>
 
-          {/* ──── RIGHT COLUMN: Payment ──── */}
-          <div className="bb-checkout__col-right">
-            {/* Flight Summary — compact */}
-            <div className="bb-checkout__card">
-              <h3 className="bb-checkout__card-title">Uçuş Özeti</h3>
-              <div className="bb-checkout__flight-mini">
-                <div className="bb-checkout__flight-mini-logo"
-                  style={!logoPath ? { background: brandStyle.bg, color: brandStyle.color, border: 'none' } : undefined}
-                >
-                  {logoPath ? (
-                    <Image src={logoPath} alt={selectedFlight.airlineName ?? 'airline'} width={36} height={36}
-                      onError={(e) => {
-                        const target = e.currentTarget.parentElement;
-                        if (target) { target.style.background = brandStyle.bg; target.style.color = brandStyle.color; target.style.border = 'none'; }
-                        e.currentTarget.style.display = 'none';
-                        const fallback = document.createElement('span');
-                        fallback.style.fontWeight = '700'; fallback.style.fontSize = '13px'; fallback.style.letterSpacing = '1px';
-                        fallback.textContent = airlineCode ?? '??';
-                        target?.appendChild(fallback);
-                      }}
-                    />
-                  ) : (
-                    <span style={{ fontWeight: 700, fontSize: 13, letterSpacing: 1 }}>{airlineCode ?? '??'}</span>
-                  )}
-                </div>
-                <div>
-                  <div className="bb-checkout__flight-mini-airline">
-                    {selectedFlight.airlineName}
-                    <span style={{ fontWeight: 400, color: '#6b7280', marginLeft: 8, fontSize: 13 }}>{selectedFlight.flightNumber}</span>
-                  </div>
-                  <div className="bb-checkout__flight-mini-route">
-                    {selectedFlight.departureTime}<span className="bb-checkout__flight-mini-arrow">→</span>{selectedFlight.arrivalTime}
-                  </div>
-                  <div className="bb-checkout__flight-mini-detail">
-                    {selectedFlight.originCode} — {selectedFlight.destinationCode}
-                    {selectedFlight.durationFormatted && <span style={{ marginLeft: 12 }}>{selectedFlight.durationFormatted}</span>}
-                  </div>
-                  <div className="bb-checkout__flight-mini-detail">{selectedFlight.departureDate}</div>
-                  {selectedFlight.isDirect ? (
-                    <span style={{ fontSize: 12, color: '#22c55e', fontWeight: 500 }}>Direkt Uçuş</span>
-                  ) : (
-                    <span style={{ fontSize: 12, color: '#f59e0b', fontWeight: 500 }}>{selectedFlight.stopText}</span>
-                  )}
-                </div>
-              </div>
-              {selectedReturnFlight && (
-                <>
-                  <div style={{ borderTop: '1px dashed #e5e7eb', margin: '10px 0' }} />
-                  <div className="bb-checkout__flight-mini">
-                    <div className="bb-checkout__flight-mini-logo"
-                      style={{ background: (AIRLINE_COLORS[selectedReturnFlight.airlineCode ?? ''] ?? FALLBACK_STYLE).bg, color: (AIRLINE_COLORS[selectedReturnFlight.airlineCode ?? ''] ?? FALLBACK_STYLE).color, border: 'none' }}
-                    >
-                      <img src={`/images/airlines/${selectedReturnFlight.airlineCode}.svg`} alt={selectedReturnFlight.airlineName ?? ''} width={36} height={36} style={{ display: 'block' }}
-                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
-                      />
+            {/* Multi-city: show all leg flights */}
+            {isMultiCity && legFlightsList.length > 0 ? (
+              legFlightsList.map((legFlight, idx) => {
+                const legAirlineCode = legFlight.airlineCode;
+                const legLogo = legAirlineCode ? `/images/airlines/${legAirlineCode}.svg` : null;
+                const legBrand = (legAirlineCode && AIRLINE_COLORS[legAirlineCode]) || FALLBACK_STYLE;
+                return (
+                  <div key={idx}>
+                    <div className="bb-checkout__leg-label">{idx + 1}. Uçuş</div>
+                    <div className="bb-checkout__flight-mini">
+                      <div className="bb-checkout__flight-mini-logo"
+                        style={!legLogo ? { background: legBrand.bg, color: legBrand.color, border: 'none' } : undefined}
+                      >
+                        {legLogo ? (
+                          <Image src={legLogo} alt={legFlight.airlineName ?? 'airline'} width={36} height={36}
+                            onError={(e) => {
+                              const target = e.currentTarget.parentElement;
+                              if (target) { target.style.background = legBrand.bg; target.style.color = legBrand.color; target.style.border = 'none'; }
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        ) : (
+                          <span style={{ fontWeight: 700, fontSize: 13, letterSpacing: 1 }}>{legAirlineCode ?? '??'}</span>
+                        )}
+                      </div>
+                      <div className="bb-checkout__flight-mini-body">
+                        <div className="bb-checkout__flight-mini-airline">
+                          {legFlight.airlineName}
+                          <span style={{ fontWeight: 400, color: '#6b7280', marginLeft: 8, fontSize: 13 }}>{legFlight.flightNumber}</span>
+                        </div>
+                        <div className="bb-checkout__flight-mini-route">
+                          {legFlight.departureTime}<span className="bb-checkout__flight-mini-arrow">&rarr;</span>{legFlight.arrivalTime}
+                        </div>
+                        <div className="bb-checkout__flight-timeline-codes">
+                          <span className="bb-checkout__flight-timeline-code">{legFlight.originCode}</span>
+                          <span className="bb-checkout__flight-timeline-code">{legFlight.destinationCode}</span>
+                        </div>
+                        <div className="bb-checkout__flight-timeline">
+                          <span className="bb-checkout__flight-timeline-dot" />
+                          <div className="bb-checkout__flight-timeline-line">
+                            <span className="bb-checkout__flight-timeline-plane"><i className="fa-solid fa-plane" /></span>
+                          </div>
+                          <span className="bb-checkout__flight-timeline-dot" />
+                        </div>
+                        <div className="bb-checkout__flight-mini-meta">
+                          <span className="bb-checkout__flight-mini-detail">{legFlight.departureDate}</span>
+                          {legFlight.durationFormatted && <span className="bb-checkout__flight-mini-duration">{legFlight.durationFormatted}</span>}
+                          {legFlight.isDirect ? (
+                            <span className="bb-checkout__flight-badge bb-checkout__flight-badge--direct">Direkt</span>
+                          ) : (
+                            <span className="bb-checkout__flight-badge bb-checkout__flight-badge--stop">{legFlight.stopText}</span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <div className="bb-checkout__flight-mini-airline">
-                        {selectedReturnFlight.airlineName}
-                        <span style={{ fontWeight: 400, color: '#6b7280', marginLeft: 8, fontSize: 13 }}>{selectedReturnFlight.flightNumber}</span>
+                  </div>
+                );
+              })
+            ) : (
+              /* Single / Round-trip flights */
+              <>
+                <div className="bb-checkout__flight-mini">
+                  <div className="bb-checkout__flight-mini-logo"
+                    style={!logoPath ? { background: brandStyle.bg, color: brandStyle.color, border: 'none' } : undefined}
+                  >
+                    {logoPath ? (
+                      <Image src={logoPath} alt={selectedFlight.airlineName ?? 'airline'} width={36} height={36}
+                        onError={(e) => {
+                          const target = e.currentTarget.parentElement;
+                          if (target) { target.style.background = brandStyle.bg; target.style.color = brandStyle.color; target.style.border = 'none'; }
+                          e.currentTarget.style.display = 'none';
+                          const fallback = document.createElement('span');
+                          fallback.style.fontWeight = '700'; fallback.style.fontSize = '13px'; fallback.style.letterSpacing = '1px';
+                          fallback.textContent = airlineCode ?? '??';
+                          target?.appendChild(fallback);
+                        }}
+                      />
+                    ) : (
+                      <span style={{ fontWeight: 700, fontSize: 13, letterSpacing: 1 }}>{airlineCode ?? '??'}</span>
+                    )}
+                  </div>
+                  <div className="bb-checkout__flight-mini-body">
+                    <div className="bb-checkout__flight-mini-airline">
+                      {selectedFlight.airlineName}
+                      <span style={{ fontWeight: 400, color: '#6b7280', marginLeft: 8, fontSize: 13 }}>{selectedFlight.flightNumber}</span>
+                    </div>
+                    <div className="bb-checkout__flight-mini-route">
+                      {selectedFlight.departureTime}<span className="bb-checkout__flight-mini-arrow">&rarr;</span>{selectedFlight.arrivalTime}
+                    </div>
+                    <div className="bb-checkout__flight-timeline-codes">
+                      <span className="bb-checkout__flight-timeline-code">{selectedFlight.originCode}</span>
+                      <span className="bb-checkout__flight-timeline-code">{selectedFlight.destinationCode}</span>
+                    </div>
+                    <div className="bb-checkout__flight-timeline">
+                      <span className="bb-checkout__flight-timeline-dot" />
+                      <div className="bb-checkout__flight-timeline-line">
+                        <span className="bb-checkout__flight-timeline-plane"><i className="fa-solid fa-plane" /></span>
                       </div>
-                      <div className="bb-checkout__flight-mini-route">
-                        {selectedReturnFlight.departureTime}<span className="bb-checkout__flight-mini-arrow">→</span>{selectedReturnFlight.arrivalTime}
-                      </div>
-                      <div className="bb-checkout__flight-mini-detail">
-                        {selectedReturnFlight.originCode} — {selectedReturnFlight.destinationCode}
-                        {selectedReturnFlight.durationFormatted && <span style={{ marginLeft: 12 }}>{selectedReturnFlight.durationFormatted}</span>}
-                      </div>
-                      <div className="bb-checkout__flight-mini-detail">{selectedReturnFlight.departureDate}</div>
-                      {selectedReturnFlight.isDirect ? (
-                        <span style={{ fontSize: 12, color: '#22c55e', fontWeight: 500 }}>Direkt Uçuş</span>
+                      <span className="bb-checkout__flight-timeline-dot" />
+                    </div>
+                    <div className="bb-checkout__flight-mini-meta">
+                      <span className="bb-checkout__flight-mini-detail">{selectedFlight.departureDate}</span>
+                      {selectedFlight.durationFormatted && <span className="bb-checkout__flight-mini-duration">{selectedFlight.durationFormatted}</span>}
+                      {selectedFlight.isDirect ? (
+                        <span className="bb-checkout__flight-badge bb-checkout__flight-badge--direct">Direkt</span>
                       ) : (
-                        <span style={{ fontSize: 12, color: '#f59e0b', fontWeight: 500 }}>{selectedReturnFlight.stopText}</span>
+                        <span className="bb-checkout__flight-badge bb-checkout__flight-badge--stop">{selectedFlight.stopText}</span>
                       )}
                     </div>
                   </div>
-                </>
-              )}
-              <div style={{ fontSize: 13, color: '#6b7280', marginTop: 8 }}>{paxSummaryText}</div>
-            </div>
-
-            {/* ── Payment Method Selection ── */}
-            <div className="bb-pay-methods">
-              <div className="bb-pay-methods__header">
-                <i className="fa-solid fa-credit-card" />
-                <span>Ödeme Yöntemi Seçin</span>
-              </div>
-              <div className="bb-pay-methods__body">
-                {/* Running Account */}
-                <div
-                  className={`bb-payment-method ${paymentMethod === 'running_account' ? 'bb-payment-method--active' : ''}`}
-                  onClick={() => setPaymentMethod('running_account')}
-                >
-                  <div className="bb-payment-method__radio" />
-                  <div className="bb-payment-method__icon"><i className="fa-solid fa-building-columns" /></div>
-                  <div className="bb-payment-method__info">
-                    <p className="bb-payment-method__name">Cari Hesap ile Ödeme</p>
-                    <p className="bb-payment-method__desc">Acente cari hesabınızdan tahsil edilir</p>
+                  <div className="bb-checkout__flight-mini-right">
+                    <span className="bb-checkout__flight-mini-date">{selectedFlight.departureDate}</span>
+                    {selectedFlight.durationFormatted && <span className="bb-checkout__flight-mini-duration">{selectedFlight.durationFormatted}</span>}
                   </div>
                 </div>
-
-                {/* Credit Card */}
-                <div
-                  className={`bb-payment-method ${paymentMethod === 'credit_card' ? 'bb-payment-method--active' : ''}`}
-                  onClick={() => setPaymentMethod('credit_card')}
-                >
-                  <div className="bb-payment-method__radio" />
-                  <div className="bb-payment-method__icon"><i className="fa-regular fa-credit-card" /></div>
-                  <div className="bb-payment-method__info">
-                    <p className="bb-payment-method__name">Kredi Kartı ile Ödeme</p>
-                    <p className="bb-payment-method__desc">Visa, Mastercard, Amex</p>
-                  </div>
-                </div>
-
-                {/* Credit Card Form */}
-                {paymentMethod === 'credit_card' && (
-                  <div className="bb-card-form">
-                    <div className="bb-card-form__row">
-                      <div className={`bb-card-form__field ${cardErrors.cardHolderName ? 'bb-card-form__field--error' : ''}`}>
-                        <label className="bb-card-form__label">Kart Üzerindeki İsim</label>
-                        <input type="text" className="bb-card-form__input" placeholder="AD SOYAD"
-                          value={cardForm.cardHolderName}
-                          onChange={e => { setCardForm(prev => ({ ...prev, cardHolderName: e.target.value })); setCardErrors(prev => ({ ...prev, cardHolderName: '' })); }}
-                          maxLength={100} autoComplete="cc-name"
+                {selectedReturnFlight && (
+                  <>
+                    <div className="bb-checkout__flight-mini">
+                      <div className="bb-checkout__flight-mini-logo"
+                        style={{ background: (AIRLINE_COLORS[selectedReturnFlight.airlineCode ?? ''] ?? FALLBACK_STYLE).bg, color: (AIRLINE_COLORS[selectedReturnFlight.airlineCode ?? ''] ?? FALLBACK_STYLE).color, border: 'none' }}
+                      >
+                        <img src={`/images/airlines/${selectedReturnFlight.airlineCode}.svg`} alt={selectedReturnFlight.airlineName ?? ''} width={36} height={36} style={{ display: 'block' }}
+                          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                         />
-                        {cardErrors.cardHolderName && <span className="bb-card-form__error">{cardErrors.cardHolderName}</span>}
                       </div>
-                    </div>
-                    <div className="bb-card-form__row">
-                      <div className={`bb-card-form__field ${cardErrors.cardNumber ? 'bb-card-form__field--error' : ''}`}>
-                        <label className="bb-card-form__label">Kart Numarası</label>
-                        <div className="bb-card-form__input-wrap">
-                          <input type="text" inputMode="numeric" className="bb-card-form__input" placeholder="0000 0000 0000 0000"
-                            value={cardForm.cardNumber.replace(/(\d{4})(?=\d)/g, '$1 ')}
-                            onChange={e => { const v = e.target.value.replace(/\D/g, '').slice(0, 16); setCardForm(prev => ({ ...prev, cardNumber: v })); setCardErrors(prev => ({ ...prev, cardNumber: '' })); }}
-                            maxLength={19} autoComplete="cc-number"
-                          />
-                          <i className="fa-regular fa-credit-card bb-card-form__card-icon" />
+                      <div className="bb-checkout__flight-mini-body">
+                        <div className="bb-checkout__flight-mini-airline">
+                          {selectedReturnFlight.airlineName}
+                          <span style={{ fontWeight: 400, color: '#6b7280', marginLeft: 8, fontSize: 13 }}>{selectedReturnFlight.flightNumber}</span>
                         </div>
-                        {cardErrors.cardNumber && <span className="bb-card-form__error">{cardErrors.cardNumber}</span>}
+                        <div className="bb-checkout__flight-mini-route">
+                          {selectedReturnFlight.departureTime}<span className="bb-checkout__flight-mini-arrow">&rarr;</span>{selectedReturnFlight.arrivalTime}
+                        </div>
+                        <div className="bb-checkout__flight-timeline-codes">
+                          <span className="bb-checkout__flight-timeline-code">{selectedReturnFlight.originCode}</span>
+                          <span className="bb-checkout__flight-timeline-code">{selectedReturnFlight.destinationCode}</span>
+                        </div>
+                        <div className="bb-checkout__flight-timeline">
+                          <span className="bb-checkout__flight-timeline-dot" />
+                          <div className="bb-checkout__flight-timeline-line">
+                            <span className="bb-checkout__flight-timeline-plane"><i className="fa-solid fa-plane" /></span>
+                          </div>
+                          <span className="bb-checkout__flight-timeline-dot" />
+                        </div>
+                        <div className="bb-checkout__flight-mini-meta">
+                          <span className="bb-checkout__flight-mini-detail">{selectedReturnFlight.departureDate}</span>
+                          {selectedReturnFlight.durationFormatted && <span className="bb-checkout__flight-mini-duration">{selectedReturnFlight.durationFormatted}</span>}
+                          {selectedReturnFlight.isDirect ? (
+                            <span className="bb-checkout__flight-badge bb-checkout__flight-badge--direct">Direkt</span>
+                          ) : (
+                            <span className="bb-checkout__flight-badge bb-checkout__flight-badge--stop">{selectedReturnFlight.stopText}</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="bb-checkout__flight-mini-right">
+                        <span className="bb-checkout__flight-mini-date">{selectedReturnFlight.departureDate}</span>
+                        {selectedReturnFlight.durationFormatted && <span className="bb-checkout__flight-mini-duration">{selectedReturnFlight.durationFormatted}</span>}
                       </div>
                     </div>
-                    <div className="bb-card-form__row bb-card-form__row--triple">
-                      <div className={`bb-card-form__field ${cardErrors.expiryMonth ? 'bb-card-form__field--error' : ''}`}>
-                        <label className="bb-card-form__label">Ay</label>
-                        <select className="bb-card-form__input bb-card-form__select" value={cardForm.expiryMonth}
-                          onChange={e => { setCardForm(prev => ({ ...prev, expiryMonth: e.target.value })); setCardErrors(prev => ({ ...prev, expiryMonth: '' })); }}
-                          autoComplete="cc-exp-month"
-                        >
-                          <option value="">Ay</option>
-                          {Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0')).map(m => (
-                            <option key={m} value={m}>{m}</option>
-                          ))}
-                        </select>
-                        {cardErrors.expiryMonth && <span className="bb-card-form__error">{cardErrors.expiryMonth}</span>}
-                      </div>
-                      <div className={`bb-card-form__field ${cardErrors.expiryYear ? 'bb-card-form__field--error' : ''}`}>
-                        <label className="bb-card-form__label">Yıl</label>
-                        <select className="bb-card-form__input bb-card-form__select" value={cardForm.expiryYear}
-                          onChange={e => { setCardForm(prev => ({ ...prev, expiryYear: e.target.value })); setCardErrors(prev => ({ ...prev, expiryYear: '' })); }}
-                          autoComplete="cc-exp-year"
-                        >
-                          <option value="">Yıl</option>
-                          {Array.from({ length: 10 }, (_, i) => String(new Date().getFullYear() + i)).map(y => (
-                            <option key={y} value={y}>{y}</option>
-                          ))}
-                        </select>
-                        {cardErrors.expiryYear && <span className="bb-card-form__error">{cardErrors.expiryYear}</span>}
-                      </div>
-                      <div className={`bb-card-form__field ${cardErrors.cvv ? 'bb-card-form__field--error' : ''}`}>
-                        <label className="bb-card-form__label">CVV</label>
-                        <input type="password" inputMode="numeric" className="bb-card-form__input" placeholder="•••"
-                          value={cardForm.cvv}
-                          onChange={e => { const v = e.target.value.replace(/\D/g, '').slice(0, 4); setCardForm(prev => ({ ...prev, cvv: v })); setCardErrors(prev => ({ ...prev, cvv: '' })); }}
-                          maxLength={4} autoComplete="cc-csc"
-                        />
-                        {cardErrors.cvv && <span className="bb-card-form__error">{cardErrors.cvv}</span>}
-                      </div>
+                  </>
+                )}
+              </>
+            )}
+            <div className="bb-checkout__price-pax">{paxSummaryText}</div>
+          </div>
+
+          {/* ──── Passenger Form ──── */}
+          <PassengerForm
+            passengers={passengers}
+            onSubmit={handlePassengerSubmit}
+            loading={updatePassengersLoading}
+            isInternational={isInternational}
+          />
+
+          {/* ── Payment Method Selection ── */}
+          <div className="bb-pay-methods">
+            <div className="bb-pay-methods__header">
+              <i className="fa-solid fa-credit-card" />
+              <span>Ödeme Yöntemi Seçin</span>
+            </div>
+            <div className="bb-pay-methods__body">
+              {/* Running Account */}
+              <div
+                className={`bb-payment-method ${paymentMethod === 'running_account' ? 'bb-payment-method--active' : ''}`}
+                onClick={() => setPaymentMethod('running_account')}
+              >
+                <div className="bb-payment-method__radio" />
+                <div className="bb-payment-method__icon"><i className="fa-solid fa-building-columns" /></div>
+                <div className="bb-payment-method__info">
+                  <p className="bb-payment-method__name">Cari Hesap ile Ödeme</p>
+                  <p className="bb-payment-method__desc">Acente cari hesabınızdan tahsil edilir</p>
+                </div>
+              </div>
+
+              {/* Credit Card */}
+              <div
+                className={`bb-payment-method ${paymentMethod === 'credit_card' ? 'bb-payment-method--active' : ''}`}
+                onClick={() => setPaymentMethod('credit_card')}
+              >
+                <div className="bb-payment-method__radio" />
+                <div className="bb-payment-method__icon"><i className="fa-regular fa-credit-card" /></div>
+                <div className="bb-payment-method__info">
+                  <p className="bb-payment-method__name">Kredi Kartı ile Ödeme</p>
+                  <p className="bb-payment-method__desc">Visa, Mastercard, Amex</p>
+                </div>
+              </div>
+
+              {/* Credit Card Form */}
+              {paymentMethod === 'credit_card' && (
+                <div className="bb-card-form">
+                  <div className="bb-card-form__row">
+                    <div className={`bb-card-form__field ${cardErrors.cardHolderName ? 'bb-card-form__field--error' : ''}`}>
+                      <label className="bb-card-form__label">Kart Üzerindeki İsim</label>
+                      <input type="text" className="bb-card-form__input" placeholder="AD SOYAD"
+                        value={cardForm.cardHolderName}
+                        onChange={e => { setCardForm(prev => ({ ...prev, cardHolderName: e.target.value })); setCardErrors(prev => ({ ...prev, cardHolderName: '' })); }}
+                        maxLength={100} autoComplete="cc-name"
+                      />
+                      {cardErrors.cardHolderName && <span className="bb-card-form__error">{cardErrors.cardHolderName}</span>}
                     </div>
                   </div>
-                )}
-              </div>
+                  <div className="bb-card-form__row">
+                    <div className={`bb-card-form__field ${cardErrors.cardNumber ? 'bb-card-form__field--error' : ''}`}>
+                      <label className="bb-card-form__label">Kart Numarası</label>
+                      <div className="bb-card-form__input-wrap">
+                        <input type="text" inputMode="numeric" className="bb-card-form__input" placeholder="0000 0000 0000 0000"
+                          value={cardForm.cardNumber.replace(/(\d{4})(?=\d)/g, '$1 ')}
+                          onChange={e => { const v = e.target.value.replace(/\D/g, '').slice(0, 16); setCardForm(prev => ({ ...prev, cardNumber: v })); setCardErrors(prev => ({ ...prev, cardNumber: '' })); }}
+                          maxLength={19} autoComplete="cc-number"
+                        />
+                        <i className="fa-regular fa-credit-card bb-card-form__card-icon" />
+                      </div>
+                      {cardErrors.cardNumber && <span className="bb-card-form__error">{cardErrors.cardNumber}</span>}
+                    </div>
+                  </div>
+                  <div className="bb-card-form__row bb-card-form__row--triple">
+                    <div className={`bb-card-form__field ${cardErrors.expiryMonth ? 'bb-card-form__field--error' : ''}`}>
+                      <label className="bb-card-form__label">Ay</label>
+                      <select className="bb-card-form__input bb-card-form__select" value={cardForm.expiryMonth}
+                        onChange={e => { setCardForm(prev => ({ ...prev, expiryMonth: e.target.value })); setCardErrors(prev => ({ ...prev, expiryMonth: '' })); }}
+                        autoComplete="cc-exp-month"
+                      >
+                        <option value="">Ay</option>
+                        {Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0')).map(m => (
+                          <option key={m} value={m}>{m}</option>
+                        ))}
+                      </select>
+                      {cardErrors.expiryMonth && <span className="bb-card-form__error">{cardErrors.expiryMonth}</span>}
+                    </div>
+                    <div className={`bb-card-form__field ${cardErrors.expiryYear ? 'bb-card-form__field--error' : ''}`}>
+                      <label className="bb-card-form__label">Yıl</label>
+                      <select className="bb-card-form__input bb-card-form__select" value={cardForm.expiryYear}
+                        onChange={e => { setCardForm(prev => ({ ...prev, expiryYear: e.target.value })); setCardErrors(prev => ({ ...prev, expiryYear: '' })); }}
+                        autoComplete="cc-exp-year"
+                      >
+                        <option value="">Yıl</option>
+                        {Array.from({ length: 10 }, (_, i) => String(new Date().getFullYear() + i)).map(y => (
+                          <option key={y} value={y}>{y}</option>
+                        ))}
+                      </select>
+                      {cardErrors.expiryYear && <span className="bb-card-form__error">{cardErrors.expiryYear}</span>}
+                    </div>
+                    <div className={`bb-card-form__field ${cardErrors.cvv ? 'bb-card-form__field--error' : ''}`}>
+                      <label className="bb-card-form__label">CVV</label>
+                      <input type="password" inputMode="numeric" className="bb-card-form__input" placeholder="•••"
+                        value={cardForm.cvv}
+                        onChange={e => { const v = e.target.value.replace(/\D/g, '').slice(0, 4); setCardForm(prev => ({ ...prev, cvv: v })); setCardErrors(prev => ({ ...prev, cvv: '' })); }}
+                        maxLength={4} autoComplete="cc-csc"
+                      />
+                      {cardErrors.cvv && <span className="bb-card-form__error">{cardErrors.cvv}</span>}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
+          </div>
 
-            {/* Price summary */}
+          {/* Agreement */}
+          <div className={`bb-agreement ${agreementError && !agreed ? 'bb-agreement--error' : ''}`}>
+            <input type="checkbox" className="bb-agreement__checkbox" id="paymentAgreement" checked={agreed}
+              onChange={(e) => { setAgreed(e.target.checked); if (e.target.checked) setAgreementError(false); }}
+            />
+            <label htmlFor="paymentAgreement" className="bb-agreement__text">
+              Satış koşullarını ve <span className="bb-agreement__link">mesafeli satış sözleşmesini</span> okudum, kabul ediyorum.
+              Yolcu bilgilerinin doğruluğunu onaylıyorum.
+            </label>
+          </div>
+
+          {/* Action buttons */}
+          <div className="bb-checkout__actions">
+            <button
+              type="button"
+              className="bb-checkout__btn bb-checkout__btn--next"
+              disabled={isProcessing || !productId || !productItemId || !searchId}
+              onClick={() => {
+                const form = document.querySelector('.bb-passenger-form') as HTMLFormElement;
+                if (form) form.requestSubmit();
+              }}
+            >
+              {isProcessing ? 'İşlem Yapılıyor...' : <><i className="fa-solid fa-lock" />Ödemeyi Tamamla</>}
+            </button>
+            <button type="button" className="bb-checkout__btn bb-checkout__btn--back" onClick={() => router.push('/search-results')}
+              disabled={isProcessing}>
+              &larr; Geri Dön
+            </button>
+          </div>
+
+          </div>
+
+          {/* ── Sidebar: Price Summary ── */}
+          <div className="bb-checkout__col-aside">
             <div className="bb-checkout__card">
-              <h3 className="bb-checkout__card-title">Fiyat Detayı</h3>
+              <h3 className="bb-checkout__card-title">
+                <i className="fa-solid fa-receipt" />
+                Fiyat Detayı
+              </h3>
               <div className="bb-checkout__price-row"><span>Bilet Ücreti</span><span>{priceSummary.totalBaseFare.toFixed(2)} {priceSummary.currency}</span></div>
               <div className="bb-checkout__price-row"><span>Vergiler &amp; Harçlar</span><span>{priceSummary.totalTaxes.toFixed(2)} {priceSummary.currency}</span></div>
               {priceSummary.totalServiceFee > 0 && (
                 <div className="bb-checkout__price-row"><span>Hizmet Bedeli</span><span>{priceSummary.totalServiceFee.toFixed(2)} {priceSummary.currency}</span></div>
               )}
               <div className="bb-checkout__price-row bb-checkout__price-row--total"><span>Genel Toplam</span><span>{priceSummary.grandTotal.toFixed(2)} {priceSummary.currency}</span></div>
-            </div>
-
-            {/* Agreement */}
-            <div className={`bb-agreement ${agreementError && !agreed ? 'bb-agreement--error' : ''}`}>
-              <input type="checkbox" className="bb-agreement__checkbox" id="paymentAgreement" checked={agreed}
-                onChange={(e) => { setAgreed(e.target.checked); if (e.target.checked) setAgreementError(false); }}
-              />
-              <label htmlFor="paymentAgreement" className="bb-agreement__text">
-                Satış koşullarını ve <span className="bb-agreement__link">mesafeli satış sözleşmesini</span> okudum, kabul ediyorum.
-                Yolcu bilgilerinin doğruluğunu onaylıyorum.
-              </label>
+              <div className="bb-checkout__price-pax">{paxSummaryText}</div>
             </div>
 
             {/* Secure badge */}
@@ -720,25 +846,6 @@ export default function CheckoutClient() {
               <span>256-bit SSL ile güvenli ödeme</span>
             </div>
           </div>
-        </div>
-
-        {/* Action buttons */}
-        <div className="bb-checkout__actions">
-          <button type="button" className="bb-checkout__btn bb-checkout__btn--back" onClick={() => router.push('/search-results')}
-            disabled={isProcessing}>
-            ← Geri Dön
-          </button>
-          <button
-            type="button"
-            className="bb-checkout__btn bb-checkout__btn--next"
-            disabled={isProcessing || !productId || !productItemId || !searchId}
-            onClick={() => {
-              const form = document.querySelector('.bb-passenger-form') as HTMLFormElement;
-              if (form) form.requestSubmit();
-            }}
-          >
-            {isProcessing ? 'İşlem Yapılıyor...' : <><i className="fa-solid fa-lock" style={{ marginRight: 6 }} />Ödemeyi Tamamla</>}
-          </button>
         </div>
 
         {/* Mobile bottom sticky bar */}

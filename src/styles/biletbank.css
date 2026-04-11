@@ -5188,14 +5188,15 @@ footer,
 
 .bb-pax-panel__input {
   width: 100%;
-  padding: 10px 14px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
+  padding: 12px 14px;
+  min-height: 48px;
+  border: 1.5px solid #d1d5db;
+  border-radius: 10px;
   font-size: 14px;
   font-family: inherit;
   color: #1a1a2e;
   background: #fff;
-  transition: border-color .15s;
+  transition: border-color .15s, box-shadow .15s;
   outline: none;
   box-sizing: border-box;
 }
@@ -5217,15 +5218,16 @@ footer,
 
 .bb-date-picker__select {
   flex: 1;
-  padding: 10px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
+  padding: 12px 12px;
+  min-height: 48px;
+  border: 1.5px solid #d1d5db;
+  border-radius: 10px;
   font-size: 14px;
   font-family: inherit;
   color: #1a1a2e;
   background: #fff;
   outline: none;
-  transition: border-color .15s;
+  transition: border-color .15s, box-shadow .15s;
   cursor: pointer;
   appearance: none;
   -webkit-appearance: none;
@@ -5233,6 +5235,7 @@ footer,
   background-repeat: no-repeat;
   background-position: right 10px center;
   padding-right: 28px;
+  box-sizing: border-box;
 }
 
 .bb-date-picker__select:focus {
@@ -5379,7 +5382,7 @@ footer,
 }
 
 /* ================================================================
-   CHECKOUT PAGE (2-column)
+   CHECKOUT PAGE — Professional OTA Layout
    ================================================================ */
 
 .bb-checkout {
@@ -5389,15 +5392,58 @@ footer,
 }
 
 .bb-checkout--full {
-  max-width: 1440px;
+  max-width: 1080px;
 }
 
-/* ── Two-column layout ── */
+/* ── Two-column layout (legacy — kept for compat) ── */
 .bb-checkout__two-col {
   display: grid;
   grid-template-columns: 1fr 1px 380px;
   gap: 32px;
   align-items: start;
+}
+
+/* ── Single-column layout ── */
+.bb-checkout__single-col {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+/* ── Pro two-column layout (main + sidebar) ── */
+.bb-checkout__pro-grid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 28px;
+  align-items: start;
+}
+
+.bb-checkout__col-main {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+
+.bb-checkout__col-aside {
+  position: sticky;
+  top: 90px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+@media (max-width: 1024px) {
+  .bb-checkout__pro-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .bb-checkout__col-aside {
+    position: static;
+    order: -1;
+  }
 }
 
 .bb-checkout__col-left {
@@ -5457,39 +5503,75 @@ footer,
   }
 }
 
-/* Sidebar card */
+/* ── Section card (shared) ── */
 
 .bb-checkout__card {
   background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 16px;
-  box-shadow: 0 2px 8px rgba(0,0,0,.04);
+  padding: 24px 28px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.03);
 }
 
 .bb-checkout__card-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1a1a2e;
-  margin: 0 0 16px;
-  padding-bottom: 12px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 20px;
+  padding-bottom: 14px;
   border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-/* Flight summary mini */
+.bb-checkout__card-title i {
+  font-size: 16px;
+  color: var(--ab-primary, #E8604C);
+  opacity: .85;
+}
+
+/* ── Section heading ── */
+.bb-checkout__section-heading {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 4px;
+  letter-spacing: -0.01em;
+}
+
+.bb-checkout__section-sub {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0 0 20px;
+}
+
+/* ── Flight summary mini card ── */
 
 .bb-checkout__flight-mini {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: #fafbfc;
+  border: 1px solid #f0f1f3;
+  border-radius: 10px;
   margin-bottom: 12px;
+  transition: box-shadow .15s;
+}
+
+.bb-checkout__flight-mini:last-child {
+  margin-bottom: 0;
+}
+
+.bb-checkout__flight-mini:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,.05);
 }
 
 .bb-checkout__flight-mini-logo {
-  width: 44px;
-  height: 44px;
-  min-width: 44px;
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
   border-radius: 10px;
   border: 1px solid #e5e7eb;
   display: flex;
@@ -5497,6 +5579,7 @@ footer,
   justify-content: center;
   overflow: hidden;
   background: #fff;
+  flex-shrink: 0;
 }
 
 .bb-checkout__flight-mini-logo img {
@@ -5505,17 +5588,24 @@ footer,
   object-fit: contain;
 }
 
+.bb-checkout__flight-mini-body {
+  flex: 1;
+  min-width: 0;
+}
+
 .bb-checkout__flight-mini-airline {
   font-size: 13px;
   font-weight: 600;
   color: #1a1a2e;
+  margin-bottom: 4px;
 }
 
 .bb-checkout__flight-mini-route {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 700;
-  color: #1a1a2e;
-  letter-spacing: .5px;
+  color: #0f172a;
+  letter-spacing: .3px;
+  line-height: 1.2;
 }
 
 .bb-checkout__flight-mini-arrow {
@@ -5524,29 +5614,136 @@ footer,
   margin: 0 6px;
 }
 
+/* Timeline connector */
+.bb-checkout__flight-timeline {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin: 8px 0 6px;
+  max-width: 260px;
+}
+
+.bb-checkout__flight-timeline-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--ab-primary, #E8604C);
+  flex-shrink: 0;
+  z-index: 1;
+}
+
+.bb-checkout__flight-timeline-line {
+  flex: 1;
+  height: 2px;
+  background: linear-gradient(90deg, var(--ab-primary, #E8604C) 0%, #93c5fd 50%, var(--ab-primary, #E8604C) 100%);
+  position: relative;
+}
+
+.bb-checkout__flight-timeline-plane {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 14px;
+  color: var(--ab-primary, #E8604C);
+  background: #fafbfc;
+  padding: 0 4px;
+}
+
+.bb-checkout__flight-timeline-codes {
+  display: flex;
+  justify-content: space-between;
+  max-width: 260px;
+  margin-bottom: 2px;
+}
+
+.bb-checkout__flight-timeline-code {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ab-primary, #E8604C);
+  letter-spacing: .5px;
+}
+
 .bb-checkout__flight-mini-detail {
   font-size: 13px;
   color: #6b7280;
   margin-top: 4px;
 }
 
-/* Price table */
+.bb-checkout__flight-mini-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.bb-checkout__flight-mini-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.bb-checkout__flight-mini-date {
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.bb-checkout__flight-mini-duration {
+  font-size: 12px;
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+.bb-checkout__flight-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.bb-checkout__flight-badge--direct {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.bb-checkout__flight-badge--stop {
+  background: #fffbeb;
+  color: #d97706;
+}
+
+/* ── Price table (sidebar) ── */
 
 .bb-checkout__price-row {
   display: flex;
   justify-content: space-between;
-  padding: 6px 0;
+  padding: 8px 0;
   font-size: 14px;
   color: #374151;
 }
 
 .bb-checkout__price-row--total {
   border-top: 2px solid #e5e7eb;
-  margin-top: 8px;
-  padding-top: 12px;
+  margin-top: 10px;
+  padding-top: 14px;
   font-weight: 700;
-  font-size: 16px;
-  color: #1a1a2e;
+  font-size: 18px;
+  color: var(--ab-primary, #E8604C);
+}
+
+.bb-checkout__price-pax {
+  font-size: 13px;
+  color: #6b7280;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #f0f0f0;
 }
 
 /* Price changed warning */
@@ -5554,8 +5751,8 @@ footer,
 .bb-checkout__price-warning {
   background: #fef2f2;
   border: 1px solid #fca5a5;
-  border-radius: 8px;
-  padding: 12px 16px;
+  border-radius: 12px;
+  padding: 14px 20px;
   margin-bottom: 16px;
   color: #dc2626;
   font-size: 13px;
@@ -5565,7 +5762,7 @@ footer,
 /* Auth banner */
 
 .bb-checkout__auth-banner {
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 14px 20px;
   margin-bottom: 20px;
   font-size: 14px;
@@ -5587,43 +5784,70 @@ footer,
 
 .bb-checkout__actions {
   display: flex;
+  flex-direction: column;
   gap: 12px;
-  justify-content: flex-end;
-  margin-top: 24px;
+  margin-top: 4px;
+}
+
+/* Multi-city leg label */
+.bb-checkout__leg-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #0C4A6E;
+  background: #e0f2fe;
+  display: inline-block;
+  padding: 3px 12px;
+  border-radius: 6px;
+  margin-bottom: 8px;
 }
 
 .bb-checkout__btn {
-  padding: 14px 32px;
-  border-radius: 8px;
-  font-size: 15px;
+  padding: 16px 32px;
+  border-radius: 10px;
+  font-size: 16px;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
   border: none;
   transition: all .2s;
+  text-align: center;
 }
 
 .bb-checkout__btn--back {
-  background: #f1f5f9;
+  background: transparent;
   color: #475569;
+  border: 2px solid #e2e8f0;
 }
 
 .bb-checkout__btn--back:hover {
-  background: #e2e8f0;
+  background: #f8fafc;
+  border-color: #cbd5e1;
 }
 
 .bb-checkout__btn--next {
   background: var(--ab-primary, #E8604C);
   color: #fff;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(232, 96, 76, .25);
 }
 
 .bb-checkout__btn--next:hover {
-  opacity: .9;
+  opacity: .92;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(232, 96, 76, .3);
 }
 
 .bb-checkout__btn--next:disabled {
   opacity: .5;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 /* Bottom sticky bar (mobile) */
@@ -5673,6 +5897,9 @@ footer,
   }
   .bb-checkout {
     padding-bottom: 100px;
+  }
+  .bb-checkout__card {
+    padding: 20px 16px;
   }
 }
 
@@ -6030,6 +6257,162 @@ footer,
   }
 }
 
+/* Flight Details Toggle Button */
+.bb-flight-card__details-toggle {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: none;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all .15s;
+}
+
+.bb-flight-card__details-toggle:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+/* Flight Details — expandable */
+.bb-flight-card__details {
+  padding: 0 24px 16px;
+  border-top: 1px dashed #e5e7eb;
+  margin-top: 2px;
+  animation: bb-slideDown .2s ease;
+}
+
+@keyframes bb-slideDown {
+  from { opacity: 0; max-height: 0; }
+  to { opacity: 1; max-height: 600px; }
+}
+
+.bb-flight-card__layover {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  margin: 10px 0;
+  background: #fef3c7;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #92400e;
+  font-weight: 500;
+}
+
+.bb-flight-card__detail-seg {
+  display: flex;
+  gap: 14px;
+  padding: 14px 0 4px;
+}
+
+.bb-flight-card__detail-timeline {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 5px;
+  min-width: 14px;
+}
+
+.bb-flight-card__detail-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid #0C4A6E;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.bb-flight-card__detail-line {
+  width: 2px;
+  flex: 1;
+  min-height: 36px;
+  background: repeating-linear-gradient(to bottom, #cbd5e1 0, #cbd5e1 4px, transparent 4px, transparent 8px);
+}
+
+.bb-flight-card__detail-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.bb-flight-card__detail-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.bb-flight-card__detail-time {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  min-width: 45px;
+}
+
+.bb-flight-card__detail-airport {
+  font-size: 13px;
+  color: #334155;
+}
+
+.bb-flight-card__detail-date {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.bb-flight-card__detail-mid {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0 8px 0;
+  flex-wrap: wrap;
+}
+
+.bb-flight-card__detail-flight {
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.bb-flight-card__detail-dur {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.bb-flight-card__detail-equip {
+  font-size: 11px;
+  color: #94a3b8;
+  background: #f1f5f9;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.bb-flight-card__detail-class {
+  font-size: 11px;
+  color: #0C4A6E;
+  background: #e0f2fe;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+@media (max-width: 768px) {
+  .bb-flight-card__details {
+    padding: 0 16px 14px;
+  }
+
+  .bb-flight-card__detail-time {
+    font-size: 14px;
+  }
+}
+
 /* ══════════════════════════════════════════════════════
    EMPTY STATE & ERROR IMPROVEMENTS
    ══════════════════════════════════════════════════════ */
@@ -6119,18 +6502,19 @@ footer,
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 18px 20px;
+  padding: 20px 22px;
   border: 2px solid var(--ab-border);
   border-radius: 12px;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.2s;
   margin-bottom: 12px;
   background: #fff;
 }
 
 .bb-payment-method:hover {
-  border-color: #bfdbfe;
+  border-color: #93c5fd;
   background: #f8faff;
+  box-shadow: 0 2px 8px rgba(0,0,0,.04);
 }
 
 .bb-payment-method--active {
@@ -6213,8 +6597,8 @@ footer,
   background: #fff;
   border-radius: 12px;
   border: 1px solid #e5e7eb;
-  margin-bottom: 20px;
   overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.03);
 }
 
 .bb-pay-flight__header,
@@ -6224,11 +6608,11 @@ footer,
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 16px 20px;
+  padding: 18px 24px;
   background: var(--ab-secondary);
   color: #fff;
   font-weight: 600;
-  font-size: 15px;
+  font-size: 16px;
 }
 
 .bb-pay-flight__header i,
@@ -6242,7 +6626,7 @@ footer,
 .bb-pay-flight__body,
 .bb-pay-reservation__body,
 .bb-pay-methods__body {
-  padding: 20px;
+  padding: 22px 24px;
 }
 
 /* Airline info */
@@ -6522,12 +6906,13 @@ footer,
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 12px 20px;
+  padding: 14px 20px;
   background: #f0fdf4;
   color: #15803d;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
-  border-top: 1px solid #dcfce7;
+  border-radius: 10px;
+  border: 1px solid #dcfce7;
 }
 
 .bb-pay-price__secure i {
@@ -6584,15 +6969,17 @@ footer,
 
 .bb-card-form__input {
   width: 100%;
-  padding: 12px 14px;
+  padding: 13px 16px;
+  min-height: 48px;
   border: 1.5px solid #d1d5db;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 15px;
   font-family: inherit;
   color: #1f2937;
   background: #fff;
   transition: border-color 0.15s, box-shadow 0.15s;
   outline: none;
+  box-sizing: border-box;
 }
 
 .bb-card-form__input:focus {
@@ -6838,11 +7225,11 @@ footer,
 .bb-agreement {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  padding: 14px 16px;
-  background: var(--ab-bg-light);
-  border-radius: 8px;
-  margin-bottom: 16px;
+  gap: 12px;
+  padding: 18px 20px;
+  background: #fafbfc;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
 }
 
 .bb-agreement__checkbox {

@@ -115,6 +115,7 @@ const BannerFormOne = () => {
    const fromRef = useRef<HTMLDivElement>(null);
    const toRef = useRef<HTMLDivElement>(null);
    const paxRef = useRef<HTMLDivElement>(null);
+   const multiCityRef = useRef<HTMLDivElement>(null);
    const urlCountryCodeResolvedRef = useRef(false);
 
    // Calendar open helpers
@@ -219,8 +220,10 @@ const BannerFormOne = () => {
          if (fromRef.current && !fromRef.current.contains(e.target as Node)) setFromOpen(false);
          if (toRef.current && !toRef.current.contains(e.target as Node)) setToOpen(false);
          if (paxRef.current && !paxRef.current.contains(e.target as Node)) setPassengerOpen(false);
-         // Close multi-city dropdowns
-         setSegments(prev => prev.map(s => ({ ...s, fromOpen: false, toOpen: false })));
+         // Close multi-city dropdowns only when clicking outside the multi-city form
+         if (multiCityRef.current && !multiCityRef.current.contains(e.target as Node)) {
+            setSegments(prev => prev.map(s => ({ ...s, fromOpen: false, toOpen: false })));
+         }
       };
       document.addEventListener("mousedown", handler);
       return () => document.removeEventListener("mousedown", handler);
@@ -430,6 +433,14 @@ const BannerFormOne = () => {
          if (patch.to !== undefined && idx < next.length - 1) {
             next[idx + 1] = { ...next[idx + 1], from: patch.to };
          }
+         // Tarih zincirleme: seçilen tarih sonraki segmentlerden büyükse, onları da güncelle
+         if (patch.date !== undefined) {
+            for (let i = idx + 1; i < next.length; i++) {
+               if (next[i].date < next[idx].date) {
+                  next[i] = { ...next[i], date: patch.date };
+               }
+            }
+         }
          return next;
       });
    };
@@ -437,9 +448,10 @@ const BannerFormOne = () => {
    const addSegment = () => {
       if (segments.length < 6) {
          setSegments(prev => {
-            const lastTo = prev[prev.length - 1]?.to || '';
+            const last = prev[prev.length - 1];
             const newSeg = createSegment();
-            newSeg.from = lastTo;
+            newSeg.from = last?.to || '';
+            newSeg.date = last?.date || new Date();
             return [...prev, newSeg];
          });
       }
@@ -763,7 +775,7 @@ const BannerFormOne = () => {
             <div className="bb-flight-form__trip-toggle mb-15">
                {renderTripToggle(tripType, setTripType, t)}
             </div>
-            <div className="bb-multicity-segments">
+            <div className="bb-multicity-segments" ref={multiCityRef}>
                {segments.map((seg, idx) => (
                   <div key={idx} className="bb-multicity-row">
                      <span className="bb-multicity-row__label">{t.flightN} {idx + 1}</span>
@@ -784,14 +796,22 @@ const BannerFormOne = () => {
                                  className={`bb-flight-form__input ${errors[`seg${idx}from`] ? "bb-flight-form__input--error" : ""}`}
                                  placeholder={t.cityOrAirport}
                                  value={seg.fromOpen ? seg.fromSearch : getAirportLabel(seg.from)}
-                                 onChange={e => updateSegment(idx, { fromSearch: e.target.value, fromOpen: true })}
-                                 onFocus={() => updateSegment(idx, { fromOpen: true, fromSearch: "" })}
+                                 onChange={e => {
+                                    const val = e.target.value;
+                                    updateSegment(idx, { fromSearch: val, fromOpen: true });
+                                 }}
+                                 onFocus={() => {
+                                    setSegments(prev => prev.map((s, i) => i === idx
+                                       ? { ...s, fromOpen: true, fromSearch: "", toOpen: false }
+                                       : { ...s, fromOpen: false, toOpen: false }
+                                    ));
+                                 }}
                                  autoComplete="off"
                               />
                            )}
                            {errors[`seg${idx}from`] && <span className="bb-flight-form__error">{errors[`seg${idx}from`]}</span>}
                            {idx === 0 && seg.fromOpen && renderAirportDropdown(
-                              filterAirports(seg.fromSearch, seg.to),
+                              seg.fromSearch.length >= 2 ? filterAirports(seg.fromSearch, seg.to) : getInitialSuggestions(),
                               (airport) => {
                                  updateSegment(idx, { from: airport.iataCode, fromOpen: false, fromSearch: "" });
                                  const toAp = allAirports.find(a => a.iataCode === seg.to);
@@ -812,12 +832,17 @@ const BannerFormOne = () => {
                               placeholder={t.cityOrAirport}
                               value={seg.toOpen ? seg.toSearch : getAirportLabel(seg.to)}
                               onChange={e => updateSegment(idx, { toSearch: e.target.value, toOpen: true })}
-                              onFocus={() => updateSegment(idx, { toOpen: true, toSearch: "" })}
+                              onFocus={() => {
+                                 setSegments(prev => prev.map((s, i) => i === idx
+                                    ? { ...s, toOpen: true, toSearch: "", fromOpen: false }
+                                    : { ...s, fromOpen: false, toOpen: false }
+                                 ));
+                              }}
                               autoComplete="off"
                            />
                            {errors[`seg${idx}to`] && <span className="bb-flight-form__error">{errors[`seg${idx}to`]}</span>}
                            {seg.toOpen && renderAirportDropdown(
-                              filterAirports(seg.toSearch, seg.from),
+                              seg.toSearch.length >= 2 ? filterAirports(seg.toSearch, seg.from) : getInitialSuggestions(),
                               (airport) => {
                                  updateSegment(idx, { to: airport.iataCode, toOpen: false, toSearch: "" });
                                  const fromAp = allAirports.find(a => a.iataCode === seg.from);

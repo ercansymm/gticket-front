@@ -52,6 +52,7 @@ function getAirlineBrandStyle(code: string | null): { bg: string; color: string 
 const FlightCard = ({ flight, onSelect, isSelected = false, allocateLoading = false }: FlightCardProps) => {
   const [logoError, setLogoError] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const baggageDisplay = getBaggageDisplay(flight);
   const logoPath = getAirlineLogoPath(flight.airlineCode);
   const brandStyle = getAirlineBrandStyle(flight.airlineCode);
@@ -164,7 +165,7 @@ const FlightCard = ({ flight, onSelect, isSelected = false, allocateLoading = fa
         </div>
       </div>
 
-      {/* Badges */}
+      {/* Badges + Details toggle */}
       <div className="bb-flight-card__badges-row">
         {flight.isDirect ? (
           <span className="bb-flight-card__badge bb-flight-card__badge--direct">
@@ -189,7 +190,60 @@ const FlightCard = ({ flight, onSelect, isSelected = false, allocateLoading = fa
             {flight.availableSeatsText}
           </span>
         )}
+        <button
+          type="button"
+          className="bb-flight-card__details-toggle"
+          onClick={() => setDetailsOpen(!detailsOpen)}
+        >
+          Uçuş Detayları
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 4, transition: 'transform .2s', transform: detailsOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </button>
       </div>
+
+      {/* Flight Details — expandable */}
+      {detailsOpen && flight.segments.length > 0 && (
+        <div className="bb-flight-card__details">
+          {flight.segments.map((seg, i) => (
+            <div key={i}>
+              {i > 0 && seg.layoverFormatted && (
+                <div className="bb-flight-card__layover">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  <span>{seg.layoverFormatted} aktarma bekleme — {seg.originName ?? seg.originCode} ({seg.originCode})</span>
+                </div>
+              )}
+              <div className="bb-flight-card__detail-seg">
+                <div className="bb-flight-card__detail-timeline">
+                  <div className="bb-flight-card__detail-dot" />
+                  <div className="bb-flight-card__detail-line" />
+                  <div className="bb-flight-card__detail-dot" />
+                </div>
+                <div className="bb-flight-card__detail-info">
+                  <div className="bb-flight-card__detail-row">
+                    <span className="bb-flight-card__detail-time">{seg.departureTime}</span>
+                    <span className="bb-flight-card__detail-airport">{seg.originName ?? seg.originCode} ({seg.originCode})</span>
+                    {seg.departureDate && <span className="bb-flight-card__detail-date">{seg.departureDate}</span>}
+                  </div>
+                  <div className="bb-flight-card__detail-mid">
+                    <span className="bb-flight-card__detail-flight">
+                      {seg.airlineName ?? flight.airlineName} {seg.flightNumber}
+                    </span>
+                    {seg.durationFormatted && <span className="bb-flight-card__detail-dur">{seg.durationFormatted}</span>}
+                    {seg.equipment && <span className="bb-flight-card__detail-equip">{seg.equipment}</span>}
+                    {seg.bookingClassName && <span className="bb-flight-card__detail-class">{seg.bookingClassName}</span>}
+                  </div>
+                  <div className="bb-flight-card__detail-row">
+                    <span className="bb-flight-card__detail-time">{seg.arrivalTime}</span>
+                    <span className="bb-flight-card__detail-airport">{seg.destinationName ?? seg.destinationCode} ({seg.destinationCode})</span>
+                    {seg.arrivalDate && seg.arrivalDate !== seg.departureDate && <span className="bb-flight-card__detail-date">{seg.arrivalDate}</span>}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Fare Packages */}
       {hasPackages && expanded && (

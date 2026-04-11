@@ -65,29 +65,6 @@ const SearchResultsMain = () => {
   const isRoundTrip = searchParams?.flightType === 'RT';
   const isMultiCity = searchParams?.flightType === 'MP';
 
-  // Multi-city: uçuşları bacak (leg) bazında grupla
-  const multiCityLegs = useMemo(() => {
-    if (!isMultiCity || !searchParams?.segments || !displayedFlights.length) return [];
-    return searchParams.segments.map((seg, idx) => {
-      const legFlights = displayedFlights.filter(f => {
-        // SequenceNo bazında eşleştirme (BiletBank segment SequenceNo ile)
-        if (f.segments.length > 0 && f.segments.some(s => s.sequenceNo === idx + 1)) return true;
-        // Fallback: origin/destination eşleştirmesi
-        return (
-          (f.originCode ?? '').toUpperCase() === seg.origin.toUpperCase() &&
-          (f.destinationCode ?? '').toUpperCase() === seg.destination.toUpperCase()
-        );
-      });
-      return {
-        legIndex: idx,
-        origin: seg.origin,
-        destination: seg.destination,
-        date: seg.departureDate,
-        flights: legFlights,
-      };
-    });
-  }, [isMultiCity, searchParams?.segments, displayedFlights]);
-
   const closeMobileFilter = useCallback(() => setMobileFilterOpen(false), []);
   const closeMobileSort = useCallback(() => setMobileSortOpen(false), []);
 
@@ -110,6 +87,29 @@ const SearchResultsMain = () => {
     const filtered = filterFlights(searchResults.flights, filters);
     return sortFlights(filtered, sortBy);
   }, [searchResults?.flights, filters, sortBy]);
+
+  // Multi-city: uçuşları bacak (leg) bazında grupla
+  const multiCityLegs = useMemo(() => {
+    if (!isMultiCity || !searchParams?.segments || !displayedFlights.length) return [];
+    return searchParams.segments.map((seg, idx) => {
+      const legFlights = displayedFlights.filter(f => {
+        // SequenceNo bazında eşleştirme (BiletBank segment SequenceNo ile)
+        if (f.segments.length > 0 && f.segments.some(s => s.sequenceNo === idx + 1)) return true;
+        // Fallback: origin/destination eşleştirmesi
+        return (
+          (f.originCode ?? '').toUpperCase() === seg.origin.toUpperCase() &&
+          (f.destinationCode ?? '').toUpperCase() === seg.destination.toUpperCase()
+        );
+      });
+      return {
+        legIndex: idx,
+        origin: seg.origin,
+        destination: seg.destination,
+        date: seg.departureDate,
+        flights: legFlights,
+      };
+    });
+  }, [isMultiCity, searchParams?.segments, displayedFlights]);
 
   // Gidiş-Dönüş: uçuşları yöne göre ayır
   // BiletBank RT aramasında her T_FlightOption'da segment.sequenceNo=1 → gidiş, sequenceNo=2 → dönüş.
@@ -358,17 +358,44 @@ const SearchResultsMain = () => {
     dispatch(setSelectedFlight(firstLeg));
 
     try {
-      // Her bacak için sıralı allocate
-      for (let i = 0; i < totalLegs; i++) {
-        const legFlight = selectedLegFlights[i];
-        if (!legFlight) continue;
-        await dispatch(allocateFlightThunk({
+      // RecommendationBox bundle: tüm bacaklar aynı BundleProductId'yi paylaşır
+      const isBundle = Object.values(selectedLegFlights).every(f => f.isRoundTripBundle && f.bundleProductId);
+
+      if (isBundle) {
+        const bundleProductId = firstLeg.bundleProductId!;
+        // Her bacaktan seçilen uçuşun FlightId'sini topla → SubOptions
+        const subOptionIds: string[] = [];
+        for (let i = 0; i < totalLegs; i++) {
+          const legFlight = selectedLegFlights[i];
+          const flightId = legFlight?.departureFlightId ?? legFlight?.returnFlightId;
+          if (flightId) subOptionIds.push(flightId);
+        }
+
+        const result = await dispatch(allocateFlightThunk({
           searchId: searchResults.searchId!,
-          productId: legFlight.productId!,
-          brandedFareItemId: legFlight.defaultBrandedFareItemId ?? undefined,
+          productId: bundleProductId,
+          brandedFareItemId: firstLeg.defaultBrandedFareItemId ?? undefined,
+          subOptions: subOptionIds.length > 0 ? subOptionIds : firstLeg.subOptionFlightIds ?? undefined,
         })).unwrap();
+
+        if (isRealPriceChange(result, firstLeg)) {
+          setPriceChangedData(result);
+        } else {
+          router.push('/checkout');
+        }
+      } else {
+        // Bağımsız FlightOption: her bacak için sıralı allocate
+        for (let i = 0; i < totalLegs; i++) {
+          const legFlight = selectedLegFlights[i];
+          if (!legFlight) continue;
+          await dispatch(allocateFlightThunk({
+            searchId: searchResults.searchId!,
+            productId: legFlight.productId!,
+            brandedFareItemId: legFlight.defaultBrandedFareItemId ?? undefined,
+          })).unwrap();
+        }
+        router.push('/checkout');
       }
-      router.push('/checkout');
     } catch {
       // Redux hata yönetimi çalışıyor
     } finally {
@@ -403,25 +430,51 @@ const SearchResultsMain = () => {
 
   // Loading — skeleton + centered spinner card
   if (searchLoading) {
+    const loadingSegments = isMultiCity && searchParams?.segments
+      ? searchParams.segments
+      : null;
+
     return (
       <>
         <HeaderOne />
         <main className="bb-search-results" style={{ position: 'relative' }}>
           {/* Spinner card overlay */}
           <div className="bb-flight-loading-overlay">
-            <div className="bb-flight-loading__card">
-              <div className="bb-flight-loading__logo">
+            <div className="bb-flight-loading__card" style={{ maxWidth: 420, padding: '36px 32px' }}>
+              <div className="bb-flight-loading__logo" style={{ fontSize: 28, marginBottom: 16 }}>
                 <span style={{ color: '#DC2626' }}>Ata</span>
                 <span style={{ color: '#0F172A' }}>Bilet</span>
               </div>
               <div className="bb-flight-loading__bar">
                 <div className="bb-flight-loading__bar-fill"></div>
               </div>
-              <div className="bb-flight-loading__route">
-                <span>{searchParams?.origin ?? '...'}</span>
-                <i className="fa-solid fa-plane" style={{ fontSize: 13, color: '#0C4A6E' }}></i>
-                <span>{searchParams?.destination ?? '...'}</span>
-              </div>
+              {loadingSegments ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 14 }}>
+                  {loadingSegments.map((seg, i) => (
+                    <div key={i} className="bb-flight-loading__route" style={{ fontSize: 14 }}>
+                      <span style={{ fontWeight: 600 }}>{seg.origin}</span>
+                      <i className="fa-solid fa-arrow-right" style={{ fontSize: 11, color: '#0C4A6E', margin: '0 8px' }}></i>
+                      <span style={{ fontWeight: 600 }}>{seg.destination}</span>
+                      <span style={{ marginLeft: 10, color: '#6b7280', fontSize: 12 }}>{seg.departureDate}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="bb-flight-loading__route" style={{ fontSize: 15, marginTop: 14 }}>
+                  <span style={{ fontWeight: 600 }}>{searchParams?.origin ?? '...'}</span>
+                  <i className="fa-solid fa-plane" style={{ fontSize: 13, color: '#0C4A6E', margin: '0 10px' }}></i>
+                  <span style={{ fontWeight: 600 }}>{searchParams?.destination ?? '...'}</span>
+                  {searchParams?.flightType === 'RT' && (
+                    <span style={{ marginLeft: 10, color: '#6b7280', fontSize: 12 }}>
+                      {searchParams?.departureDate} — {searchParams?.returnDate}
+                    </span>
+                  )}
+                  {searchParams?.flightType !== 'RT' && searchParams?.departureDate && (
+                    <span style={{ marginLeft: 10, color: '#6b7280', fontSize: 12 }}>{searchParams.departureDate}</span>
+                  )}
+                </div>
+              )}
+              <div style={{ marginTop: 8, fontSize: 13, color: '#6b7280' }}>{paxText} &middot; {tripTypeText}</div>
               <p className="bb-flight-loading__text">Uçuşlar aranıyor<span className="bb-flight-loading__dots"></span></p>
             </div>
           </div>
@@ -430,9 +483,25 @@ const SearchResultsMain = () => {
           <div className="bb-search-summary">
             <div className="bb-search-summary__inner">
               <div className="bb-search-summary__route">
-                <span className="bb-search-summary__city">{searchParams?.origin ?? '...'}</span>
-                <span className="bb-search-summary__arrow">→</span>
-                <span className="bb-search-summary__city">{searchParams?.destination ?? '...'}</span>
+                {loadingSegments ? (
+                  loadingSegments.map((seg, i) => (
+                    <span key={i}>
+                      {i > 0 && <span className="bb-search-summary__arrow">→</span>}
+                      <span className="bb-search-summary__city">{seg.origin}</span>
+                    </span>
+                  )).concat(
+                    <span key="last">
+                      <span className="bb-search-summary__arrow">→</span>
+                      <span className="bb-search-summary__city">{loadingSegments[loadingSegments.length - 1].destination}</span>
+                    </span>
+                  )
+                ) : (
+                  <>
+                    <span className="bb-search-summary__city">{searchParams?.origin ?? '...'}</span>
+                    <span className="bb-search-summary__arrow">→</span>
+                    <span className="bb-search-summary__city">{searchParams?.destination ?? '...'}</span>
+                  </>
+                )}
               </div>
               <div className="bb-search-summary__meta">
                 <span className="bb-search-summary__meta-item">{searchParams?.departureDate}</span>
