@@ -1,5 +1,15 @@
 import { z } from 'zod';
 
+const multiCitySegmentSchema = z.object({
+  origin: z.string().min(2).max(50).trim().regex(/^[A-Z]{2,5}(,[A-Z]{2,5})*$/i, 'Geçersiz havalimanı kodu'),
+  destination: z.string().min(2).max(50).trim().regex(/^[A-Z]{2,5}(,[A-Z]{2,5})*$/i, 'Geçersiz havalimanı kodu'),
+  originCountryCode: z.string().min(2).max(5).optional().default('TR'),
+  destinationCountryCode: z.string().min(2).max(5).optional().default('TR'),
+  originIsCity: z.boolean().optional().default(false),
+  destinationIsCity: z.boolean().optional().default(false),
+  departureDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+});
+
 export const flightSearchSchema = z.object({
   origin: z.string().min(2).max(50).trim().regex(/^[A-Z]{2,5}(,[A-Z]{2,5})*$/i, 'Geçersiz havalimanı kodu'),
   destination: z.string().min(2).max(50).trim().regex(/^[A-Z]{2,5}(,[A-Z]{2,5})*$/i, 'Geçersiz havalimanı kodu'),
@@ -19,6 +29,7 @@ export const flightSearchSchema = z.object({
   searchTimeoutMilliseconds: z.number().int().min(0).max(60000).optional().default(0),
   preferredAirlines: z.array(z.string().regex(/^[A-Z0-9]{2}$/i)).max(10).nullable().optional(),
   searchReason: z.enum(['SearchOnly', 'SearchAndBook']).optional().default('SearchAndBook'),
+  segments: z.array(multiCitySegmentSchema).min(2).max(6).nullable().optional(),
 }).refine(data => (data.adultCount ?? 1) + (data.childCount ?? 0) <= 9, {
   message: 'Toplam yolcu 9\'u geçemez',
 }).refine(data => (data.infantCount ?? 0) <= (data.adultCount ?? 1), {
@@ -28,6 +39,11 @@ export const flightSearchSchema = z.object({
   return true;
 }, {
   message: 'Gidiş-dönüş aramada dönüş tarihi zorunlu',
+}).refine(data => {
+  if (data.flightType === 'MP' && (!data.segments || data.segments.length < 2)) return false;
+  return true;
+}, {
+  message: 'Çoklu şehir aramasında en az 2 segment gereklidir',
 });
 
 // İstemciden gelen allocate request — session bilgisi YOK

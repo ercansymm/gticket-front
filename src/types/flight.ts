@@ -3,6 +3,16 @@
 export type TripType = 'OW' | 'RT' | 'MP';
 export type CabinClass = 'Economy' | 'PremiumEconomy' | 'Business' | 'First';
 
+export interface MultiCitySearchSegment {
+  origin: string;
+  destination: string;
+  originCountryCode?: string;
+  destinationCountryCode?: string;
+  originIsCity?: boolean;
+  destinationIsCity?: boolean;
+  departureDate: string; // YYYY-MM-DD
+}
+
 export interface FlightSearchRequest {
   origin: string;
   destination: string;
@@ -22,6 +32,7 @@ export interface FlightSearchRequest {
   searchTimeoutMilliseconds?: number;
   preferredAirlines?: string[] | null;
   searchReason?: 'SearchOnly' | 'SearchAndBook';
+  segments?: MultiCitySearchSegment[]; // MP (multi-city) tipinde kullanılır
 }
 
 // İstemciye dönen güvenli response — sessionId/sessionToken YOK

@@ -424,11 +424,25 @@ const BannerFormOne = () => {
 
    // Multi-city segment helpers
    const updateSegment = (idx: number, patch: Partial<MultiCitySegment>) => {
-      setSegments(prev => prev.map((s, i) => i === idx ? { ...s, ...patch } : s));
+      setSegments(prev => {
+         const next = prev.map((s, i) => i === idx ? { ...s, ...patch } : s);
+         // Zincirleme: to değişince sonraki segmentin from'unu otomatik set et
+         if (patch.to !== undefined && idx < next.length - 1) {
+            next[idx + 1] = { ...next[idx + 1], from: patch.to };
+         }
+         return next;
+      });
    };
 
    const addSegment = () => {
-      if (segments.length < 6) setSegments(prev => [...prev, createSegment()]);
+      if (segments.length < 6) {
+         setSegments(prev => {
+            const lastTo = prev[prev.length - 1]?.to || '';
+            const newSeg = createSegment();
+            newSeg.from = lastTo;
+            return [...prev, newSeg];
+         });
+      }
    };
 
    const removeSegment = (idx: number) => {
@@ -451,6 +465,11 @@ const BannerFormOne = () => {
             if (!seg.from) errs[`seg${i}from`] = t.selectOrigin;
             if (!seg.to) errs[`seg${i}to`] = t.selectDestination;
             if (seg.from && seg.to && (seg.from === seg.to || isSameCityByCode(seg.from, seg.to))) errs[`seg${i}to`] = t.sameCityError;
+            // Tarih sıralama kontrolü: her segment bir öncekinden >= olmalı
+            if (i > 0) {
+               const prevDate = segments[i - 1].date;
+               if (seg.date < prevDate) errs[`seg${i}date`] = t.returnDateError;
+            }
          });
       } else if (tripType === "group") {
          if (!groupName.trim()) errs.groupName = t.enterFullName;
@@ -483,7 +502,73 @@ const BannerFormOne = () => {
       }
 
       if (tripType === "multicity") {
-         // TODO: Implement multi-city search API call
+         const formatDateForApi = (d: Date): string => {
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+         };
+
+         const resolveAirportMeta = (code: string) => {
+            const airport = allAirports.find(a => a.iataCode === code);
+            const cityGroupMembers = allAirports.filter(
+               a => a.cityCode && a.cityCode === code && a.iataCode !== code
+            );
+            const isCity = cityGroupMembers.length >= 1;
+            const countryCode = airport?.countryCode ?? cityGroupMembers[0]?.countryCode ?? 'TR';
+            return { countryCode, isCity };
+         };
+
+         const apiSegments = segments.map(seg => {
+            const fromMeta = resolveAirportMeta(seg.from);
+            const toMeta = resolveAirportMeta(seg.to);
+            return {
+               origin: seg.from,
+               destination: seg.to,
+               originCountryCode: fromMeta.countryCode,
+               destinationCountryCode: toMeta.countryCode,
+               originIsCity: fromMeta.isCity,
+               destinationIsCity: toMeta.isCity,
+               departureDate: formatDateForApi(seg.date),
+            };
+         });
+
+         const classMap: Record<string, CabinClass> = {
+            economy: 'Economy',
+            premiumeconomy: 'PremiumEconomy',
+            business: 'Business',
+            first: 'First',
+         };
+
+         const searchRequest: FlightSearchRequest = {
+            origin: segments[0].from,
+            destination: segments[0].to,
+            originCountryCode: apiSegments[0].originCountryCode,
+            destinationCountryCode: apiSegments[0].destinationCountryCode,
+            originIsCity: apiSegments[0].originIsCity,
+            destinationIsCity: apiSegments[0].destinationIsCity,
+            departureDate: apiSegments[0].departureDate,
+            returnDate: null,
+            flightType: 'MP',
+            flightClass: classMap[flightClass] ?? 'Economy',
+            adultCount: passengers.adult,
+            childCount: passengers.child,
+            infantCount: passengers.infant,
+            directFlightsOnly: directOnly,
+            refundablesOnly: false,
+            searchTimeoutMilliseconds: 0,
+            preferredAirlines: airlines.length > 0 ? airlines : null,
+            searchReason: 'SearchAndBook',
+            segments: apiSegments,
+         };
+
+         dispatch(resetPayment());
+         dispatch(resetBooking());
+         dispatch(clearSearch());
+         sessionStorage.removeItem('payment_3ds_session');
+         dispatch(setSearchParams(searchRequest));
+         dispatch(searchFlightsThunk(searchRequest));
+         router.push('/search-results');
          return;
       }
 
@@ -685,17 +770,27 @@ const BannerFormOne = () => {
                      <div className="bb-multicity-row__fields">
                         <div className="bb-flight-form__field bb-flight-form__field--airport">
                            <label className="bb-flight-form__label">{t.from}</label>
-                           <input
-                              type="text"
-                              className={`bb-flight-form__input ${errors[`seg${idx}from`] ? "bb-flight-form__input--error" : ""}`}
-                              placeholder={t.cityOrAirport}
-                              value={seg.fromOpen ? seg.fromSearch : getAirportLabel(seg.from)}
-                              onChange={e => updateSegment(idx, { fromSearch: e.target.value, fromOpen: true })}
-                              onFocus={() => updateSegment(idx, { fromOpen: true, fromSearch: "" })}
-                              autoComplete="off"
-                           />
+                           {idx > 0 ? (
+                              <input
+                                 type="text"
+                                 className="bb-flight-form__input bb-flight-form__input--readonly"
+                                 value={getAirportLabel(seg.from)}
+                                 readOnly
+                                 tabIndex={-1}
+                              />
+                           ) : (
+                              <input
+                                 type="text"
+                                 className={`bb-flight-form__input ${errors[`seg${idx}from`] ? "bb-flight-form__input--error" : ""}`}
+                                 placeholder={t.cityOrAirport}
+                                 value={seg.fromOpen ? seg.fromSearch : getAirportLabel(seg.from)}
+                                 onChange={e => updateSegment(idx, { fromSearch: e.target.value, fromOpen: true })}
+                                 onFocus={() => updateSegment(idx, { fromOpen: true, fromSearch: "" })}
+                                 autoComplete="off"
+                              />
+                           )}
                            {errors[`seg${idx}from`] && <span className="bb-flight-form__error">{errors[`seg${idx}from`]}</span>}
-                           {seg.fromOpen && renderAirportDropdown(
+                           {idx === 0 && seg.fromOpen && renderAirportDropdown(
                               filterAirports(seg.fromSearch, seg.to),
                               (airport) => {
                                  updateSegment(idx, { from: airport.iataCode, fromOpen: false, fromSearch: "" });
@@ -739,12 +834,13 @@ const BannerFormOne = () => {
                            <label className="bb-flight-form__label">{t.departureDate}</label>
                            <input
                               type="text"
-                              className="bb-flight-form__input"
+                              className={`bb-flight-form__input ${errors[`seg${idx}date`] ? "bb-flight-form__input--error" : ""}`}
                               value={formatDate(seg.date)}
                               placeholder={t.selectDate}
                               readOnly
                               onClick={() => updateSegment(idx, { calOpen: true })}
                            />
+                           {errors[`seg${idx}date`] && <span className="bb-flight-form__error">{errors[`seg${idx}date`]}</span>}
                            {seg.calOpen && (
                               <Calendar
                                  isOpen
@@ -752,6 +848,7 @@ const BannerFormOne = () => {
                                  onClose={() => updateSegment(idx, { calOpen: false })}
                                  onSelectDate={(d) => { updateSegment(idx, { date: d, calOpen: false }); }}
                                  selectedDate={seg.date}
+                                 minDate={idx > 0 ? segments[idx - 1].date : undefined}
                               />
                            )}
                         </div>
@@ -1045,7 +1142,7 @@ function renderTripToggle(
    const types: { value: TripType; label: string; icon?: string; disabled?: boolean; badge?: string }[] = [
       { value: "oneway", label: t.oneWay },
       { value: "roundtrip", label: t.roundTrip },
-      { value: "multicity", label: t.multiCity, disabled: true, badge: "Yakında" },
+      { value: "multicity", label: t.multiCity },
    ];
 
    return (

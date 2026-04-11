@@ -34,6 +34,9 @@ interface FlightState {
   // Seçili branded fare (paket seçimi)
   selectedBrandedFareItemId: string | null;
 
+  // MP (multi-city) bacak seçimleri — her leg için seçili uçuş
+  selectedLegFlights: Record<number, FlightResult>;
+
   // Allocate
   allocateResult: AllocateResponse | null;
   allocateLoading: boolean;
@@ -54,6 +57,7 @@ const initialState: FlightState = {
   selectedFlight: null,
   selectedReturnFlight: null,
   selectedBrandedFareItemId: null,
+  selectedLegFlights: {},
   allocateResult: null,
   allocateLoading: false,
   allocateError: null,
@@ -110,12 +114,22 @@ const flightSlice = createSlice({
     setSelectedBrandedFareItemId: (state, action: PayloadAction<string | null>) => {
       state.selectedBrandedFareItemId = action.payload;
     },
+    setSelectedLegFlight: (state, action: PayloadAction<{ legIndex: number; flight: FlightResult }>) => {
+      state.selectedLegFlights[action.payload.legIndex] = action.payload.flight;
+    },
+    clearSelectedLegFlight: (state, action: PayloadAction<number>) => {
+      delete state.selectedLegFlights[action.payload];
+    },
+    clearSelectedLegFlights: (state) => {
+      state.selectedLegFlights = {};
+    },
     clearSearch: (state) => {
       state.searchResults = null;
       state.searchError = null;
       state.selectedFlight = null;
       state.selectedReturnFlight = null;
       state.selectedBrandedFareItemId = null;
+      state.selectedLegFlights = {};
       state.allocateResult = null;
       state.searchId = null;
       state.sessionStartedAt = null;
@@ -159,5 +173,5 @@ const flightSlice = createSlice({
   },
 });
 
-export const { setSearchParams, setSelectedFlight, setSelectedReturnFlight, setSelectedBrandedFareItemId, clearSearch, clearAllocate } = flightSlice.actions;
+export const { setSearchParams, setSelectedFlight, setSelectedReturnFlight, setSelectedBrandedFareItemId, setSelectedLegFlight, clearSelectedLegFlight, clearSelectedLegFlights, clearSearch, clearAllocate } = flightSlice.actions;
 export default flightSlice.reducer;

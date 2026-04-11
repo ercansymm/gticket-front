@@ -880,6 +880,13 @@ img, video, iframe, table {
   cursor: not-allowed;
 }
 
+.bb-flight-form__input--readonly {
+  background: var(--bb-gray-100);
+  color: var(--bb-gray-600);
+  cursor: default;
+  border-style: dashed;
+}
+
 /* Select styling */
 select.bb-flight-form__input {
   appearance: none;
@@ -1299,6 +1306,13 @@ select.bb-flight-form__input {
 
 .bb-multicity-add:hover {
   background: var(--ab-primary-light);
+}
+
+.bb-multicity-continue {
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 0;
+  margin-top: 8px;
 }
 
 .bb-flight-form__fields--bottom {
