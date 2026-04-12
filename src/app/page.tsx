@@ -1,6 +1,8 @@
 // Bu satır test2 branch'inden eklendi - conflict testi
 
 //burada test 1 de herhangi bir şey eklemedik bakalım sadece burası eklenecek mi var olan hangi şeyi silecek yada silmeyecek
+// İsmail test commiti - bu satır PR testi için eklendi
+
 import type { Metadata } from "next";
 import HomePageClient from "./page-client";
 import JsonLd from "@/components/JsonLd";
