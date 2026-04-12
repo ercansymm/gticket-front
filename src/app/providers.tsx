@@ -1,3 +1,5 @@
+//başka bir sayfadada değişiklik var test amaçlıdır.
+
 "use client";
 
 import { useEffect } from "react";
