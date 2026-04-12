@@ -5,6 +5,8 @@
 // 5. satırda bir test yapıldı conflict için eklenecek. 
 
 //  ercanın mergeinden sonra benim kodlarım gidecekmi sağlaması 
+
+//ismail e mail branchindeyken test
 import type { Metadata } from "next";
 import HomePageClient from "./page-client";
 import JsonLd from "@/components/JsonLd";
