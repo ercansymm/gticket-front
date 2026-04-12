@@ -1,4 +1,5 @@
 //başka bir sayfadada değişiklik var test amaçlıdır.
+//başka bir değişiklik olacak bakalım durum nedir.
 
 "use client";
 
