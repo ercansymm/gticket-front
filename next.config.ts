@@ -8,6 +8,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "www.atabilet.com",
       },
+      {
+        protocol: "https",
+        hostname: "pics.avs.io",
+      },
     ],
     formats: ["image/avif", "image/webp"],
   },

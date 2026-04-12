@@ -15,14 +15,8 @@ import type { RootState, AppDispatch } from '@/redux/store';
 import type { PassengerItem, ContactInfo, MakePreBookingResponse } from '@/types/booking';
 import { useSessionTimeout } from '@/hooks/UseSessionTimeout';
 import { airports } from '@/data/AirportData';
+import { AIRLINE_COLORS, getAirlineLogoUrl, getAirlineBrandStyle } from '@/utils/airlineUtils';
 
-const AIRLINE_COLORS: Record<string, { bg: string; color: string }> = {
-  TK: { bg: '#E30A17', color: '#fff' },
-  PC: { bg: '#FFB800', color: '#1a1a1a' },
-  VF: { bg: '#1A56DB', color: '#fff' },
-  XQ: { bg: '#E30A17', color: '#fff' },
-  KK: { bg: '#00529B', color: '#fff' },
-};
 const FALLBACK_STYLE = { bg: '#6b7280', color: '#fff' };
 
 export default function CheckoutClient() {
@@ -398,8 +392,8 @@ export default function CheckoutClient() {
   if (!allocateResult || !selectedFlight) return null;
 
   const airlineCode = selectedFlight.airlineCode;
-  const logoPath = airlineCode ? `/images/airlines/${airlineCode}.svg` : null;
-  const brandStyle = (airlineCode && AIRLINE_COLORS[airlineCode]) || FALLBACK_STYLE;
+  const logoPath = getAirlineLogoUrl(airlineCode);
+  const brandStyle = getAirlineBrandStyle(airlineCode);
 
   // Multi-city: ordered list of leg flights
   const isMultiCity = searchParams?.flightType === 'MP';
@@ -519,8 +513,8 @@ export default function CheckoutClient() {
             {isMultiCity && legFlightsList.length > 0 ? (
               legFlightsList.map((legFlight, idx) => {
                 const legAirlineCode = legFlight.airlineCode;
-                const legLogo = legAirlineCode ? `/images/airlines/${legAirlineCode}.svg` : null;
-                const legBrand = (legAirlineCode && AIRLINE_COLORS[legAirlineCode]) || FALLBACK_STYLE;
+                const legLogo = getAirlineLogoUrl(legAirlineCode);
+                const legBrand = getAirlineBrandStyle(legAirlineCode);
                 return (
                   <div key={idx}>
                     <div className="bb-checkout__leg-label">{idx + 1}. Uçuş</div>
@@ -634,9 +628,9 @@ export default function CheckoutClient() {
                   <>
                     <div className="bb-checkout__flight-mini">
                       <div className="bb-checkout__flight-mini-logo"
-                        style={{ background: (AIRLINE_COLORS[selectedReturnFlight.airlineCode ?? ''] ?? FALLBACK_STYLE).bg, color: (AIRLINE_COLORS[selectedReturnFlight.airlineCode ?? ''] ?? FALLBACK_STYLE).color, border: 'none' }}
+                        style={{ background: getAirlineBrandStyle(selectedReturnFlight.airlineCode).bg, color: getAirlineBrandStyle(selectedReturnFlight.airlineCode).color, border: 'none' }}
                       >
-                        <img src={`/images/airlines/${selectedReturnFlight.airlineCode}.svg`} alt={selectedReturnFlight.airlineName ?? ''} width={36} height={36} style={{ display: 'block' }}
+                        <img src={getAirlineLogoUrl(selectedReturnFlight.airlineCode) ?? ''} alt={selectedReturnFlight.airlineName ?? ''} width={36} height={36} style={{ display: 'block' }}
                           onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                         />
                       </div>

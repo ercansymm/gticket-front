@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import type { FlightResult, FarePackage } from "@/types";
+import { getAirlineLogoUrl, getAirlineBrandStyle, getAirlineInitials } from '@/utils/airlineUtils';
 
 interface BundleFlightCardProps {
   outbound: FlightResult;
@@ -13,28 +14,6 @@ interface BundleFlightCardProps {
   loading?: boolean;
 }
 
-const AIRLINE_COLORS: Record<string, { bg: string; color: string }> = {
-  TK: { bg: "#E30A17", color: "#fff" },
-  PC: { bg: "#FFB800", color: "#1a1a1a" },
-  VF: { bg: "#1A56DB", color: "#fff" },
-  XQ: { bg: "#E30A17", color: "#fff" },
-  KK: { bg: "#00529B", color: "#fff" },
-  BA: { bg: "#075AAA", color: "#fff" },
-  EZY: { bg: "#FF6600", color: "#fff" },
-};
-const FALLBACK = { bg: "#6b7280", color: "#fff" };
-
-function airlineStyle(code: string | null) {
-  return (code && AIRLINE_COLORS[code]) || FALLBACK;
-}
-
-function airlineInitials(name: string | null): string {
-  if (!name) return "??";
-  const parts = name.trim().split(/\s+/);
-  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-  return name.substring(0, 2).toUpperCase();
-}
-
 interface LegRowProps {
   flight: FlightResult;
   label: string;
@@ -43,8 +22,8 @@ interface LegRowProps {
 
 function LegRow({ flight, label, labelColor }: LegRowProps) {
   const [logoError, setLogoError] = useState(false);
-  const logoPath = flight.airlineCode ? `/images/airlines/${flight.airlineCode}.svg` : null;
-  const brand = airlineStyle(flight.airlineCode);
+  const logoPath = getAirlineLogoUrl(flight.airlineCode);
+  const brand = getAirlineBrandStyle(flight.airlineCode);
 
   return (
     <div className="bb-bundle-card__leg">
@@ -72,7 +51,7 @@ function LegRow({ flight, label, labelColor }: LegRowProps) {
           />
         ) : (
           <span style={{ fontWeight: 700, fontSize: 12 }}>
-            {flight.airlineCode ?? airlineInitials(flight.airlineName)}
+            {flight.airlineCode ?? getAirlineInitials(flight.airlineName)}
           </span>
         )}
       </div>
