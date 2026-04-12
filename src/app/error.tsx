@@ -1,3 +1,5 @@
+//deneme bu yazı test feature/ismail-test2 den eklendi conflict testi   
+
 "use client";
 
 import { useEffect } from "react";
