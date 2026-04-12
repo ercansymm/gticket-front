@@ -2,6 +2,8 @@
 //butest1 de yazılmıştır
 //butest1 de yazılmıştır 3. satır için test edilecektir.
 
+//deneme bu yazı test feature/ismail-test2 den eklendi conflict testi   
+
 "use client";
 
 import { useEffect } from "react";
