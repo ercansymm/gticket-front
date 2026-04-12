@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import type { FlightResult, FarePackage } from '@/types';
 import FarePackageSelector from './FarePackageSelector';
+import { getAirlineLogoUrl, getAirlineBrandStyle, getAirlineInitials } from '@/utils/airlineUtils';
 
 interface FlightCardProps {
   flight: FlightResult;
@@ -22,39 +23,12 @@ function getBaggageDisplay(flight: FlightResult): string | null {
   return null;
 }
 
-function getAirlineInitials(name: string | null): string {
-  if (!name) return '??';
-  const parts = name.trim().split(/\s+/);
-  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-  return name.substring(0, 2).toUpperCase();
-}
-
-/** Brand colors for known airlines */
-const AIRLINE_COLORS: Record<string, { bg: string; color: string }> = {
-  TK: { bg: '#E30A17', color: '#fff' },   // Turkish Airlines
-  PC: { bg: '#FFB800', color: '#1a1a1a' }, // Pegasus
-  VF: { bg: '#1A56DB', color: '#fff' },    // AnadoluJet
-  XQ: { bg: '#E30A17', color: '#fff' },    // SunExpress
-  KK: { bg: '#00529B', color: '#fff' },    // AtlasGlobal
-};
-
-const FALLBACK_STYLE = { bg: '#6b7280', color: '#fff' };
-
-function getAirlineLogoPath(code: string | null): string | null {
-  if (!code) return null;
-  return `/images/airlines/${code}.svg`;
-}
-
-function getAirlineBrandStyle(code: string | null): { bg: string; color: string } {
-  return (code && AIRLINE_COLORS[code]) || FALLBACK_STYLE;
-}
-
 const FlightCard = ({ flight, onSelect, isSelected = false, allocateLoading = false }: FlightCardProps) => {
   const [logoError, setLogoError] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const baggageDisplay = getBaggageDisplay(flight);
-  const logoPath = getAirlineLogoPath(flight.airlineCode);
+  const logoPath = getAirlineLogoUrl(flight.airlineCode);
   const brandStyle = getAirlineBrandStyle(flight.airlineCode);
 
   const hasPackages = flight.farePackages && flight.farePackages.length > 1;

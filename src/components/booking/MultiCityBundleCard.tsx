@@ -5,14 +5,13 @@ import Image from "next/image";
 import type { FlightResult, FarePackage } from "@/types";
 import { getAirlineLogoUrl, getAirlineBrandStyle, getAirlineInitials } from '@/utils/airlineUtils';
 
-interface BundleFlightCardProps {
-  outbound: FlightResult;
-  /** Gidiş ile aynı bundleProductId paylaşan dönüş bacağı */
-  returnFlight: FlightResult;
+interface MultiCityBundleCardProps {
+  legs: FlightResult[];
   onSelect: (brandedFareItemId?: string | null) => void;
-  onOpenPackages?: () => void;
   loading?: boolean;
 }
+
+const LEG_COLORS = ["#047857", "#0369a1", "#7c3aed", "#b45309", "#be185d"];
 
 interface LegRowProps {
   flight: FlightResult;
@@ -27,12 +26,10 @@ function LegRow({ flight, label, labelColor }: LegRowProps) {
 
   return (
     <div className="bb-bundle-card__leg">
-      {/* Direction badge */}
       <div className="bb-bundle-card__leg-badge" style={{ background: labelColor }}>
         {label}
       </div>
 
-      {/* Airline logo */}
       <div
         className="bb-bundle-card__leg-logo"
         style={
@@ -56,13 +53,11 @@ function LegRow({ flight, label, labelColor }: LegRowProps) {
         )}
       </div>
 
-      {/* Airline name + flight no */}
       <div className="bb-bundle-card__leg-info">
         <span className="bb-bundle-card__leg-airline">{flight.airlineName}</span>
         <span className="bb-bundle-card__leg-flno">{flight.flightNumber}</span>
       </div>
 
-      {/* Route + time track */}
       <div className="bb-bundle-card__leg-track">
         <div className="bb-bundle-card__leg-endpoint">
           <span className="bb-bundle-card__leg-time">{flight.departureTime}</span>
@@ -70,19 +65,19 @@ function LegRow({ flight, label, labelColor }: LegRowProps) {
         </div>
 
         <div className="bb-bundle-card__leg-line">
-          <span className="bb-bundle-card__leg-duration">{flight.durationFormatted}</span>
+          <span className="bb-bundle-card__leg-duration">
+            {flight.durationFormatted}
+          </span>
           <div className="bb-bundle-card__leg-bar-wrap">
             <span className="bb-bundle-card__leg-dot bb-bundle-card__leg-dot--start" />
             <span
               className={`bb-bundle-card__leg-bar ${!flight.isDirect ? "bb-bundle-card__leg-bar--stops" : ""}`}
             />
-            {!flight.isDirect && (
-              <span className="bb-bundle-card__leg-stop-dot" />
-            )}
+            {!flight.isDirect && <span className="bb-bundle-card__leg-stop-dot" />}
             <span className="bb-bundle-card__leg-dot bb-bundle-card__leg-dot--end" />
           </div>
           {flight.isDirect ? (
-            <span className="bb-bundle-card__leg-direct">Aktarmasız</span>
+            <span className="bb-bundle-card__leg-direct">Aktarmasiz</span>
           ) : (
             <span className="bb-bundle-card__leg-stops">{flight.stopText}</span>
           )}
@@ -97,7 +92,6 @@ function LegRow({ flight, label, labelColor }: LegRowProps) {
   );
 }
 
-// ── Fare paketi satır bileşeni ────────────────────────────────────
 interface FarePkgRowProps {
   pkg: FarePackage;
   isSelected: boolean;
@@ -107,28 +101,31 @@ interface FarePkgRowProps {
   loading: boolean;
 }
 
-function FarePkgRow({ pkg, isSelected, isDefault, onPick, onContinue, loading }: FarePkgRowProps) {
+function FarePkgRow({
+  pkg,
+  isSelected,
+  isDefault,
+  onPick,
+  onContinue,
+  loading,
+}: FarePkgRowProps) {
   const diffText = pkg.priceDifferenceFormatted
     ? `+${pkg.priceDifferenceFormatted}`
     : null;
 
   return (
     <div
-      className={`bb-bundle-card__fare-row ${
-        isSelected ? "bb-bundle-card__fare-row--selected" : ""
-      }`}
+      className={`bb-bundle-card__fare-row ${isSelected ? "bb-bundle-card__fare-row--selected" : ""}`}
       onClick={() => onPick(pkg)}
       role="radio"
       aria-checked={isSelected}
       tabIndex={0}
       onKeyDown={(e) => e.key === "Enter" && onPick(pkg)}
     >
-      {/* Radyo göstergesi */}
       <div className="bb-bundle-card__fare-radio">
         {isSelected && <div className="bb-bundle-card__fare-radio-dot" />}
       </div>
 
-      {/* Paket adı + Önerilen rozeti */}
       <div className="bb-bundle-card__fare-info">
         <span className="bb-bundle-card__fare-name">
           {pkg.brandName ?? (isDefault ? "En Ucuz" : "Paket")}
@@ -140,64 +137,64 @@ function FarePkgRow({ pkg, isSelected, isDefault, onPick, onContinue, loading }:
         )}
         {!isDefault && (
           <span className="bb-bundle-card__fare-badge bb-bundle-card__fare-badge--recommended">
-            Önerilen
+            Onerilen
           </span>
         )}
       </div>
 
-      {/* Fiyat */}
       <div className="bb-bundle-card__fare-price">
         <span className="bb-bundle-card__fare-price-amount">
           {pkg.totalFareFormatted ?? pkg.totalFare.toLocaleString("tr-TR")}
         </span>
-        <span className="bb-bundle-card__fare-price-currency">{pkg.currency ?? "TRY"}</span>
+        <span className="bb-bundle-card__fare-price-currency">
+          {pkg.currency ?? "TRY"}
+        </span>
         {diffText && (
           <span className="bb-bundle-card__fare-price-diff">{diffText}</span>
         )}
       </div>
 
-      {/* Seç butonu (seçiliyse) */}
       {isSelected && (
         <button
           className="bb-bundle-card__fare-select-btn"
-          onClick={(e) => { e.stopPropagation(); onContinue(pkg); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onContinue(pkg);
+          }}
           disabled={loading}
         >
-          {loading ? (
-            <span className="bb-spinner bb-spinner--sm" />
-          ) : (
-            "Devam →"
-          )}
+          {loading ? <span className="bb-spinner bb-spinner--sm" /> : "Devam \u2192"}
         </button>
       )}
     </div>
   );
 }
 
-/** Gidiş + dönüş bacağını tek kart içinde gösteren bundle bileşeni */
-export default function BundleFlightCard({
-  outbound,
-  returnFlight,
+export default function MultiCityBundleCard({
+  legs,
   onSelect,
   loading = false,
-}: BundleFlightCardProps) {
-  const currency = outbound.currency ?? "TRY";
-  const farePackages = outbound.farePackages ?? [];
+}: MultiCityBundleCardProps) {
+  const firstLeg = legs[0];
+  if (!firstLeg) return null;
+
+  const currency = firstLeg.currency ?? "TRY";
+  const farePackages = firstLeg.farePackages ?? [];
   const hasFares = farePackages.length > 1;
 
-  // Varsayılan seçili paket: isDefault=true veya ilk paket
   const defaultPkg = hasFares
-    ? (farePackages.find((p) => p.isDefault) ?? farePackages[0])
+    ? farePackages.find((p) => p.isDefault) ?? farePackages[0]
     : null;
   const [selectedPkg, setSelectedPkg] = useState<FarePackage | null>(defaultPkg);
 
-  // Görüntülenecek fiyat: seçili paket varsa onun fiyatı, yoksa outbound.totalFare
-  const displayFare = (hasFares && selectedPkg)
-    ? selectedPkg.totalFare
-    : (outbound.totalFare ?? 0);
-  const displayFormatted = (hasFares && selectedPkg?.totalFareFormatted)
-    ? selectedPkg.totalFareFormatted
-    : displayFare.toLocaleString("tr-TR", { minimumFractionDigits: 0 });
+  const displayFare =
+    hasFares && selectedPkg
+      ? selectedPkg.totalFare
+      : firstLeg.totalFare ?? 0;
+  const displayFormatted =
+    hasFares && selectedPkg?.totalFareFormatted
+      ? selectedPkg.totalFareFormatted
+      : displayFare.toLocaleString("tr-TR", { minimumFractionDigits: 0 });
 
   const handleContinue = (pkg: FarePackage) => {
     onSelect(pkg.brandedFareItemId);
@@ -209,7 +206,6 @@ export default function BundleFlightCard({
 
   return (
     <div className="bb-bundle-card">
-      {/* Bundle etiketi */}
       <div className="bb-bundle-card__banner">
         <svg
           width="14"
@@ -224,25 +220,32 @@ export default function BundleFlightCard({
           <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
           <line x1="7" y1="7" x2="7.01" y2="7" />
         </svg>
-        Gidiş + Dönüş Paketi
+        Coklu Sehir Paketi &middot; {legs.length} Ucus
       </div>
 
-      {/* Bacaklar */}
       <div className="bb-bundle-card__legs">
-        <LegRow flight={outbound} label="Gidiş" labelColor="#047857" />
-        <div className="bb-bundle-card__divider" />
-        <LegRow flight={returnFlight} label="Dönüş" labelColor="#0369a1" />
+        {legs.map((leg, i) => (
+          <div key={leg.productId ?? i}>
+            {i > 0 && <div className="bb-bundle-card__divider" />}
+            <LegRow
+              flight={leg}
+              label={`${leg.originCode} \u2192 ${leg.destinationCode}`}
+              labelColor={LEG_COLORS[i % LEG_COLORS.length]}
+            />
+          </div>
+        ))}
       </div>
 
-      {/* Fare seçenekleri (varsa) */}
       {hasFares ? (
         <div className="bb-bundle-card__fares">
-          <div className="bb-bundle-card__fares-header">Tarife Seçin</div>
+          <div className="bb-bundle-card__fares-header">Tarife Secin</div>
           {farePackages.map((pkg) => (
             <FarePkgRow
               key={pkg.brandedFareItemId}
               pkg={pkg}
-              isSelected={selectedPkg?.brandedFareItemId === pkg.brandedFareItemId}
+              isSelected={
+                selectedPkg?.brandedFareItemId === pkg.brandedFareItemId
+              }
               isDefault={!!pkg.isDefault}
               onPick={setSelectedPkg}
               onContinue={handleContinue}
@@ -251,15 +254,18 @@ export default function BundleFlightCard({
           ))}
         </div>
       ) : (
-        /* Fare yok — sadece fiyat ve tek buton */
         <div className="bb-bundle-card__footer">
           <div className="bb-bundle-card__price-wrap">
             <span className="bb-bundle-card__price-label">Toplam</span>
             <div className="bb-bundle-card__price">
-              <span className="bb-bundle-card__price-amount">{displayFormatted}</span>
+              <span className="bb-bundle-card__price-amount">
+                {displayFormatted}
+              </span>
               <span className="bb-bundle-card__price-currency">{currency}</span>
             </div>
-            <span className="bb-bundle-card__price-note">Gidiş + dönüş dahil</span>
+            <span className="bb-bundle-card__price-note">
+              Tum ucuslar dahil
+            </span>
           </div>
           <button
             className="bb-bundle-card__select-btn"
@@ -270,8 +276,18 @@ export default function BundleFlightCard({
               <span className="bb-spinner bb-spinner--sm" />
             ) : (
               <>
-                Paketi Seç
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 6 }}>
+                Paketi Sec
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  style={{ marginLeft: 6 }}
+                >
                   <polyline points="9 18 15 12 9 6" />
                 </svg>
               </>

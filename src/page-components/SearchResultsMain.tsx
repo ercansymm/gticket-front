@@ -5,6 +5,7 @@ import HeaderOne from '../layouts/headers/HeaderOne';
 import FooterOne from '../layouts/footers/FooterOne';
 import FlightCard from '../components/booking/FlightCard';
 import BundleFlightCard from '../components/booking/BundleFlightCard';
+import MultiCityBundleCard from '../components/booking/MultiCityBundleCard';
 import FilterSidebar from '../components/booking/FilterSidebar';
 import SortBar from '../components/booking/SortBar';
 // import PriceCalendar, { generateMockPrices } from '../components/flight/PriceCalendar';
@@ -17,6 +18,11 @@ interface BundlePackage {
   bundleProductId: string;
   outbound: FlightResult;
   returnFlight: FlightResult;
+}
+
+interface MultiCityPackage {
+  bundleProductId: string;
+  legs: FlightResult[];
 }
 
 const SORT_OPTIONS: { value: FlightSortBy; label: string }[] = [
@@ -110,6 +116,35 @@ const SearchResultsMain = () => {
       };
     });
   }, [isMultiCity, searchParams?.segments, displayedFlights]);
+
+  // Multi-city: RecommendationBox uçuşlarını bundleProductId'ye göre paketler halinde grupla
+  const multiCityBundles = useMemo((): MultiCityPackage[] => {
+    if (!isMultiCity) return [];
+    const bundleFlights = displayedFlights.filter(f => f.isRoundTripBundle && f.bundleProductId);
+    const groupMap = new Map<string, FlightResult[]>();
+    for (const f of bundleFlights) {
+      const key = f.bundleProductId!;
+      if (!groupMap.has(key)) groupMap.set(key, []);
+      groupMap.get(key)!.push(f);
+    }
+    const packages: MultiCityPackage[] = [];
+    for (const [pid, flights] of groupMap) {
+      flights.sort((a, b) => {
+        const seqA = a.segments[0]?.sequenceNo ?? 0;
+        const seqB = b.segments[0]?.sequenceNo ?? 0;
+        return seqA - seqB;
+      });
+      packages.push({ bundleProductId: pid, legs: flights });
+    }
+    packages.sort((a, b) => (a.legs[0]?.totalFare ?? 0) - (b.legs[0]?.totalFare ?? 0));
+    return packages;
+  }, [isMultiCity, displayedFlights]);
+
+  // Multi-city: bundle olmayan (bağımsız FlightOption) uçuşlar
+  const nonBundleMpFlights = useMemo(() => {
+    if (!isMultiCity) return [];
+    return displayedFlights.filter(f => !f.isRoundTripBundle);
+  }, [isMultiCity, displayedFlights]);
 
   // Gidiş-Dönüş: uçuşları yöne göre ayır
   // BiletBank RT aramasında her T_FlightOption'da segment.sequenceNo=1 → gidiş, sequenceNo=2 → dönüş.
@@ -347,7 +382,7 @@ const SearchResultsMain = () => {
     dispatch(setSelectedBrandedFareItemId(brandedFareItemId ?? null));
   };
 
-  // Multi-city: tüm bacaklar seçildiyse allocate yap
+  // Multi-city: tüm bacaklar seçildiyse allocate yap (sadece non-bundle FlightOption'lar için)
   const handleMultiCityAllocate = async () => {
     if (!searchResults || !searchParams?.segments) return;
     const totalLegs = searchParams.segments.length;
@@ -358,42 +393,42 @@ const SearchResultsMain = () => {
     dispatch(setSelectedFlight(firstLeg));
 
     try {
-      // RecommendationBox bundle: tüm bacaklar aynı BundleProductId'yi paylaşır
-      const isBundle = Object.values(selectedLegFlights).every(f => f.isRoundTripBundle && f.bundleProductId);
-
-      if (isBundle) {
-        const bundleProductId = firstLeg.bundleProductId!;
-        // Her bacaktan seçilen uçuşun FlightId'sini topla → SubOptions
-        const subOptionIds: string[] = [];
-        for (let i = 0; i < totalLegs; i++) {
-          const legFlight = selectedLegFlights[i];
-          const flightId = legFlight?.departureFlightId ?? legFlight?.returnFlightId;
-          if (flightId) subOptionIds.push(flightId);
-        }
-
-        const result = await dispatch(allocateFlightThunk({
+      // Bağımsız FlightOption: her bacak için sıralı allocate
+      for (let i = 0; i < totalLegs; i++) {
+        const legFlight = selectedLegFlights[i];
+        if (!legFlight) continue;
+        await dispatch(allocateFlightThunk({
           searchId: searchResults.searchId!,
-          productId: bundleProductId,
-          brandedFareItemId: firstLeg.defaultBrandedFareItemId ?? undefined,
-          subOptions: subOptionIds.length > 0 ? subOptionIds : firstLeg.subOptionFlightIds ?? undefined,
+          productId: legFlight.productId!,
+          brandedFareItemId: legFlight.defaultBrandedFareItemId ?? undefined,
         })).unwrap();
+      }
+      router.push('/checkout');
+    } catch {
+      // Redux hata yönetimi çalışıyor
+    } finally {
+      setRtAllocating(false);
+    }
+  };
 
-        if (isRealPriceChange(result, firstLeg)) {
-          setPriceChangedData(result);
-        } else {
-          router.push('/checkout');
-        }
+  // Multi-city bundle: tek RecommendationBox kartı seçimi → doğrudan allocate
+  const handleSelectMultiCityBundle = async (pkg: MultiCityPackage, brandedFareItemId?: string | null) => {
+    if (!searchResults) return;
+    setRtAllocating(true);
+    const firstLeg = pkg.legs[0];
+    dispatch(setSelectedFlight(firstLeg));
+
+    try {
+      const result = await dispatch(allocateFlightThunk({
+        searchId: searchResults.searchId!,
+        productId: pkg.bundleProductId,
+        brandedFareItemId: brandedFareItemId ?? firstLeg.defaultBrandedFareItemId ?? undefined,
+        subOptions: firstLeg.subOptionFlightIds ?? undefined,
+      })).unwrap();
+
+      if (isRealPriceChange(result, firstLeg, brandedFareItemId ?? firstLeg.defaultBrandedFareItemId)) {
+        setPriceChangedData(result);
       } else {
-        // Bağımsız FlightOption: her bacak için sıralı allocate
-        for (let i = 0; i < totalLegs; i++) {
-          const legFlight = selectedLegFlights[i];
-          if (!legFlight) continue;
-          await dispatch(allocateFlightThunk({
-            searchId: searchResults.searchId!,
-            productId: legFlight.productId!,
-            brandedFareItemId: legFlight.defaultBrandedFareItemId ?? undefined,
-          })).unwrap();
-        }
         router.push('/checkout');
       }
     } catch {
@@ -880,71 +915,134 @@ const SearchResultsMain = () => {
             ) : isMultiCity ? (
               /* ═══ Çoklu Şehir Modu ═══ */
               <div className="bb-search-results__list">
-                {multiCityLegs.map((leg) => {
-                  const legSelected = selectedLegFlights[leg.legIndex];
-                  return (
-                    <div key={leg.legIndex}>
-                      <div className="bb-direction-header">
+
+                {/* ── Paket Uçuşlar (RecommendationBox bundles) ── */}
+                {multiCityBundles.length > 0 && (
+                  <>
+                    <div className="bb-direction-header bb-direction-header--bundle">
+                      <div className="bb-direction-header__icon" style={{ background: '#047857' }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+                          <line x1="7" y1="7" x2="7.01" y2="7" />
+                        </svg>
+                      </div>
+                      <div className="bb-direction-header__info">
+                        <h3 className="bb-direction-header__title">Çoklu Şehir Paketleri</h3>
+                        <span className="bb-direction-header__route">
+                          {searchParams?.segments?.map((seg, i) => (
+                            <span key={i}>
+                              {i > 0 && ' → '}
+                              {seg.origin}
+                            </span>
+                          ))}
+                          {searchParams?.segments && searchParams.segments.length > 0 && (
+                            <span> → {searchParams.segments[searchParams.segments.length - 1].destination}</span>
+                          )}
+                        </span>
+                      </div>
+                      <span className="bb-direction-header__count">{multiCityBundles.length} paket</span>
+                    </div>
+
+                    {multiCityBundles.map((pkg) => (
+                      <MultiCityBundleCard
+                        key={pkg.bundleProductId}
+                        legs={pkg.legs}
+                        onSelect={(fareItemId) => handleSelectMultiCityBundle(pkg, fareItemId)}
+                        loading={rtAllocating}
+                      />
+                    ))}
+                  </>
+                )}
+
+                {/* ── Bağımsız FlightOption'lar (bundle olmayan) — bacak bazlı seçim ── */}
+                {nonBundleMpFlights.length > 0 && (
+                  <>
+                    {multiCityBundles.length > 0 && (
+                      <div className="bb-direction-header" style={{ marginTop: 24 }}>
                         <div className="bb-direction-header__icon">
                           <i className="fa-solid fa-plane-departure" />
                         </div>
                         <div className="bb-direction-header__info">
-                          <h3 className="bb-direction-header__title">Uçuş {leg.legIndex + 1}</h3>
-                          <span className="bb-direction-header__route">
-                            {leg.origin} → {leg.destination}
-                            <span className="bb-direction-header__date">{leg.date}</span>
-                          </span>
+                          <h3 className="bb-direction-header__title">Tekli Uçuşlar</h3>
                         </div>
-                        <span className="bb-direction-header__count">{leg.flights.length} uçuş</span>
                       </div>
+                    )}
 
-                      {legSelected ? (
-                        <div className="bb-selected-summary">
-                          <div className="bb-selected-summary__badge">
-                            <i className="fa-solid fa-check-circle" /> Uçuş {leg.legIndex + 1} Seçildi
+                    {multiCityLegs.map((leg) => {
+                      const legNonBundle = leg.flights.filter(f => !f.isRoundTripBundle);
+                      if (legNonBundle.length === 0) return null;
+                      const legSelected = selectedLegFlights[leg.legIndex];
+                      return (
+                        <div key={leg.legIndex}>
+                          <div className="bb-direction-header">
+                            <div className="bb-direction-header__icon">
+                              <i className="fa-solid fa-plane-departure" />
+                            </div>
+                            <div className="bb-direction-header__info">
+                              <h3 className="bb-direction-header__title">Uçuş {leg.legIndex + 1}</h3>
+                              <span className="bb-direction-header__route">
+                                {leg.origin} → {leg.destination}
+                                <span className="bb-direction-header__date">{leg.date}</span>
+                              </span>
+                            </div>
+                            <span className="bb-direction-header__count">{legNonBundle.length} uçuş</span>
                           </div>
-                          <div className="bb-selected-summary__info">
-                            <span className="bb-selected-summary__airline">{legSelected.airlineName}</span>
-                            <span className="bb-selected-summary__flight">{legSelected.flightNumber}</span>
-                            <span className="bb-selected-summary__time">
-                              {legSelected.departureTime} → {legSelected.arrivalTime}
-                            </span>
-                            <span className="bb-selected-summary__price">
-                              {legSelected.totalFare?.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} {legSelected.currency ?? 'TRY'}
-                            </span>
-                          </div>
-                          <button className="bb-selected-summary__change" onClick={() => dispatch(clearSelectedLegFlight(leg.legIndex))}>
-                            Değiştir
-                          </button>
-                        </div>
-                      ) : leg.flights.length === 0 ? (
-                        <div className="bb-empty-state" style={{ marginTop: 12 }}>
-                          <p className="bb-empty-state__text">Bu güzergâh için uçuş bulunamadı.</p>
-                        </div>
-                      ) : (
-                        leg.flights.map((flight) => (
-                          <FlightCard
-                            key={flight.productId}
-                            flight={flight}
-                            onSelect={(fareItemId) => handleSelectLegFlight(leg.legIndex, flight, fareItemId)}
-                          />
-                        ))
-                      )}
-                    </div>
-                  );
-                })}
 
-                {/* Tüm bacaklar seçildiyse Devam Et butonu */}
-                {searchParams?.segments && Object.keys(selectedLegFlights).length === searchParams.segments.length && 
-                  Object.values(selectedLegFlights).every(f => f != null) && (
-                  <div className="bb-multicity-continue">
-                    <button
-                      className="bb-flight-form__submit"
-                      onClick={handleMultiCityAllocate}
-                      disabled={rtAllocating}
-                    >
-                      {rtAllocating ? 'Tahsis ediliyor...' : 'Devam Et'}
-                    </button>
+                          {legSelected && !legSelected.isRoundTripBundle ? (
+                            <div className="bb-selected-summary">
+                              <div className="bb-selected-summary__badge">
+                                <i className="fa-solid fa-check-circle" /> Uçuş {leg.legIndex + 1} Seçildi
+                              </div>
+                              <div className="bb-selected-summary__info">
+                                <span className="bb-selected-summary__airline">{legSelected.airlineName}</span>
+                                <span className="bb-selected-summary__flight">{legSelected.flightNumber}</span>
+                                <span className="bb-selected-summary__time">
+                                  {legSelected.departureTime} → {legSelected.arrivalTime}
+                                </span>
+                                <span className="bb-selected-summary__price">
+                                  {legSelected.totalFare?.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} {legSelected.currency ?? 'TRY'}
+                                </span>
+                              </div>
+                              <button className="bb-selected-summary__change" onClick={() => dispatch(clearSelectedLegFlight(leg.legIndex))}>
+                                Değiştir
+                              </button>
+                            </div>
+                          ) : (
+                            legNonBundle.map((flight) => (
+                              <FlightCard
+                                key={flight.productId}
+                                flight={flight}
+                                onSelect={(fareItemId) => handleSelectLegFlight(leg.legIndex, flight, fareItemId)}
+                              />
+                            ))
+                          )}
+                        </div>
+                      );
+                    })}
+
+                    {/* Tüm bacaklar seçildiyse Devam Et butonu (sadece non-bundle) */}
+                    {searchParams?.segments && Object.keys(selectedLegFlights).length === searchParams.segments.length && 
+                      Object.values(selectedLegFlights).every(f => f != null) && (
+                      <div className="bb-multicity-continue">
+                        <button
+                          className="bb-flight-form__submit"
+                          onClick={handleMultiCityAllocate}
+                          disabled={rtAllocating}
+                        >
+                          {rtAllocating ? 'Tahsis ediliyor...' : 'Devam Et'}
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* Hiç sonuç yoksa */}
+                {multiCityBundles.length === 0 && nonBundleMpFlights.length === 0 && (
+                  <div className="bb-empty-state">
+                    <div className="bb-empty-state__icon"><i className="fa-solid fa-magnifying-glass"></i></div>
+                    <h2 className="bb-empty-state__title">Filtre Sonucu Bulunamadı</h2>
+                    <p className="bb-empty-state__text">Seçili filtrelere uygun uçuş yok. Filtreleri değiştirmeyi deneyin.</p>
+                    <button className="bb-empty-state__btn" onClick={() => setFilters(INITIAL_FILTERS)}>Filtreleri Temizle</button>
                   </div>
                 )}
               </div>
