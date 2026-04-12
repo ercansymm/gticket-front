@@ -1,3 +1,5 @@
+// İsmail test commiti - bu satır PR testi için eklendi
+
 import type { Metadata } from "next";
 import HomePageClient from "./page-client";
 import JsonLd from "@/components/JsonLd";
