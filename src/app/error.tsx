@@ -1,3 +1,7 @@
+//butest1 de yazılmıştır
+//butest1 de yazılmıştır
+//butest1 de yazılmıştır 3. satır için test edilecektir.
+
 "use client";
 
 import { useEffect } from "react";
