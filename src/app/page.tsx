@@ -2,7 +2,7 @@
 
 //burada test 1 de herhangi bir şey eklemedik bakalım sadece burası eklenecek mi var olan hangi şeyi silecek yada silmeyecek
 // İsmail test commiti - bu satır PR testi için eklendi
-
+// 5. satırda bir test yapıldı conflict için eklenecek. 
 import type { Metadata } from "next";
 import HomePageClient from "./page-client";
 import JsonLd from "@/components/JsonLd";
