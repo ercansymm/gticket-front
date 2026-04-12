@@ -1,3 +1,4 @@
+// Bu satır test2 branch'inden eklendi - conflict testi
 import type { Metadata } from "next";
 import HomePageClient from "./page-client";
 import JsonLd from "@/components/JsonLd";
