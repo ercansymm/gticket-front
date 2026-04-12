@@ -639,7 +639,7 @@ const BannerFormOne = () => {
             const isGroup = !!(a as AirportDropdownItem).isCityGroup;
             return (
                <li
-                  key={isGroup ? `group-${a.iataCode}` : a.iataCode}
+                  key={isGroup ? `group-${a.iataCode}-${i}` : `${a.iataCode}-${i}`}
                   role="option"
                   aria-selected={i === highlightedIndex}
                   className={`${i === highlightedIndex ? 'bb-dropdown-highlighted' : ''} ${isGroup ? 'bb-dropdown-city-group' : ''}`}
