@@ -1,5 +1,6 @@
 import apiClient from './client';
 import { airports as airportFallbackList } from '@/data/AirportData';
+import { normalizeForSearch } from '@/utils/normalizeForSearch';
 
 // Backend'den gelen ham havalimanı tipi
 interface AirportRaw {
@@ -14,6 +15,7 @@ interface AirportRaw {
   countryEn: string;
   countryCode: string;
   timezone: string;
+  cityCode: string | null;
   isCity: boolean;
   isDomestic: boolean;
   isActive: boolean;
@@ -25,6 +27,7 @@ export interface AirportDto {
   iataCode: string;        // "IST"
   name: string;            // Aktif dile göre
   city: string;            // Aktif dile göre
+  cityCode: string;        // IATA şehir kodu — "IST", "LON", "IZM" vb.
   countryCode: string;     // "TR"
   isDomestic: boolean;
 }
@@ -52,6 +55,7 @@ const mapAirport = (a: AirportRaw, lang: 'tr' | 'en' = 'tr'): AirportDto => {
     iataCode: a.iataCode,
     name,
     city,
+    cityCode: a.cityCode || a.iataCode,
     countryCode: a.countryCode || 'TR',
     isDomestic: a.isDomestic ?? true,
   };
@@ -82,18 +86,19 @@ export const searchAirports = async (query: string, lang: 'tr' | 'en' = 'tr'): P
   if (!query || query.length < 2) return [];
 
   try {
-    const response = await apiClient.get<{ value: AirportRaw[] } | AirportRaw[]>(`/api/airport/search?q=${encodeURIComponent(query)}`);
-    const raw = Array.isArray(response.data) ? response.data : response.data.value;
+    const response = await apiClient.get<{ success: boolean; data: AirportRaw[] } | { value: AirportRaw[] } | AirportRaw[]>(`/lookup/airports?q=${encodeURIComponent(query)}`);
+    const d = response.data as any;
+    const raw: AirportRaw[] = Array.isArray(d) ? d : (d.data ?? d.value ?? []);
     return raw.map(a => mapAirport(a, lang));
   } catch {
     // Search endpoint 404 fallback: tüm havalimanlarını çekip frontend'de filtrele
     try {
       const all = await getAllAirports(lang);
-      const q = query.toLowerCase();
+      const q = normalizeForSearch(query);
       return all.filter(a =>
         a.iataCode?.toLowerCase().includes(q) ||
-        a.name?.toLowerCase().includes(q) ||
-        a.city?.toLowerCase().includes(q)
+        normalizeForSearch(a.name || '').includes(q) ||
+        normalizeForSearch(a.city || '').includes(q)
       );
     } catch {
       return [];
@@ -106,8 +111,9 @@ export const searchAirports = async (query: string, lang: 'tr' | 'en' = 'tr'): P
  * GET /api/airport/domestic
  */
 export const getDomesticAirports = async (lang: 'tr' | 'en' = 'tr'): Promise<AirportDto[]> => {
-  const response = await apiClient.get<{ value: AirportRaw[] } | AirportRaw[]>('/api/airport/domestic');
-  const raw = Array.isArray(response.data) ? response.data : response.data.value;
+  const response = await apiClient.get<{ success: boolean; data: AirportRaw[] } | { value: AirportRaw[] } | AirportRaw[]>('/lookup/airports?domestic=true');
+  const d = response.data as any;
+  const raw: AirportRaw[] = Array.isArray(d) ? d : (d.data ?? d.value ?? []);
   return raw.map(a => mapAirport(a, lang));
 };
 
@@ -116,8 +122,9 @@ export const getDomesticAirports = async (lang: 'tr' | 'en' = 'tr'): Promise<Air
  * GET /api/airport
  */
 export const getAllAirports = async (lang: 'tr' | 'en' = 'tr'): Promise<AirportDto[]> => {
-  const response = await apiClient.get<{ value: AirportRaw[] } | AirportRaw[]>('/api/airport');
-  const raw = Array.isArray(response.data) ? response.data : response.data.value;
+  const response = await apiClient.get<{ success: boolean; data: AirportRaw[] } | { value: AirportRaw[] } | AirportRaw[]>('/lookup/airports');
+  const d = response.data as any;
+  const raw: AirportRaw[] = Array.isArray(d) ? d : (d.data ?? d.value ?? []);
   return raw.map(a => mapAirport(a, lang));
 };
 
@@ -126,7 +133,7 @@ export const getAllAirports = async (lang: 'tr' | 'en' = 'tr'): Promise<AirportD
  * GET /api/airline
  */
 export const getAllAirlines = async (): Promise<AirlineDto[]> => {
-  const response = await apiClient.get<AirlineDto[]>('/api/airline');
+  const response = await apiClient.get<AirlineDto[]>('/lookup/airlines');
   return response.data;
 };
 
@@ -135,6 +142,6 @@ export const getAllAirlines = async (): Promise<AirlineDto[]> => {
  * GET /api/popularroute
  */
 export const getPopularRoutes = async (): Promise<PopularRouteDto[]> => {
-  const response = await apiClient.get<PopularRouteDto[]>('/api/popularroute');
+  const response = await apiClient.get<PopularRouteDto[]>('/lookup/popular-routes');
   return response.data;
 };

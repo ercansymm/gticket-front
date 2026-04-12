@@ -30,6 +30,7 @@ export interface PassengerItem {
   citizenNo?: string | null;
   passportNo?: string | null;
   passportCountry?: string | null;
+  passportExpiry?: string | null;
   nationality?: string;
   tempTag?: string | null;
   paxReferenceId?: string | null;
@@ -79,6 +80,7 @@ export interface MakePreBookingResponse {
   serviceFee: number;
   currency: string | null;
   isPriceChanged: boolean;
+  oldPrice: number;
   prebookingExpiresAt: string | null;
   reservationExpiresAt: string | null;
   segments: PreBookingSegment[];

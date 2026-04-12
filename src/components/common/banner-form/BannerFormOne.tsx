@@ -4,9 +4,13 @@ import { useDispatch, useSelector } from "react-redux";
 import Calendar, { formatDate } from "../calendar/Calendar";
 import { useTranslation } from "../../../context/LanguageContext";
 import { airports as staticAirports } from "../../../data/AirportData";
-import { getAllAirports, type AirportDto } from "../../../api/lookup";
-import { searchFlightsThunk, setSearchParams } from "../../../redux/features/flightSlice";
-import type { FlightSearchRequest, Airport } from "@/types";
+import { getAllAirports, searchAirports, type AirportDto } from "../../../api/lookup";
+import { searchFlightsThunk, setSearchParams, clearSearch } from "../../../redux/features/flightSlice";
+import { resetBooking } from "../../../redux/features/bookingSlice";
+import { resetPayment } from "../../../redux/features/paymentSlice";
+import { normalizeForSearch } from "../../../utils/normalizeForSearch";
+import { getTurkishAirportInfo } from "../../../utils/airportTurkishNames";
+import type { FlightSearchRequest, Airport, CabinClass } from "@/types";
 import type { AppDispatch, RootState } from "../../../redux/store";
 
 /** Statik havalimanını AirportDto formatına dönüştür */
@@ -14,9 +18,16 @@ const toAirportDto = (a: Airport, lang: 'tr' | 'en' = 'tr'): AirportDto => ({
    iataCode: a.code,
    name: lang === 'tr' ? a.nameTr : a.nameEn,
    city: lang === 'tr' ? a.cityTr : a.cityEn,
+   cityCode: a.cityCode || a.code,
    countryCode: a.countryCode,
    isDomestic: a.isDomestic,
 });
+
+/** Dropdown'da hem tek havalimanı hem de şehir grubunu temsil eden genişletilmiş tip */
+interface AirportDropdownItem extends AirportDto {
+   isCityGroup?: boolean;
+   groupCodes?: string[];
+}
 
 interface PassengerCounts {
    adult: number;
@@ -66,8 +77,12 @@ const BannerFormOne = () => {
    const [errors, setErrors] = useState<Record<string, string>>({});
    const [fromCity, setFromCity] = useState('');
    const [toCity, setToCity] = useState('');
-   const [fromSuggestions, setFromSuggestions] = useState<AirportDto[]>([]);
-   const [toSuggestions, setToSuggestions] = useState<AirportDto[]>([]);
+   const [fromCountryCode, setFromCountryCode] = useState('');
+   const [toCountryCode, setToCountryCode] = useState('');
+   const [fromIsCity, setFromIsCity] = useState(false);
+   const [toIsCity, setToIsCity] = useState(false);
+   const [fromSuggestions, setFromSuggestions] = useState<AirportDropdownItem[]>([]);
+   const [toSuggestions, setToSuggestions] = useState<AirportDropdownItem[]>([]);
    const [allAirports, setAllAirports] = useState<AirportDto[]>(staticFallback);
 
    // Calendar state
@@ -100,6 +115,8 @@ const BannerFormOne = () => {
    const fromRef = useRef<HTMLDivElement>(null);
    const toRef = useRef<HTMLDivElement>(null);
    const paxRef = useRef<HTMLDivElement>(null);
+   const multiCityRef = useRef<HTMLDivElement>(null);
+   const urlCountryCodeResolvedRef = useRef(false);
 
    // Calendar open helpers
    const openCalendar = useCallback((target: "depart" | "return") => {
@@ -109,13 +126,19 @@ const BannerFormOne = () => {
 
    const closeCalendar = useCallback(() => setCalendarOpen(false), []);
 
-   // Sayfa yüklendiğinde tüm havalimanlarını API'den bir kere çek
+   // Sayfa yüklendiğinde tüm havalimanlarını API'den çek ve statik listeyle birleştir
    useEffect(() => {
       const fetchAirports = async () => {
          try {
             const data = await getAllAirports(lang);
-            if (data.length > 0) setAllAirports(data);
-            else setAllAirports(staticFallback);
+            if (data.length > 0) {
+               // API verisini statik fallback ile birleştir — uluslararası havalimanları korunsun
+               const apiCodes = new Set(data.map(a => a.iataCode));
+               const extras = staticFallback.filter(s => !apiCodes.has(s.iataCode));
+               setAllAirports([...data, ...extras]);
+            } else {
+               setAllAirports(staticFallback);
+            }
          } catch {
             setAllAirports(staticFallback);
          }
@@ -145,8 +168,51 @@ const BannerFormOne = () => {
          if (n > 0 && n <= 9) setPassengers(prev => ({ ...prev, adult: n }));
       }
       if (urlClass === "business") setFlightClass("business");
+      if (urlClass === "premiumeconomy") setFlightClass("premiumeconomy");
+      if (urlClass === "first") setFlightClass("first");
       if (urlType === "roundtrip" || urlType === "oneway") setTripType(urlType);
    }, [searchParams]);
+
+   // allAirports yüklenince URL'deki from/to kodlarının countryCode ve isCity'sini resolve et
+   // (Dropdown seçiminde zaten set ediliyor; bu effect URL ile gelip allAirports hazır olmadan
+   //  mount olan form için çalışır.)
+   useEffect(() => {
+      if (allAirports.length === 0 || urlCountryCodeResolvedRef.current) return;
+      const urlFrom = searchParams?.get("from");
+      const urlTo = searchParams?.get("to");
+      if (!urlFrom && !urlTo) return;
+
+      urlCountryCodeResolvedRef.current = true;
+
+      const resolveCode = (rawCode: string): { countryCode: string; isCity: boolean } => {
+         const code = rawCode.toUpperCase();
+         // Önce city group kodu olarak bak (cityCode === code, farklı bir IATA koduna sahip)
+         const cityGroupMembers = allAirports.filter(
+            a => a.cityCode && a.cityCode === code && a.iataCode !== code
+         );
+         if (cityGroupMembers.length >= 1) {
+            return { countryCode: cityGroupMembers[0].countryCode ?? 'TR', isCity: true };
+         }
+         // Doğrudan IATA kodu ekleştir
+         const airport = allAirports.find(a => a.iataCode === code);
+         if (airport) {
+            return { countryCode: airport.countryCode ?? 'TR', isCity: false };
+         }
+         return { countryCode: 'TR', isCity: false };
+      };
+
+      if (urlFrom) {
+         const { countryCode, isCity } = resolveCode(urlFrom);
+         setFromCountryCode(countryCode);
+         setFromIsCity(isCity);
+      }
+      if (urlTo) {
+         const { countryCode, isCity } = resolveCode(urlTo);
+         setToCountryCode(countryCode);
+         setToIsCity(isCity);
+      }
+   // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, [allAirports]);
 
    // Dışarı tıklanınca dropdown kapat
    useEffect(() => {
@@ -154,50 +220,136 @@ const BannerFormOne = () => {
          if (fromRef.current && !fromRef.current.contains(e.target as Node)) setFromOpen(false);
          if (toRef.current && !toRef.current.contains(e.target as Node)) setToOpen(false);
          if (paxRef.current && !paxRef.current.contains(e.target as Node)) setPassengerOpen(false);
-         // Close multi-city dropdowns
-         setSegments(prev => prev.map(s => ({ ...s, fromOpen: false, toOpen: false })));
+         // Close multi-city dropdowns only when clicking outside the multi-city form
+         if (multiCityRef.current && !multiCityRef.current.contains(e.target as Node)) {
+            setSegments(prev => prev.map(s => ({ ...s, fromOpen: false, toOpen: false })));
+         }
       };
       document.addEventListener("mousedown", handler);
       return () => document.removeEventListener("mousedown", handler);
    }, []);
 
+   /** Seçilen havalimanını allAirports'a ekle (yoksa) — getAirportLabel'ın bulabilmesi için */
+   const addToAirportsList = useCallback((airport: AirportDto) => {
+      setAllAirports(prev => {
+         if (prev.some(a => a.iataCode === airport.iataCode)) return prev;
+         return [...prev, airport];
+      });
+   }, []);
+
    const getAirportLabel = (code: string) => {
       if (!code) return "";
       const a = allAirports.find(ap => ap.iataCode === code);
-      return a ? `${a.city} (${a.iataCode})` : code;
+      const trInfo = getTurkishAirportInfo(code);
+      const city = trInfo?.cityName ?? a?.city ?? code;
+      return a ? `${city} (${a.iataCode})` : code;
    };
 
-   /** Türkçe küçük harf dönüşümü — JS'nin toLowerCase() fonksiyonu İ→i̇ yapıyor, bu düzeltir */
-   const turkishLower = useCallback((str: string): string => {
-      return str
-         .replace(/İ/g, 'i')
-         .replace(/I/g, 'ı')
-         .replace(/Ş/g, 'ş')
-         .replace(/Ğ/g, 'ğ')
-         .replace(/Ü/g, 'ü')
-         .replace(/Ö/g, 'ö')
-         .replace(/Ç/g, 'ç')
-         .toLowerCase();
-   }, []);
+   /** Tüm allAirports'u şehir bazında indeksle — grupları hızlıca bulmak için */
+   const cityIndex = useMemo(() => {
+      const map = new Map<string, AirportDto[]>();
+      for (const a of allAirports) {
+         const key = normalizeForSearch(a.city || '');
+         if (!key) continue;
+         const arr = map.get(key) || [];
+         arr.push(a);
+         map.set(key, arr);
+      }
+      return map;
+   }, [allAirports]);
 
-   /** Havalimanlarını state'teki listeden filtrele — API'ye gitmez */
-   const filterAirports = useCallback((search: string, exclude?: string): AirportDto[] => {
+   /** Havalimanlarını state'teki listeden filtrele — anlık sonuç, şehir gruplarını da ekler */
+   const filterAirports = useCallback((search: string, exclude?: string): AirportDropdownItem[] => {
       if (!search || search.length < 2) return [];
-      const q = turkishLower(search);
-      return allAirports
+      const q = normalizeForSearch(search);
+      const matched = allAirports
          .filter(a =>
             a.iataCode !== exclude &&
             (a.iataCode.toLowerCase().includes(q) ||
-             turkishLower(a.city || '').includes(q) ||
-             turkishLower(a.name || '').includes(q))
+             normalizeForSearch(a.city || '').includes(q) ||
+             normalizeForSearch(a.name || '').includes(q))
          )
-         .slice(0, 8);
-   }, [allAirports, turkishLower]);
+         .slice(0, 12);
 
-   /** Aynı şehir kontrolü — state'teki city bilgisini kullanır */
+      // Eşleşen havalimanlarının şehirlerini al, o şehirdeki TÜM havalimanlarından grup oluştur
+      const seenCities = new Set<string>();
+      const groups: AirportDropdownItem[] = [];
+      for (const a of matched) {
+         const cityKey = normalizeForSearch(a.city || '');
+         if (!cityKey || seenCities.has(cityKey)) continue;
+         seenCities.add(cityKey);
+         const allInCity = cityIndex.get(cityKey);
+         if (allInCity && allInCity.length >= 2) {
+            const codes = allInCity.map(ap => ap.iataCode);
+            const groupCityCode = allInCity[0].cityCode || codes[0];
+            groups.push({
+               iataCode: groupCityCode,
+               name: `${allInCity[0].city} - ${t.allAirports}`,
+               city: allInCity[0].city,
+               cityCode: groupCityCode,
+               countryCode: allInCity[0].countryCode,
+               isDomestic: allInCity[0].isDomestic,
+               isCityGroup: true,
+               groupCodes: codes,
+            });
+         }
+      }
+
+      return [...groups, ...matched].slice(0, 12);
+   }, [allAirports, t.allAirports, cityIndex]);
+
+   /** Focus'ta gösterilecek başlangıç önerileri — şehir gruplarını içerir */
+   const getInitialSuggestions = useCallback((): AirportDropdownItem[] => {
+      const top = allAirports.slice(0, 10);
+      const seenCities = new Set<string>();
+      const groups: AirportDropdownItem[] = [];
+      for (const a of top) {
+         const cityKey = normalizeForSearch(a.city || '');
+         if (!cityKey || seenCities.has(cityKey)) continue;
+         seenCities.add(cityKey);
+         const allInCity = cityIndex.get(cityKey);
+         if (allInCity && allInCity.length >= 2) {
+            const codes = allInCity.map(ap => ap.iataCode);
+            const groupCityCode = allInCity[0].cityCode || codes[0];
+            groups.push({
+               iataCode: groupCityCode,
+               name: `${allInCity[0].city} - ${t.allAirports}`,
+               city: allInCity[0].city,
+               cityCode: groupCityCode,
+               countryCode: allInCity[0].countryCode,
+               isDomestic: allInCity[0].isDomestic,
+               isCityGroup: true,
+               groupCodes: codes,
+            });
+         }
+      }
+      return [...groups, ...top].slice(0, 10);
+   }, [allAirports, t.allAirports, cityIndex]);
+
+   /** API'den async havalimanı araması — yerel sonuç yetersizse tetiklenir */
+   const apiSearchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+   const searchAirportsAsync = useCallback((search: string, exclude: string | undefined, setter: React.Dispatch<React.SetStateAction<AirportDropdownItem[]>>) => {
+      if (apiSearchTimerRef.current) clearTimeout(apiSearchTimerRef.current);
+      if (!search || search.length < 2) return;
+      apiSearchTimerRef.current = setTimeout(async () => {
+         try {
+            const results = await searchAirports(search, lang);
+            const merged = results.filter(a => a.iataCode !== exclude);
+            if (merged.length > 0) {
+               setter(prev => {
+                  const existingCodes = new Set(prev.map(p => p.iataCode));
+                  const newOnes = merged.filter(m => !existingCodes.has(m.iataCode));
+                  return newOnes.length > 0 ? [...prev, ...newOnes].slice(0, 12) : prev;
+               });
+            }
+         } catch { /* sessizce geç */ }
+      }, 300);
+   }, [lang]);
+
+   /** Aynı şehir kontrolü — Türkçe karakter normalize'lu */
    const isSameCity = useCallback((city1: string, city2: string): boolean => {
       if (!city1 || !city2) return false;
-      return city1.toLowerCase() === city2.toLowerCase();
+      return normalizeForSearch(city1) === normalizeForSearch(city2);
    }, []);
 
    const updatePassenger = (type: keyof PassengerCounts, delta: number) => {
@@ -223,7 +375,13 @@ const BannerFormOne = () => {
       if (passengers.adult > 0) parts.push(`${passengers.adult} ${t.adult}`);
       if (passengers.child > 0) parts.push(`${passengers.child} ${t.child}`);
       if (passengers.infant > 0) parts.push(`${passengers.infant} ${t.infant}`);
-      parts.push(flightClass === "economy" ? t.economy : t.business);
+      const classLabel: Record<string, string> = {
+         economy: t.economy,
+         premiumeconomy: t.premiumEconomy,
+         business: t.business,
+         first: t.first,
+      };
+      parts.push(classLabel[flightClass] ?? t.economy);
       return parts.join(", ");
    }, [passengers, flightClass, t]);
 
@@ -232,10 +390,18 @@ const BannerFormOne = () => {
       const tempTo = to;
       const tempFromCity = fromCity;
       const tempToCity = toCity;
+      const tempFromCountryCode = fromCountryCode;
+      const tempToCountryCode = toCountryCode;
+      const tempFromIsCity = fromIsCity;
+      const tempToIsCity = toIsCity;
       setFrom(tempTo);
       setTo(tempFrom);
       setFromCity(tempToCity);
       setToCity(tempFromCity);
+      setFromCountryCode(tempToCountryCode);
+      setToCountryCode(tempFromCountryCode);
+      setFromIsCity(tempToIsCity);
+      setToIsCity(tempFromIsCity);
       if (tempFromCity && tempToCity && isSameCity(tempToCity, tempFromCity)) {
          setErrors(prev => ({ ...prev, to: t.sameCityError }));
       } else {
@@ -261,11 +427,34 @@ const BannerFormOne = () => {
 
    // Multi-city segment helpers
    const updateSegment = (idx: number, patch: Partial<MultiCitySegment>) => {
-      setSegments(prev => prev.map((s, i) => i === idx ? { ...s, ...patch } : s));
+      setSegments(prev => {
+         const next = prev.map((s, i) => i === idx ? { ...s, ...patch } : s);
+         // Zincirleme: to değişince sonraki segmentin from'unu otomatik set et
+         if (patch.to !== undefined && idx < next.length - 1) {
+            next[idx + 1] = { ...next[idx + 1], from: patch.to };
+         }
+         // Tarih zincirleme: seçilen tarih sonraki segmentlerden büyükse, onları da güncelle
+         if (patch.date !== undefined) {
+            for (let i = idx + 1; i < next.length; i++) {
+               if (next[i].date < next[idx].date) {
+                  next[i] = { ...next[i], date: patch.date };
+               }
+            }
+         }
+         return next;
+      });
    };
 
    const addSegment = () => {
-      if (segments.length < 6) setSegments(prev => [...prev, createSegment()]);
+      if (segments.length < 6) {
+         setSegments(prev => {
+            const last = prev[prev.length - 1];
+            const newSeg = createSegment();
+            newSeg.from = last?.to || '';
+            newSeg.date = last?.date || new Date();
+            return [...prev, newSeg];
+         });
+      }
    };
 
    const removeSegment = (idx: number) => {
@@ -280,7 +469,7 @@ const BannerFormOne = () => {
          const a1 = allAirports.find(a => a.iataCode === code1);
          const a2 = allAirports.find(a => a.iataCode === code2);
          if (!a1 || !a2) return false;
-         return a1.city.toLowerCase() === a2.city.toLowerCase();
+         return normalizeForSearch(a1.city) === normalizeForSearch(a2.city);
       };
 
       if (tripType === "multicity") {
@@ -288,6 +477,11 @@ const BannerFormOne = () => {
             if (!seg.from) errs[`seg${i}from`] = t.selectOrigin;
             if (!seg.to) errs[`seg${i}to`] = t.selectDestination;
             if (seg.from && seg.to && (seg.from === seg.to || isSameCityByCode(seg.from, seg.to))) errs[`seg${i}to`] = t.sameCityError;
+            // Tarih sıralama kontrolü: her segment bir öncekinden >= olmalı
+            if (i > 0) {
+               const prevDate = segments[i - 1].date;
+               if (seg.date < prevDate) errs[`seg${i}date`] = t.returnDateError;
+            }
          });
       } else if (tripType === "group") {
          if (!groupName.trim()) errs.groupName = t.enterFullName;
@@ -320,7 +514,73 @@ const BannerFormOne = () => {
       }
 
       if (tripType === "multicity") {
-         // TODO: Implement multi-city search API call
+         const formatDateForApi = (d: Date): string => {
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+         };
+
+         const resolveAirportMeta = (code: string) => {
+            const airport = allAirports.find(a => a.iataCode === code);
+            const cityGroupMembers = allAirports.filter(
+               a => a.cityCode && a.cityCode === code && a.iataCode !== code
+            );
+            const isCity = cityGroupMembers.length >= 1;
+            const countryCode = airport?.countryCode ?? cityGroupMembers[0]?.countryCode ?? 'TR';
+            return { countryCode, isCity };
+         };
+
+         const apiSegments = segments.map(seg => {
+            const fromMeta = resolveAirportMeta(seg.from);
+            const toMeta = resolveAirportMeta(seg.to);
+            return {
+               origin: seg.from,
+               destination: seg.to,
+               originCountryCode: fromMeta.countryCode,
+               destinationCountryCode: toMeta.countryCode,
+               originIsCity: fromMeta.isCity,
+               destinationIsCity: toMeta.isCity,
+               departureDate: formatDateForApi(seg.date),
+            };
+         });
+
+         const classMap: Record<string, CabinClass> = {
+            economy: 'Economy',
+            premiumeconomy: 'PremiumEconomy',
+            business: 'Business',
+            first: 'First',
+         };
+
+         const searchRequest: FlightSearchRequest = {
+            origin: segments[0].from,
+            destination: segments[0].to,
+            originCountryCode: apiSegments[0].originCountryCode,
+            destinationCountryCode: apiSegments[0].destinationCountryCode,
+            originIsCity: apiSegments[0].originIsCity,
+            destinationIsCity: apiSegments[0].destinationIsCity,
+            departureDate: apiSegments[0].departureDate,
+            returnDate: null,
+            flightType: 'MP',
+            flightClass: classMap[flightClass] ?? 'Economy',
+            adultCount: passengers.adult,
+            childCount: passengers.child,
+            infantCount: passengers.infant,
+            directFlightsOnly: directOnly,
+            refundablesOnly: false,
+            searchTimeoutMilliseconds: 0,
+            preferredAirlines: airlines.length > 0 ? airlines : null,
+            searchReason: 'SearchAndBook',
+            segments: apiSegments,
+         };
+
+         dispatch(resetPayment());
+         dispatch(resetBooking());
+         dispatch(clearSearch());
+         sessionStorage.removeItem('payment_3ds_session');
+         dispatch(setSearchParams(searchRequest));
+         dispatch(searchFlightsThunk(searchRequest));
+         router.push('/search-results');
          return;
       }
 
@@ -336,14 +596,14 @@ const BannerFormOne = () => {
       const searchRequest: FlightSearchRequest = {
          origin: from,
          destination: to,
-         originCountryCode: 'TR',
-         destinationCountryCode: 'TR',
-         originIsCity: false,
-         destinationIsCity: false,
+         originCountryCode: fromCountryCode || 'TR',
+         destinationCountryCode: toCountryCode || 'TR',
+         originIsCity: fromIsCity,
+         destinationIsCity: toIsCity,
          departureDate: formatDateForApi(departDate!),
          returnDate: tripType === 'roundtrip' && returnDate ? formatDateForApi(returnDate) : null,
          flightType: tripType === 'oneway' ? 'OW' : 'RT',
-         flightClass: flightClass === 'economy' ? 'Economy' : 'Business',
+         flightClass: (({ economy: 'Economy', premiumeconomy: 'PremiumEconomy', business: 'Business', first: 'First' } as Record<string, CabinClass>)[flightClass] ?? 'Economy') as CabinClass,
          adultCount: passengers.adult,
          childCount: passengers.child,
          infantCount: passengers.infant,
@@ -353,6 +613,12 @@ const BannerFormOne = () => {
          preferredAirlines: airlines.length > 0 ? airlines : null,
          searchReason: 'SearchAndBook',
       };
+
+      // Clear all previous booking state before starting a new search
+      dispatch(resetPayment());
+      dispatch(resetBooking());
+      dispatch(clearSearch());
+      sessionStorage.removeItem('payment_3ds_session');
 
       // Redux'a kaydet ve API çağrısı yap
       dispatch(setSearchParams(searchRequest));
@@ -364,17 +630,50 @@ const BannerFormOne = () => {
 
    // ── Shared airport dropdown renderer ──
    const renderAirportDropdown = (
-      list: AirportDto[],
-      onSelect: (airport: AirportDto) => void,
+      list: AirportDropdownItem[],
+      onSelect: (airport: AirportDropdownItem) => void,
       highlightedIndex: number,
    ) => (
       <ul className="bb-flight-form__dropdown" role="listbox">
-         {list.map((a, i) => (
-            <li key={a.iataCode} role="option" aria-selected={i === highlightedIndex} className={i === highlightedIndex ? 'bb-dropdown-highlighted' : ''} onClick={() => onSelect(a)}>
-               <strong>{a.city}</strong> <span className="bb-airport-code">{a.iataCode}</span>
-               <small>{a.name}</small>
-            </li>
-         ))}
+         {list.map((a, i) => {
+            const isGroup = !!(a as AirportDropdownItem).isCityGroup;
+            return (
+               <li
+                  key={isGroup ? `group-${a.iataCode}-${i}` : `${a.iataCode}-${i}`}
+                  role="option"
+                  aria-selected={i === highlightedIndex}
+                  className={`${i === highlightedIndex ? 'bb-dropdown-highlighted' : ''} ${isGroup ? 'bb-dropdown-city-group' : ''}`}
+                  onClick={() => { addToAirportsList(a); onSelect(a); }}
+               >
+                  {isGroup ? (
+                     <>
+                        <div className="bb-dropdown-top">
+                           <strong className="bb-city-group-label">{a.city}</strong>
+                           <div className="bb-city-group-codes">
+                              {(a as AirportDropdownItem).groupCodes?.map(code => (
+                                 <span key={code} className="bb-airport-code">{code}</span>
+                              ))}
+                           </div>
+                        </div>
+                        <small className="bb-city-group-sub">{a.name}</small>
+                     </>
+                  ) : (() => {
+                     const trInfo = getTurkishAirportInfo(a.iataCode);
+                     const cityLabel = trInfo?.cityName ?? a.city;
+                     const nameLabel = trInfo?.airportName ?? a.name;
+                     return (
+                        <>
+                           <div className="bb-dropdown-top">
+                              <strong>{cityLabel}</strong>
+                              <span className="bb-airport-code">{a.iataCode}</span>
+                           </div>
+                           <small>{nameLabel}</small>
+                        </>
+                     );
+                  })()}
+               </li>
+            );
+         })}
          {list.length === 0 && <li className="bb-flight-form__no-result">{t.noResult}</li>}
       </ul>
    );
@@ -382,10 +681,10 @@ const BannerFormOne = () => {
    /** Keyboard handler for airport input fields */
    const handleAirportKeyDown = (
       e: React.KeyboardEvent<HTMLInputElement>,
-      suggestions: AirportDto[],
+      suggestions: AirportDropdownItem[],
       highlightedIndex: number,
       setHighlight: (i: number) => void,
-      onSelect: (airport: AirportDto) => void,
+      onSelect: (airport: AirportDropdownItem) => void,
       setOpen: (open: boolean) => void,
    ) => {
       if (!suggestions.length) return;
@@ -397,6 +696,7 @@ const BannerFormOne = () => {
          setHighlight(highlightedIndex > 0 ? highlightedIndex - 1 : suggestions.length - 1);
       } else if (e.key === 'Enter' && highlightedIndex >= 0) {
          e.preventDefault();
+         addToAirportsList(suggestions[highlightedIndex]);
          onSelect(suggestions[highlightedIndex]);
          setHighlight(-1);
       } else if (e.key === 'Escape') {
@@ -475,25 +775,43 @@ const BannerFormOne = () => {
             <div className="bb-flight-form__trip-toggle mb-15">
                {renderTripToggle(tripType, setTripType, t)}
             </div>
-            <div className="bb-multicity-segments">
+            <div className="bb-multicity-segments" ref={multiCityRef}>
                {segments.map((seg, idx) => (
                   <div key={idx} className="bb-multicity-row">
                      <span className="bb-multicity-row__label">{t.flightN} {idx + 1}</span>
                      <div className="bb-multicity-row__fields">
                         <div className="bb-flight-form__field bb-flight-form__field--airport">
                            <label className="bb-flight-form__label">{t.from}</label>
-                           <input
-                              type="text"
-                              className={`bb-flight-form__input ${errors[`seg${idx}from`] ? "bb-flight-form__input--error" : ""}`}
-                              placeholder={t.cityOrAirport}
-                              value={seg.fromOpen ? seg.fromSearch : getAirportLabel(seg.from)}
-                              onChange={e => updateSegment(idx, { fromSearch: e.target.value, fromOpen: true })}
-                              onFocus={() => updateSegment(idx, { fromOpen: true, fromSearch: "" })}
-                              autoComplete="off"
-                           />
+                           {idx > 0 ? (
+                              <input
+                                 type="text"
+                                 className="bb-flight-form__input bb-flight-form__input--readonly"
+                                 value={getAirportLabel(seg.from)}
+                                 readOnly
+                                 tabIndex={-1}
+                              />
+                           ) : (
+                              <input
+                                 type="text"
+                                 className={`bb-flight-form__input ${errors[`seg${idx}from`] ? "bb-flight-form__input--error" : ""}`}
+                                 placeholder={t.cityOrAirport}
+                                 value={seg.fromOpen ? seg.fromSearch : getAirportLabel(seg.from)}
+                                 onChange={e => {
+                                    const val = e.target.value;
+                                    updateSegment(idx, { fromSearch: val, fromOpen: true });
+                                 }}
+                                 onFocus={() => {
+                                    setSegments(prev => prev.map((s, i) => i === idx
+                                       ? { ...s, fromOpen: true, fromSearch: "", toOpen: false }
+                                       : { ...s, fromOpen: false, toOpen: false }
+                                    ));
+                                 }}
+                                 autoComplete="off"
+                              />
+                           )}
                            {errors[`seg${idx}from`] && <span className="bb-flight-form__error">{errors[`seg${idx}from`]}</span>}
-                           {seg.fromOpen && renderAirportDropdown(
-                              filterAirports(seg.fromSearch, seg.to),
+                           {idx === 0 && seg.fromOpen && renderAirportDropdown(
+                              seg.fromSearch.length >= 2 ? filterAirports(seg.fromSearch, seg.to) : getInitialSuggestions(),
                               (airport) => {
                                  updateSegment(idx, { from: airport.iataCode, fromOpen: false, fromSearch: "" });
                                  const toAp = allAirports.find(a => a.iataCode === seg.to);
@@ -514,12 +832,17 @@ const BannerFormOne = () => {
                               placeholder={t.cityOrAirport}
                               value={seg.toOpen ? seg.toSearch : getAirportLabel(seg.to)}
                               onChange={e => updateSegment(idx, { toSearch: e.target.value, toOpen: true })}
-                              onFocus={() => updateSegment(idx, { toOpen: true, toSearch: "" })}
+                              onFocus={() => {
+                                 setSegments(prev => prev.map((s, i) => i === idx
+                                    ? { ...s, toOpen: true, toSearch: "", fromOpen: false }
+                                    : { ...s, fromOpen: false, toOpen: false }
+                                 ));
+                              }}
                               autoComplete="off"
                            />
                            {errors[`seg${idx}to`] && <span className="bb-flight-form__error">{errors[`seg${idx}to`]}</span>}
                            {seg.toOpen && renderAirportDropdown(
-                              filterAirports(seg.toSearch, seg.from),
+                              seg.toSearch.length >= 2 ? filterAirports(seg.toSearch, seg.from) : getInitialSuggestions(),
                               (airport) => {
                                  updateSegment(idx, { to: airport.iataCode, toOpen: false, toSearch: "" });
                                  const fromAp = allAirports.find(a => a.iataCode === seg.from);
@@ -536,12 +859,13 @@ const BannerFormOne = () => {
                            <label className="bb-flight-form__label">{t.departureDate}</label>
                            <input
                               type="text"
-                              className="bb-flight-form__input"
+                              className={`bb-flight-form__input ${errors[`seg${idx}date`] ? "bb-flight-form__input--error" : ""}`}
                               value={formatDate(seg.date)}
                               placeholder={t.selectDate}
                               readOnly
                               onClick={() => updateSegment(idx, { calOpen: true })}
                            />
+                           {errors[`seg${idx}date`] && <span className="bb-flight-form__error">{errors[`seg${idx}date`]}</span>}
                            {seg.calOpen && (
                               <Calendar
                                  isOpen
@@ -549,6 +873,7 @@ const BannerFormOne = () => {
                                  onClose={() => updateSegment(idx, { calOpen: false })}
                                  onSelectDate={(d) => { updateSegment(idx, { date: d, calOpen: false }); }}
                                  selectedDate={seg.date}
+                                 minDate={idx > 0 ? segments[idx - 1].date : undefined}
                               />
                            )}
                         </div>
@@ -615,7 +940,9 @@ const BannerFormOne = () => {
                </div>
                <select className="bb-pax-class-select" value={flightClass} onChange={e => setFlightClass(e.target.value)}>
                   <option value="economy">{t.economy}</option>
+                  <option value="premiumeconomy">{t.premiumEconomy}</option>
                   <option value="business">{t.business}</option>
+                  <option value="first">{t.first}</option>
                </select>
             </div>
             <button type="button" className="bb-pax-apply" onClick={() => setPassengerOpen(false)}>{t.apply}</button>
@@ -640,13 +967,19 @@ const BannerFormOne = () => {
                   className={`bb-flight-form__input ${errors.from ? "bb-flight-form__input--error" : ""}`}
                   placeholder={t.cityOrAirport}
                   value={fromOpen ? fromSearch : getAirportLabel(from)}
-                  onChange={(e) => { setFromSearch(e.target.value); setFromOpen(true); setFromHighlight(-1); setFromSuggestions(filterAirports(e.target.value, to)); }}
+                  onChange={(e) => {
+                     const val = e.target.value;
+                     setFromSearch(val); setFromOpen(true); setFromHighlight(-1);
+                     const local = filterAirports(val, to);
+                     setFromSuggestions(local);
+                     searchAirportsAsync(val, to, setFromSuggestions);
+                  }}
                   onFocus={() => {
                      setFromOpen(true); setFromSearch(""); setFromHighlight(-1);
-                     setFromSuggestions(allAirports.slice(0, 8));
+                     setFromSuggestions(getInitialSuggestions());
                   }}
                   onKeyDown={(e) => handleAirportKeyDown(e, fromSuggestions, fromHighlight, setFromHighlight, (airport) => {
-                     setFrom(airport.iataCode); setFromCity(airport.city); setFromOpen(false); setFromSearch(""); setFromSuggestions([]);
+                     setFrom(airport.iataCode); setFromCity(airport.city); setFromCountryCode(airport.countryCode ?? ''); setFromIsCity(!!airport.isCityGroup); setFromOpen(false); setFromSearch(""); setFromSuggestions([]);
                      if (toCity && isSameCity(airport.city, toCity)) {
                         setErrors(prev => ({ ...prev, to: t.sameCityError }));
                      } else {
@@ -661,7 +994,7 @@ const BannerFormOne = () => {
                />
                {errors.from && <span className="bb-flight-form__error">{errors.from}</span>}
                {fromOpen && fromSuggestions.length > 0 && renderAirportDropdown(fromSuggestions, (airport) => {
-                  setFrom(airport.iataCode); setFromCity(airport.city); setFromOpen(false); setFromSearch(""); setFromSuggestions([]);
+                  setFrom(airport.iataCode); setFromCity(airport.city); setFromCountryCode(airport.countryCode ?? ''); setFromIsCity(!!airport.isCityGroup); setFromOpen(false); setFromSearch(""); setFromSuggestions([]);
                   if (toCity && isSameCity(airport.city, toCity)) {
                      setErrors(prev => ({ ...prev, to: t.sameCityError }));
                   } else {
@@ -683,13 +1016,19 @@ const BannerFormOne = () => {
                   className={`bb-flight-form__input ${errors.to ? "bb-flight-form__input--error" : ""}`}
                   placeholder={t.cityOrAirport}
                   value={toOpen ? toSearch : getAirportLabel(to)}
-                  onChange={(e) => { setToSearch(e.target.value); setToOpen(true); setToHighlight(-1); setToSuggestions(filterAirports(e.target.value, from)); }}
+                  onChange={(e) => {
+                     const val = e.target.value;
+                     setToSearch(val); setToOpen(true); setToHighlight(-1);
+                     const local = filterAirports(val, from);
+                     setToSuggestions(local);
+                     searchAirportsAsync(val, from, setToSuggestions);
+                  }}
                   onFocus={() => {
                      setToOpen(true); setToSearch(""); setToHighlight(-1);
-                     setToSuggestions(allAirports.slice(0, 8));
+                     setToSuggestions(getInitialSuggestions());
                   }}
                   onKeyDown={(e) => handleAirportKeyDown(e, toSuggestions, toHighlight, setToHighlight, (airport) => {
-                     setTo(airport.iataCode); setToCity(airport.city); setToOpen(false); setToSearch(""); setToSuggestions([]);
+                     setTo(airport.iataCode); setToCity(airport.city); setToCountryCode(airport.countryCode ?? ''); setToIsCity(!!airport.isCityGroup); setToOpen(false); setToSearch(""); setToSuggestions([]);
                      if (fromCity && isSameCity(fromCity, airport.city)) {
                         setErrors(prev => ({ ...prev, to: t.sameCityError }));
                      } else {
@@ -704,7 +1043,7 @@ const BannerFormOne = () => {
                />
                {errors.to && <span className="bb-flight-form__error">{errors.to}</span>}
                {toOpen && toSuggestions.length > 0 && renderAirportDropdown(toSuggestions, (airport) => {
-                  setTo(airport.iataCode); setToCity(airport.city); setToOpen(false); setToSearch(""); setToSuggestions([]);
+                  setTo(airport.iataCode); setToCity(airport.city); setToCountryCode(airport.countryCode ?? ''); setToIsCity(!!airport.isCityGroup); setToOpen(false); setToSearch(""); setToSuggestions([]);
                   if (fromCity && isSameCity(fromCity, airport.city)) {
                      setErrors(prev => ({ ...prev, to: t.sameCityError }));
                   } else {
@@ -783,19 +1122,6 @@ const BannerFormOne = () => {
                {passengerOpen && renderPaxDropdown()}
             </div>
 
-            {/* Bagajlı Arama */}
-            <div className="bb-flight-form__field bb-flight-form__field--baggage">
-               <div className="bb-baggage-toggle">
-                  <span>{t.baggageIncluded}</span>
-                  <div
-                     className={`bb-baggage-switch ${baggageOnly ? 'active' : ''}`}
-                     onClick={() => setBaggageOnly(!baggageOnly)}
-                     role="switch"
-                     aria-checked={baggageOnly}
-                  />
-               </div>
-            </div>
-
             {/* Ara butonu */}
             <div className="bb-flight-form__field bb-flight-form__field--submit">
                <button type="submit" className="bb-flight-form__submit" data-event="flight_search" data-action="click" disabled={searchLoading}>
@@ -805,6 +1131,27 @@ const BannerFormOne = () => {
                      <><i className="fa-solid fa-magnifying-glass"></i> {t.searchFlight}</>
                   )}
                </button>
+            </div>
+         </div>
+
+         {/* Bagajlı Arama — form altı satır */}
+         <div className="bb-flight-form__baggage-row">
+            <div className="bb-baggage-toggle">
+               <span>{t.baggageIncluded}</span>
+               <div
+                  className={`bb-baggage-switch ${baggageOnly ? 'active' : ''}`}
+                  onClick={() => setBaggageOnly(!baggageOnly)}
+                  role="switch"
+                  aria-checked={baggageOnly}
+               />
+            </div>
+            <div className="bb-baggage-info">
+               <i className="fa-solid fa-circle-info bb-baggage-info__icon"></i>
+               <div className="bb-baggage-info__tooltip">
+                  {lang === 'tr'
+                     ? 'Bagajlı arama açıldığında, sadece bagaj hakkı dahil olan uçuşlar listelenir. Kapalıyken tüm uçuşlar (el bagajı dahil) gösterilir.'
+                     : 'When baggage search is on, only flights with checked baggage are shown. When off, all flights (including carry-on only) are listed.'}
+               </div>
             </div>
          </div>
       </form>
@@ -820,7 +1167,7 @@ function renderTripToggle(
    const types: { value: TripType; label: string; icon?: string; disabled?: boolean; badge?: string }[] = [
       { value: "oneway", label: t.oneWay },
       { value: "roundtrip", label: t.roundTrip },
-      { value: "multicity", label: t.multiCity, disabled: true, badge: "Yakında" },
+      { value: "multicity", label: t.multiCity },
    ];
 
    return (

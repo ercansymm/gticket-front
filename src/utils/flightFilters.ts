@@ -45,10 +45,8 @@ export function filterFlights(flights: FlightResult[], filters: FlightFilters): 
 
   if (filters.farePackages.length > 0) {
     result = result.filter(f =>
-      f.brandedFareItems?.some(bfi =>
-        bfi.brandedItems?.some(bi =>
-          bi.brandName != null && filters.farePackages.includes(bi.brandName)
-        )
+      f.farePackages?.some(p =>
+        p.brandName != null && filters.farePackages.includes(p.brandName)
       )
     );
   }

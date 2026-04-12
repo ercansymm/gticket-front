@@ -1,19 +1,14 @@
 import { useState } from 'react';
 import Image from 'next/image';
-import type { FlightResult, BrandedFareItem, BrandedItem, BrandedRule } from '@/types';
+import type { FlightResult, FarePackage } from '@/types';
+import FarePackageSelector from './FarePackageSelector';
 
 interface FlightCardProps {
   flight: FlightResult;
   onSelect: (brandedFareItemId?: string | null) => void;
-}
-
-function getRuleIcon(application: string | null): string {
-  switch (application) {
-    case 'F': return '✅';
-    case 'C': return '💰';
-    case 'N': return '❌';
-    default: return '—';
-  }
+  onOpenPackages?: () => void;
+  isSelected?: boolean;
+  allocateLoading?: boolean;
 }
 
 function getBaggageDisplay(flight: FlightResult): string | null {
@@ -45,7 +40,6 @@ const AIRLINE_COLORS: Record<string, { bg: string; color: string }> = {
 
 const FALLBACK_STYLE = { bg: '#6b7280', color: '#fff' };
 
-/** Local airline logo path */
 function getAirlineLogoPath(code: string | null): string | null {
   if (!code) return null;
   return `/images/airlines/${code}.svg`;
@@ -55,53 +49,40 @@ function getAirlineBrandStyle(code: string | null): { bg: string; color: string 
   return (code && AIRLINE_COLORS[code]) || FALLBACK_STYLE;
 }
 
-/** brandedFareItems → BrandedItem[] tümünü topla (görüntülenecek paketler) */
-function collectBrandedItems(fareItems: BrandedFareItem[]): Array<{
-  brandedFareItemId: string | null;
-  brandItem: BrandedItem;
-  totalFare: number;
-  totalFareFormatted: string;
-  currency: string;
-}> {
-  const result: Array<{
-    brandedFareItemId: string | null;
-    brandItem: BrandedItem;
-    totalFare: number;
-    totalFareFormatted: string;
-    currency: string;
-  }> = [];
-
-  for (const fareItem of fareItems) {
-    const totalInfo = fareItem.totalFareInfo;
-    const totalFare = totalInfo?.totalFare ?? 0;
-    const currency = fareItem.brandedFarePassengers?.[0]?.passengerFareInfo?.currency ?? 'TRY';
-
-    for (const bi of fareItem.brandedItems ?? []) {
-      result.push({
-        brandedFareItemId: fareItem.brandedFareItemId,
-        brandItem: bi,
-        totalFare,
-        totalFareFormatted: totalFare.toLocaleString('tr-TR', { minimumFractionDigits: 2 }) + ' ' + currency,
-        currency,
-      });
-    }
-  }
-
-  return result;
-}
-
-const FlightCard = ({ flight, onSelect }: FlightCardProps) => {
-  const [expandedPackage, setExpandedPackage] = useState<string | null>(null);
+const FlightCard = ({ flight, onSelect, isSelected = false, allocateLoading = false }: FlightCardProps) => {
   const [logoError, setLogoError] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const baggageDisplay = getBaggageDisplay(flight);
-  const brandedItems = collectBrandedItems(flight.brandedFareItems ?? []);
-  const hasPackages = brandedItems.length > 0;
   const logoPath = getAirlineLogoPath(flight.airlineCode);
   const brandStyle = getAirlineBrandStyle(flight.airlineCode);
 
+  const hasPackages = flight.farePackages && flight.farePackages.length > 1;
+
+  // Default selected package: isDefault=true or first package
+  const defaultPkg = hasPackages
+    ? (flight.farePackages.find(p => p.isDefault) ?? flight.farePackages[0])
+    : null;
+  const [selectedPkg, setSelectedPkg] = useState<FarePackage | null>(defaultPkg);
+
+  // Displayed price: selected package price or flight's totalFare
+  const displayPrice = (hasPackages && selectedPkg) ? selectedPkg.totalFare : flight.totalFare;
+  const displayPriceFormatted = (hasPackages && selectedPkg?.totalFareFormatted)
+    ? selectedPkg.totalFareFormatted
+    : displayPrice?.toLocaleString('tr-TR', { minimumFractionDigits: 0 });
+
+  const handlePackageSelect = (pkg: FarePackage) => {
+    setSelectedPkg(pkg);
+  };
+
+  const handleContinue = () => {
+    const fareItemId = (hasPackages && selectedPkg) ? selectedPkg.brandedFareItemId : null;
+    onSelect(fareItemId);
+  };
+
   return (
-    <div className="bb-flight-card">
-      {/* Üst kısım: havayolu + zaman çizgisi + fiyat */}
+    <div className={`bb-flight-card ${isSelected ? 'bb-flight-card--selected' : ''}`}>
+      {/* Üst kısım: havayolu + zaman çizgisi + fiyat + genişlet butonu */}
       <div className="bb-flight-card__top">
         {/* Airline */}
         <div className="bb-flight-card__airline">
@@ -141,7 +122,6 @@ const FlightCard = ({ flight, onSelect }: FlightCardProps) => {
               <span className="bb-flight-card__track-dot bb-flight-card__track-dot--start" />
               <span className={`bb-flight-card__track-bar ${!flight.isDirect ? 'bb-flight-card__track-bar--stops' : ''}`} />
               {!flight.isDirect && <span className="bb-flight-card__track-stop-dot" />}
-              <span className="bb-flight-card__track-plane">✈</span>
               <span className="bb-flight-card__track-dot bb-flight-card__track-dot--end" />
             </div>
             {flight.isDirect ? (
@@ -156,26 +136,40 @@ const FlightCard = ({ flight, onSelect }: FlightCardProps) => {
           </div>
         </div>
 
-        {/* Paket yoksa doğrudan fiyat + seç butonu */}
-        {!hasPackages && (
-          <div className="bb-flight-card__price-section">
-            <div className="bb-flight-card__price-amount">
-              {flight.totalFare?.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
-              <span style={{ fontSize: 14, fontWeight: 500, marginLeft: 4 }}>{flight.currency ?? 'TRY'}</span>
-            </div>
-            <div className="bb-flight-card__price-note">kişi başı</div>
-            <button className="bb-flight-card__select-btn" onClick={() => onSelect(null)}>
-              Uçuşu Seç
-            </button>
+        {/* Fiyat + seç butonu */}
+        <div className="bb-flight-card__price-section">
+          <div className="bb-flight-card__price-amount">
+            {displayPriceFormatted}
+            <span className="bb-flight-card__price-currency">{flight.currency ?? 'TRY'}</span>
           </div>
-        )}
+          <button
+            className="bb-flight-card__select-btn"
+            onClick={() => {
+              if (hasPackages) {
+                setExpanded(!expanded);
+              } else {
+                onSelect(null);
+              }
+            }}
+          >
+            {hasPackages
+              ? (expanded ? 'Gizle' : 'Seç')
+              : 'Seç ve İlerle'}
+            {' '}
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 4 }}>
+              {hasPackages && expanded
+                ? <polyline points="18 15 12 9 6 15" />
+                : <polyline points="9 18 15 12 9 6" />}
+            </svg>
+          </button>
+        </div>
       </div>
 
-      {/* Badges */}
+      {/* Badges + Details toggle */}
       <div className="bb-flight-card__badges-row">
         {flight.isDirect ? (
           <span className="bb-flight-card__badge bb-flight-card__badge--direct">
-            <i className="fa-solid fa-arrow-right" /> Direkt
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg> Direkt
           </span>
         ) : (
           <span className="bb-flight-card__badge bb-flight-card__badge--stop">{flight.stopText}</span>
@@ -184,62 +178,84 @@ const FlightCard = ({ flight, onSelect }: FlightCardProps) => {
           {flight.refundableText}
         </span>
         {baggageDisplay && (
-          <span className="bb-flight-card__badge bb-flight-card__badge--baggage">🧳 {baggageDisplay}</span>
+          <span className="bb-flight-card__badge bb-flight-card__badge--baggage">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="6" y="4" width="12" height="16" rx="1" /><path d="M9 4V2" /><path d="M15 4V2" /><path d="M6 14h12" /></svg> {baggageDisplay}
+          </span>
         )}
         {flight.cabinClassName && (
           <span className="bb-flight-card__badge bb-flight-card__badge--cabin">{flight.cabinClassName}</span>
         )}
         {flight.availableSeats > 0 && flight.availableSeats <= 9 && (
           <span className="bb-flight-card__badge bb-flight-card__badge--seats">
-            🔥 {flight.availableSeatsText}
+            {flight.availableSeatsText}
           </span>
         )}
+        <button
+          type="button"
+          className="bb-flight-card__details-toggle"
+          onClick={() => setDetailsOpen(!detailsOpen)}
+        >
+          Uçuş Detayları
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 4, transition: 'transform .2s', transform: detailsOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </button>
       </div>
 
-      {/* Fare paketleri */}
-      {hasPackages && (
-        <div className="bb-flight-card__packages">
-          {brandedItems.map((pkg) => {
-            const pkgId = pkg.brandedFareItemId ?? pkg.brandItem.brandCode;
-            const isExpanded = expandedPackage === pkgId;
-            return (
-              <div
-                key={pkgId}
-                className={`bb-fare-package ${isExpanded ? 'bb-fare-package--expanded' : ''}`}
-              >
-                <div
-                  className="bb-fare-package__header"
-                  onClick={() => setExpandedPackage(isExpanded ? null : (pkgId ?? null))}
-                >
-                  <span className="bb-fare-package__name">{pkg.brandItem.brandName}</span>
-                  <span className="bb-fare-package__price">{pkg.totalFareFormatted}</span>
+      {/* Flight Details — expandable */}
+      {detailsOpen && flight.segments.length > 0 && (
+        <div className="bb-flight-card__details">
+          {flight.segments.map((seg, i) => (
+            <div key={i}>
+              {i > 0 && seg.layoverFormatted && (
+                <div className="bb-flight-card__layover">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  <span>{seg.layoverFormatted} aktarma bekleme — {seg.originName ?? seg.originCode} ({seg.originCode})</span>
                 </div>
-
-                <div className="bb-fare-package__rules">
-                  {(pkg.brandItem.brandedRules ?? []).slice(0, isExpanded ? undefined : 3).map((rule: BrandedRule, idx: number) => (
-                    <div key={idx} className="bb-fare-package__rule">
-                      <span className="bb-fare-package__rule-icon">{getRuleIcon(rule.application)}</span>
-                      <span className="bb-fare-package__rule-text">{rule.ruleDescription}</span>
-                    </div>
-                  ))}
-                  {!isExpanded && (pkg.brandItem.brandedRules ?? []).length > 3 && (
-                    <div className="bb-fare-package__more">
-                      +{(pkg.brandItem.brandedRules ?? []).length - 3} kural daha
-                    </div>
-                  )}
+              )}
+              <div className="bb-flight-card__detail-seg">
+                <div className="bb-flight-card__detail-timeline">
+                  <div className="bb-flight-card__detail-dot" />
+                  <div className="bb-flight-card__detail-line" />
+                  <div className="bb-flight-card__detail-dot" />
                 </div>
-
-                <button
-                  className="bb-fare-package__select"
-                  onClick={() => onSelect(pkg.brandedFareItemId)}
-                >
-                  Seç
-                </button>
+                <div className="bb-flight-card__detail-info">
+                  <div className="bb-flight-card__detail-row">
+                    <span className="bb-flight-card__detail-time">{seg.departureTime}</span>
+                    <span className="bb-flight-card__detail-airport">{seg.originName ?? seg.originCode} ({seg.originCode})</span>
+                    {seg.departureDate && <span className="bb-flight-card__detail-date">{seg.departureDate}</span>}
+                  </div>
+                  <div className="bb-flight-card__detail-mid">
+                    <span className="bb-flight-card__detail-flight">
+                      {seg.airlineName ?? flight.airlineName} {seg.flightNumber}
+                    </span>
+                    {seg.durationFormatted && <span className="bb-flight-card__detail-dur">{seg.durationFormatted}</span>}
+                    {seg.equipment && <span className="bb-flight-card__detail-equip">{seg.equipment}</span>}
+                    {seg.bookingClassName && <span className="bb-flight-card__detail-class">{seg.bookingClassName}</span>}
+                  </div>
+                  <div className="bb-flight-card__detail-row">
+                    <span className="bb-flight-card__detail-time">{seg.arrivalTime}</span>
+                    <span className="bb-flight-card__detail-airport">{seg.destinationName ?? seg.destinationCode} ({seg.destinationCode})</span>
+                    {seg.arrivalDate && seg.arrivalDate !== seg.departureDate && <span className="bb-flight-card__detail-date">{seg.arrivalDate}</span>}
+                  </div>
+                </div>
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       )}
+
+      {/* Fare Packages */}
+      {hasPackages && expanded && (
+        <FarePackageSelector
+          packages={flight.farePackages}
+          selectedId={selectedPkg?.brandedFareItemId ?? null}
+          onSelect={handlePackageSelect}
+          onContinue={handleContinue}
+          loading={allocateLoading}
+        />
+      )}
+
     </div>
   );
 };

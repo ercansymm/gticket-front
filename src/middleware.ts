@@ -46,7 +46,7 @@ export async function middleware(request: NextRequest) {
     "img-src 'self' data: blob: https:",
     "font-src 'self' https://fonts.gstatic.com",
     "connect-src 'self'",
-    "frame-src 'self'",
+    "frame-src 'self' https://pay3dstage.biletbank.com https://pay3d.biletbank.com",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

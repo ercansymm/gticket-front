@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { flightAllocateClientSchema, validateBody, parseBody } from '@/lib/validations';
-import { filterSensitiveFields, withTimeout, checkRateLimit } from '@/lib/api-helpers';
+import { filterSensitiveFields, normalizeToCamelCase, withTimeout, checkRateLimit } from '@/lib/api-helpers';
 import { logger } from '@/lib/logger';
 
 const API_BASE = process.env.API_BASE_URL;
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     const validation = validateBody(flightAllocateClientSchema, parsed.data);
     if (!validation.success) return validation.response;
 
-    const { searchId, productId } = validation.data;
+    const { searchId, productId, brandedFareItemId, subOptions } = validation.data;
 
     // 1. Server-side'da session bilgisini al
     const sessionRes = await fetch(`${API_BASE}/api/flight/session/${encodeURIComponent(searchId)}`, {
@@ -30,7 +30,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const sessionData = await sessionRes.json();
+    const sessionDataRaw = await sessionRes.json();
+    const sessionData = normalizeToCamelCase(sessionDataRaw) as Record<string, unknown>;
 
     if (!sessionData.sessionId || !sessionData.sessionToken) {
       return NextResponse.json(
@@ -40,13 +41,19 @@ export async function POST(request: NextRequest) {
     }
 
     // 2. Backend'e tam request gönder (session server-side'da eklendi, serviceFee sabit 0)
-    const backendBody = {
+    const backendBody: Record<string, unknown> = {
       sessionId: sessionData.sessionId,
       sessionToken: sessionData.sessionToken,
       productId,
       selectedServiceFee: 0,
       searchRequest: null,
     };
+    if (brandedFareItemId) {
+      backendBody.brandedFareItemId = brandedFareItemId;
+    }
+    if (subOptions && subOptions.length > 0) {
+      backendBody.subOptions = subOptions;
+    }
 
     const { signal, clear } = withTimeout(30_000);
     const res = await fetch(`${API_BASE}/api/flight/allocate`, {
@@ -55,6 +62,7 @@ export async function POST(request: NextRequest) {
         'Content-Type': 'application/json; charset=utf-8',
         'Accept': 'application/json; charset=utf-8',
         'X-Transaction-Id': crypto.randomUUID(),
+        'X-Search-Id': searchId,
       },
       body: JSON.stringify(backendBody),
       signal,
@@ -64,7 +72,9 @@ export async function POST(request: NextRequest) {
     const data = await res.json();
 
     // GÜVENLİK: filterSensitiveFields sessionId/sessionToken ve hassas alanları siler
-    const safeData = filterSensitiveFields(data);
+    const safeData = filterSensitiveFields(data) as Record<string, unknown>;
+    // searchId'yi backend döndürmeyebilir — istemcinin checkout akışında kullanabilmesi için ekle
+    safeData.searchId = searchId;
     return NextResponse.json(safeData, { status: res.status });
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {

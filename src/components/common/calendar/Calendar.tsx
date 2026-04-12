@@ -48,6 +48,8 @@ const Calendar = ({
 }: CalendarProps) => {
   const { t } = useTranslation();
   const calRef = useRef<HTMLDivElement>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   const today = startOfDay(new Date());
   const effectiveMin = minDate ? startOfDay(minDate) : today;
@@ -63,7 +65,7 @@ const Calendar = ({
     if (!isOpen) return;
     const handler = (e: MouseEvent) => {
       if (calRef.current && !calRef.current.contains(e.target as Node)) {
-        onClose();
+        onCloseRef.current();
       }
     };
     // Delay binding so the opening click doesn't immediately close
@@ -72,7 +74,7 @@ const Calendar = ({
       clearTimeout(id);
       document.removeEventListener("mousedown", handler);
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   // Internal range state for two-click selection
   const [internalStart, setInternalStart] = useState<Date | null>(rangeStart ?? null);

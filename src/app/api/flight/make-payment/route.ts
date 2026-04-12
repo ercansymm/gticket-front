@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { makePaymentClientSchema, validateBody, parseBody } from '@/lib/validations';
-import { filterSensitiveFields, withTimeout, checkRateLimit } from '@/lib/api-helpers';
+import { filterSensitiveFields, normalizeToCamelCase, withTimeout, checkRateLimit } from '@/lib/api-helpers';
 import { logger } from '@/lib/logger';
 
 const API_BASE = process.env.API_BASE_URL;
@@ -32,7 +32,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const sessionData = await sessionRes.json();
+    const sessionDataRaw = await sessionRes.json();
+    const sessionData = normalizeToCamelCase(sessionDataRaw) as Record<string, unknown>;
+
+    // Debug: session endpoint'inden dönen tüm alanları logla
+    logger.info('Session data keys and values', 'api/flight/make-payment', {
+      rawKeys: Object.keys(sessionDataRaw).join(','),
+      normalizedKeys: Object.keys(sessionData).join(','),
+      grandTotal: sessionData.grandTotal,
+      totalFare: sessionData.totalFare,
+      hasSessionId: !!sessionData.sessionId,
+      hasProductId: !!sessionData.productId,
+    });
 
     if (!sessionData.sessionId || !sessionData.sessionToken || !sessionData.shoppingFileId) {
       return NextResponse.json(
@@ -42,28 +53,51 @@ export async function POST(request: NextRequest) {
     }
 
     // GÜVENLİK: Kart bilgisi sadece backend'e gönderilir, asla loglanmaz
+    const amount = Number(sessionData.grandTotal || sessionData.totalFare || 0);
+    if (!amount || amount <= 0) {
+      logger.error('Session amount is zero or missing', { searchId, grandTotal: sessionData.grandTotal, totalFare: sessionData.totalFare }, 'api/flight/make-payment');
+      return NextResponse.json(
+        { error: 'Fiyat bilgisi alınamadı. Lütfen işlemi baştan başlatın.' },
+        { status: 400 },
+      );
+    }
+
     const backendBody: Record<string, unknown> = {
       sessionId: sessionData.sessionId,
       sessionToken: sessionData.sessionToken,
       shoppingFileId: sessionData.shoppingFileId,
-      productId: sessionData.productId || '',
-      amount: sessionData.grandTotal || 0,
+      productId: sessionData.productId ?? null,
+      amount,
       currency: sessionData.currency || 'TRY',
       paymentType: paymentType,
-      bookingId: sessionData.bookingId || null,
+      bookingId: sessionData.bookingId ?? null,
     };
 
-    if (paymentType === 'CreditCard') {
-      const { cardHolderName, cardNumber, expireMonth, expireYear, cvv, installmentCount } = rest as {
-        cardHolderName: string; cardNumber: string; expireMonth: string;
-        expireYear: string; cvv: string; installmentCount?: number;
+    // Debug: session'dan gelen alanları logla (hassas veri yok)
+    logger.info('MakePayment session fields', 'api/flight/make-payment', {
+      searchId,
+      hasProductId: !!sessionData.productId,
+      hasBookingId: !!sessionData.bookingId,
+      hasCurrency: !!sessionData.currency,
+      amount,
+      paymentType,
+    });
+
+    if (paymentType === 'CreditCard' || paymentType === 'CreditCardDirect') {
+      const { cardHolderName, cardNumber, expiryMonth, expiryYear, cvv, installmentOptionId } = rest as {
+        cardHolderName: string; cardNumber: string; expiryMonth: string;
+        expiryYear: string; cvv: string; installmentOptionId?: string;
       };
-      backendBody.creditCard = { cardHolderName, cardNumber, expireMonth, expireYear, cvv };
-      backendBody.installmentCount = installmentCount ?? 1;
-    } else {
-      backendBody.creditCard = null;
-      backendBody.installmentCount = 1;
+      backendBody.creditCard = { cardHolderName, cardNumber, expiryMonth, expiryYear, cvv };
+      if (installmentOptionId) {
+        backendBody.installmentOptionId = installmentOptionId;
+      }
+
+      // 3D Secure callback URL — backend banka dönüşünü buraya yönlendirir
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+      backendBody.continueUrl = `${siteUrl}/payment/result`;
     }
+    // Non-card payments: creditCard alanı gönderilmez
 
     const { signal, clear } = withTimeout(60_000);
     const res = await fetch(`${API_BASE}/api/flight/make-payment`, {
@@ -78,25 +112,48 @@ export async function POST(request: NextRequest) {
     });
     clear();
 
-    const data = await res.json();
+    const dataRaw = await res.json();
+    const data = normalizeToCamelCase(dataRaw) as Record<string, unknown>;
+
+    // Debug: backend response alanlarını logla
+    logger.info('MakePayment backend response fields', 'api/flight/make-payment', {
+      status: res.status,
+      hasError: data.hasError,
+      isPaymentSuccessful: data.isPaymentSuccessful,
+      is3DSecureRequired: data.is3DSecureRequired,
+      hasThreeDSecureHtml: !!data.threeDSecureHtml,
+      hasThreeDSecureUrl: !!data.threeDSecureUrl,
+      errorMessage: data.errorMessage,
+      keys: Object.keys(data).join(','),
+    });
 
     // GÜVENLİK: 3DS URL whitelist kontrolü
-    if (data.is3DSecureRequired && data.threeDSecureUrl) {
-      try {
-        const url = new URL(data.threeDSecureUrl);
-        const allowedHosts = (process.env.ALLOWED_3DS_HOSTS || '').split(',').map((h: string) => h.trim()).filter(Boolean);
-        if (allowedHosts.length > 0 && !allowedHosts.some((h: string) => url.hostname.endsWith(h))) {
-          logger.error('Suspicious 3DS URL blocked', { url: data.threeDSecureUrl }, 'api/flight/make-payment');
+    if (data.is3DSecureRequired) {
+      // Backend threeDSecureUrl veya threeDSecureHtml döndürebilir
+      const secureUrl = data.threeDSecureUrl as string | undefined;
+      if (secureUrl) {
+        try {
+          const url = new URL(secureUrl);
+          const allowedHosts = (process.env.ALLOWED_3DS_HOSTS || '').split(',').map((h: string) => h.trim()).filter(Boolean);
+          if (allowedHosts.length > 0 && !allowedHosts.some((h: string) => url.hostname.endsWith(h))) {
+            logger.error('Suspicious 3DS URL blocked', { url: secureUrl }, 'api/flight/make-payment');
+            return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+          }
+        } catch {
+          logger.error('Invalid 3DS URL', { url: secureUrl }, 'api/flight/make-payment');
           return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
         }
-      } catch {
-        logger.error('Invalid 3DS URL', { url: data.threeDSecureUrl }, 'api/flight/make-payment');
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
       }
     }
 
     // filterSensitiveFields zaten creditCard, cardNumber, cvv, sessionId, sessionToken siler
-    return NextResponse.json(filterSensitiveFields(data), { status: res.status });
+    // 3DS akışı için paymentReferenceId ve shoppingFileId korunmalı
+    const filtered = filterSensitiveFields(data) as Record<string, unknown>;
+    // Ensure these fields pass through even if filterSensitiveFields strips them
+    if (data.paymentReferenceId) filtered.paymentReferenceId = data.paymentReferenceId;
+    if (data.shoppingFileId) filtered.shoppingFileId = data.shoppingFileId;
+
+    return NextResponse.json(filtered, { status: res.status });
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {
       logger.error('Backend timeout', error, 'api/flight/make-payment');

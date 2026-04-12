@@ -12,6 +12,7 @@ import {
   cancelBooking,
   getBookingStatus,
 } from '../../api/flight';
+import { searchFlightsThunk } from './flightSlice';
 import type {
   MakePaymentClientRequest, MakePaymentResponse,
   FinalizeShoppingClientRequest, FinalizeShoppingResponse,
@@ -43,6 +44,7 @@ interface PaymentState {
   // 3DS
   is3DSecureRequired: boolean;
   threeDSecureUrl: string | null;
+  threeDSecureHtml: string | null;
 
   // Biletleme
   finalizeResult: FinalizeShoppingResponse | null;
@@ -82,6 +84,7 @@ const initialState: PaymentState = {
   paymentError: null,
   is3DSecureRequired: false,
   threeDSecureUrl: null,
+  threeDSecureHtml: null,
   finalizeResult: null,
   finalizeLoading: false,
   finalizeError: null,
@@ -106,11 +109,17 @@ export const makePaymentThunk = createAsyncThunk(
   async (params: MakePaymentClientRequest, { rejectWithValue }) => {
     try {
       const result = await makePayment(params);
-      if (result.hasError) {
+      // Ödeme başarılıysa hasError olsa bile devam et (backend tutarsız dönebiliyor)
+      if (result.hasError && !result.isPaymentSuccessful) {
         return rejectWithValue(result.errorMessage || 'Ödeme başarısız');
       }
       return result;
     } catch (error: any) {
+      // Backend hasError:true dönse bile isPaymentSuccessful:true ise ödeme alınmış demektir
+      const data = error.response?.data;
+      if (data?.isPaymentSuccessful) {
+        return data as MakePaymentResponse;
+      }
       return rejectWithValue(extractErrorMessage(error, 'Ödeme başarısız'));
     }
   },
@@ -128,6 +137,16 @@ export const finalizeShoppingThunk = createAsyncThunk(
     } catch (error: any) {
       return rejectWithValue(extractErrorMessage(error, 'Biletleme başarısız'));
     }
+  },
+  {
+    condition: (_, { getState }) => {
+      const { payment } = getState() as { payment: PaymentState };
+      // Prevent duplicate dispatch while already loading, already finalized, or already errored
+      if (payment.finalizeLoading) return false;
+      if (payment.finalizeResult && !payment.finalizeResult.hasError) return false;
+      if (payment.finalizeError) return false;
+      return true;
+    },
   },
 );
 
@@ -250,6 +269,9 @@ const paymentSlice = createSlice({
     clearPaymentError: (state) => {
       state.paymentError = null;
     },
+    clearFinalizeError: (state) => {
+      state.finalizeError = null;
+    },
     clearBookingDetail: (state) => {
       state.bookingDetail = null;
       state.bookingDetailError = null;
@@ -266,6 +288,7 @@ const paymentSlice = createSlice({
       state.paymentResult = action.payload;
       state.is3DSecureRequired = action.payload.is3DSecureRequired;
       state.threeDSecureUrl = action.payload.threeDSecureUrl;
+      state.threeDSecureHtml = action.payload.threeDSecureHtml;
     });
     builder.addCase(makePaymentThunk.rejected, (state, action) => {
       state.paymentLoading = false;
@@ -376,8 +399,22 @@ const paymentSlice = createSlice({
     builder.addCase(getBookingStatusThunk.rejected, (state) => {
       state.bookingStatusLoading = false;
     });
+
+    // Auto-reset when a new search starts — prevents stale payment/finalize data leaking into new searches
+    builder.addCase(searchFlightsThunk.pending, () => initialState);
+
+    // Finalize timeout (dispatched manually after 60s) — must be after all addCase calls
+    builder.addMatcher(
+      (action) => action.type === 'payment/finalizeTimeout',
+      (state) => {
+        if (state.finalizeLoading) {
+          state.finalizeLoading = false;
+          state.finalizeError = 'Biletleme zaman aşımına uğradı. Lütfen bilet sorgulama sayfasından durumunuzu kontrol edin.';
+        }
+      },
+    );
   },
 });
 
-export const { resetPayment, clearPaymentError, clearBookingDetail } = paymentSlice.actions;
+export const { resetPayment, clearPaymentError, clearFinalizeError, clearBookingDetail } = paymentSlice.actions;
 export default paymentSlice.reducer;

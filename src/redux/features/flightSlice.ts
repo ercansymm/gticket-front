@@ -6,6 +6,7 @@ import type {
   AllocateClientRequest, AllocateResponse,
   FlightResult
 } from '@/types';
+import type { RootState } from '../store';
 
 /** Backend'den gelen 4 farklı hata formatını tek mesaja çevirir */
 function extractErrorMessage(error: any, fallback: string): string {
@@ -27,6 +28,15 @@ interface FlightState {
   // Seçili uçuş
   selectedFlight: FlightResult | null;
 
+  // RT'de seçilen dönüş bacağı (bundle veya bağımsız)
+  selectedReturnFlight: FlightResult | null;
+
+  // Seçili branded fare (paket seçimi)
+  selectedBrandedFareItemId: string | null;
+
+  // MP (multi-city) bacak seçimleri — her leg için seçili uçuş
+  selectedLegFlights: Record<number, FlightResult>;
+
   // Allocate
   allocateResult: AllocateResponse | null;
   allocateLoading: boolean;
@@ -45,6 +55,9 @@ const initialState: FlightState = {
   searchLoading: false,
   searchError: null,
   selectedFlight: null,
+  selectedReturnFlight: null,
+  selectedBrandedFareItemId: null,
+  selectedLegFlights: {},
   allocateResult: null,
   allocateLoading: false,
   allocateError: null,
@@ -65,12 +78,19 @@ export const searchFlightsThunk = createAsyncThunk(
   }
 );
 
-// Uçuş tahsis — istemci sadece searchId + productId gönderir
+// Uçuş tahsis — state'ten session bilgisini alıp backend'e gönderir
 export const allocateFlightThunk = createAsyncThunk(
   'flight/allocate',
-  async (params: AllocateClientRequest, { rejectWithValue }) => {
+  async (params: AllocateClientRequest, { getState, rejectWithValue }) => {
     try {
-      const result = await allocateFlight(params);
+      const state = getState() as RootState;
+      const searchResults = state.flight.searchResults;
+      const enrichedParams: AllocateClientRequest = {
+        ...params,
+        sessionId: params.sessionId ?? searchResults?.sessionId ?? null,
+        sessionToken: params.sessionToken ?? searchResults?.sessionToken ?? null,
+      };
+      const result = await allocateFlight(enrichedParams);
       return result;
     } catch (error: any) {
       return rejectWithValue(extractErrorMessage(error, 'Uçuş tahsisi başarısız'));
@@ -88,10 +108,28 @@ const flightSlice = createSlice({
     setSelectedFlight: (state, action: PayloadAction<FlightResult>) => {
       state.selectedFlight = action.payload;
     },
+    setSelectedReturnFlight: (state, action: PayloadAction<FlightResult | null>) => {
+      state.selectedReturnFlight = action.payload;
+    },
+    setSelectedBrandedFareItemId: (state, action: PayloadAction<string | null>) => {
+      state.selectedBrandedFareItemId = action.payload;
+    },
+    setSelectedLegFlight: (state, action: PayloadAction<{ legIndex: number; flight: FlightResult }>) => {
+      state.selectedLegFlights[action.payload.legIndex] = action.payload.flight;
+    },
+    clearSelectedLegFlight: (state, action: PayloadAction<number>) => {
+      delete state.selectedLegFlights[action.payload];
+    },
+    clearSelectedLegFlights: (state) => {
+      state.selectedLegFlights = {};
+    },
     clearSearch: (state) => {
       state.searchResults = null;
       state.searchError = null;
       state.selectedFlight = null;
+      state.selectedReturnFlight = null;
+      state.selectedBrandedFareItemId = null;
+      state.selectedLegFlights = {};
       state.allocateResult = null;
       state.searchId = null;
       state.sessionStartedAt = null;
@@ -135,5 +173,5 @@ const flightSlice = createSlice({
   },
 });
 
-export const { setSearchParams, setSelectedFlight, clearSearch, clearAllocate } = flightSlice.actions;
+export const { setSearchParams, setSelectedFlight, setSelectedReturnFlight, setSelectedBrandedFareItemId, setSelectedLegFlight, clearSelectedLegFlight, clearSelectedLegFlights, clearSearch, clearAllocate } = flightSlice.actions;
 export default flightSlice.reducer;

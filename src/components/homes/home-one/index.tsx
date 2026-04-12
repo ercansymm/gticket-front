@@ -1,6 +1,6 @@
 import { lazy, Suspense } from "react"
 import Banner from "./Banner"
-import TrustBar from "./TrustBar"
+import Campaigns from "./Campaigns"
 import HeaderOne from "../../../layouts/headers/HeaderOne"
 import FooterOne from "../../../layouts/footers/FooterOne"
 import CookieConsent from "../../common/CookieConsent"
@@ -13,10 +13,10 @@ const Blog = lazy(() => import("./Blog"))
 const HomeOne = () => {
    return (
       <>
-         <TrustBar />
          <HeaderOne />
          <main>
             <Banner />
+            <Campaigns />
             <Suspense fallback={<div style={{ minHeight: 200 }} />}>
                <Location />
             </Suspense>

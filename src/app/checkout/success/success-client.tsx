@@ -2,7 +2,8 @@
 
 import { useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import HeaderOne from '@/layouts/headers/HeaderOne';
 import FooterOne from '@/layouts/footers/FooterOne';
 import { readShoppingFileThunk, logoutSessionThunk, resetPayment } from '@/redux/features/paymentSlice';
@@ -13,6 +14,7 @@ import type { RootState, AppDispatch } from '@/redux/store';
 export default function SuccessClient() {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const { searchId } = useSelector((state: RootState) => state.flight);
   const { preBookingResult } = useSelector((state: RootState) => state.booking);
@@ -21,14 +23,23 @@ export default function SuccessClient() {
   const hasReadFile = useRef(false);
   const hasLoggedOut = useRef(false);
 
-  // Guard: no finalize result → back
+  // URL params (from 3D callback redirect — Redux state is lost after full-page redirect)
+  const urlPnr = searchParams.get('pnr');
+  const urlBookingId = searchParams.get('bookingId');
+  const urlFinalized = searchParams.get('finalized') === 'True' || searchParams.get('finalized') === 'true';
+
+  // Determine data source: Redux state OR URL params
+  const hasReduxData = !!finalizeResult;
+  const hasUrlData = !!urlPnr || !!urlBookingId;
+
+  // Guard: no data at all → back
   useEffect(() => {
-    if (!finalizeResult) {
+    if (!hasReduxData && !hasUrlData) {
       router.push('/');
     }
-  }, [finalizeResult, router]);
+  }, [hasReduxData, hasUrlData, router]);
 
-  // Auto read shopping file after finalize
+  // Auto read shopping file after finalize (only when Redux flow)
   useEffect(() => {
     if (finalizeResult?.isFinalized && searchId && !hasReadFile.current) {
       hasReadFile.current = true;
@@ -36,7 +47,7 @@ export default function SuccessClient() {
     }
   }, [finalizeResult, searchId, dispatch]);
 
-  // Auto logout session after reading
+  // Auto logout session after reading (only when Redux flow)
   useEffect(() => {
     if (readResult && searchId && !hasLoggedOut.current) {
       hasLoggedOut.current = true;
@@ -55,24 +66,31 @@ export default function SuccessClient() {
     window.print();
   };
 
-  if (!finalizeResult) return null;
+  if (!hasReduxData && !hasUrlData) return null;
 
-  const pnr = finalizeResult.pnr ?? finalizeResult.bookingCode ?? preBookingResult?.bookingCode ?? '—';
-  const tickets = finalizeResult.tickets ?? [];
+  const pnr = finalizeResult?.pnr ?? finalizeResult?.bookingCode ?? preBookingResult?.bookingCode ?? urlPnr ?? '—';
+  const tickets = finalizeResult?.tickets ?? [];
+  const isFinalized = finalizeResult?.isFinalized ?? urlFinalized;
 
   return (
     <>
       <HeaderOne />
-      <main className="bb-checkout">
+      <main className="bb-success-page">
         <div className="bb-success">
           {/* Success header */}
           <div className="bb-success__header">
             <div className="bb-success__icon">
-              <span className="bb-success__icon-check">✓</span>
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 13l4 4L19 7" />
+              </svg>
             </div>
-            <h1 className="bb-success__title">Biletiniz Kesildi!</h1>
+            <h1 className="bb-success__title">
+              {isFinalized ? 'Biletiniz Kesildi!' : 'Ödeme Başarılı!'}
+            </h1>
             <p className="bb-success__subtitle">
-              Rezervasyonunuz onaylanmış ve biletleriniz başarıyla oluşturulmuştur.
+              {isFinalized
+                ? 'Rezervasyonunuz onaylanmış ve biletleriniz başarıyla oluşturulmuştur.'
+                : 'Ödemeniz alındı. Bilet durumunuzu "Bilet Sorgula" sayfasından takip edebilirsiniz.'}
             </p>
           </div>
 
@@ -111,13 +129,11 @@ export default function SuccessClient() {
             </div>
           )}
 
-          {/* Full details from readShoppingFile */}
+          {/* Loading state */}
           {readLoading && (
-            <div className="bb-spinner-overlay" style={{ position: 'relative', minHeight: 80, borderRadius: 12 }}>
-              <div className="bb-spinner-wrapper">
-                <div className="bb-spinner"></div>
-                <p className="bb-spinner-text">Detaylar yükleniyor...</p>
-              </div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '32px 0' }}>
+              <div style={{ width: 36, height: 36, border: '3px solid #d1fae5', borderTopColor: '#059669', borderRadius: '50%', animation: 'spin 0.8s linear infinite', marginBottom: 12 }} />
+              <p style={{ fontSize: 13, color: '#9ca3af' }}>Detaylar yükleniyor...</p>
             </div>
           )}
 
@@ -171,13 +187,13 @@ export default function SuccessClient() {
           {/* Actions */}
           <div className="bb-success__actions">
             <button className="bb-success__btn bb-success__btn--primary" onClick={handleNewSearch}>
-              ✈️ Yeni Arama Yap
+              Yeni Arama Yap
             </button>
-            <button className="bb-success__btn bb-success__btn--secondary" onClick={() => router.push('/bilet-sorgula')}>
-              🔍 Bilet Sorgula
-            </button>
+            <Link href="/bilet-sorgula" className="bb-success__btn bb-success__btn--secondary">
+              Bilet Sorgula
+            </Link>
             <button className="bb-success__btn bb-success__btn--secondary" onClick={handlePrint}>
-              🖨️ Yazdır
+              Yazdır
             </button>
           </div>
         </div>

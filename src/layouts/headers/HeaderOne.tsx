@@ -27,19 +27,8 @@ const HeaderOne = () => {
                <div className="bb-header-inner">
                   <div className="bb-header-left">
                      <Logo variant="dark" />
-                     <ul className="bb-nav-links d-none d-lg-flex">
-                        <li><Link href="/">{t.flights}</Link></li>
-                        <li><Link href="/hotel-grid">{t.hotels}</Link></li>
-                        <li><Link href="/faq">{t.help}</Link></li>
-                     </ul>
                   </div>
                   <div className="bb-header-right">
-                     {/* Support phone */}
-                     <a href="tel:08505550000" className="bb-support-phone d-none d-xl-flex">
-                        <i className="fa-solid fa-phone"></i> 0850 555 00 00
-                     </a>
-                     <span className="bb-divider d-none d-xl-block"></span>
-
                      {/* Bilet Sorgula */}
                      <Link href="/bilet-sorgula" className="bb-header-btn d-none d-md-inline-flex">
                         <i className="fa-solid fa-ticket"></i> {t.bookingCheck}

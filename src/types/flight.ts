@@ -1,7 +1,17 @@
 // ========== UÇUŞ ARAMA (AirSearch) ==========
 
 export type TripType = 'OW' | 'RT' | 'MP';
-export type CabinClass = 'Economy' | 'Business' | 'First' | 'Comfort';
+export type CabinClass = 'Economy' | 'PremiumEconomy' | 'Business' | 'First';
+
+export interface MultiCitySearchSegment {
+  origin: string;
+  destination: string;
+  originCountryCode?: string;
+  destinationCountryCode?: string;
+  originIsCity?: boolean;
+  destinationIsCity?: boolean;
+  departureDate: string; // YYYY-MM-DD
+}
 
 export interface FlightSearchRequest {
   origin: string;
@@ -22,6 +32,7 @@ export interface FlightSearchRequest {
   searchTimeoutMilliseconds?: number;
   preferredAirlines?: string[] | null;
   searchReason?: 'SearchOnly' | 'SearchAndBook';
+  segments?: MultiCitySearchSegment[]; // MP (multi-city) tipinde kullanılır
 }
 
 // İstemciye dönen güvenli response — sessionId/sessionToken YOK
@@ -29,14 +40,12 @@ export interface FlightSearchResponse {
   hasError: boolean;
   errorMessage: string | null;
   searchId: string | null;
-  flights: FlightResult[];
-  filterOptions: FilterOptions | null;
-}
-
-// Server-side'da kullanılan ham backend response — istemciye GİTMEZ
-export interface FlightSearchBackendResponse extends FlightSearchResponse {
   sessionId: string | null;
   sessionToken: string | null;
+  flights: FlightResult[];
+  filterOptions: FilterOptions | null;
+  /** DEV only — filterSensitiveFields sessionId'yi siler, bu geçici field ile badge'a aktarılır */
+  __devSessionId?: string | null;
 }
 
 export interface FlightResult {
@@ -82,7 +91,18 @@ export interface FlightResult {
   baggageInfo: BaggageInfo | null;
   cabinClass: string | null;
   cabinClassName: string | null;
+  defaultBrandedFareItemId: string | null;
   // NOT: customerCommission* alanları güvenlik gereği backend tarafından filtrelenir, frontend tipinde tutulmaz
+
+  // RecommendationBox (RT bundle) alanları
+  /** true ise bu uçuş BiletBank T_RecommendationBox'tan geldi — gidiş+dönüş tek üründe paketli */
+  isRoundTripBundle: boolean;
+  /** true ise bu DTO dönüş bacağını temsil ediyor */
+  isReturnLeg: boolean;
+  /** Dönüş bacağı için asıl RecommendationBox ProductId'si — allocate bu ID ile yapılır */
+  bundleProductId: string | null;
+  /** RecommendationBox gidiş+dönüş FlightId listesi — Allocate SubOptions için */
+  subOptionFlightIds?: string[] | null;
 }
 
 export interface FarePackage {
@@ -93,9 +113,23 @@ export interface FarePackage {
   totalTaxes: number;
   currency: string | null;
   totalFareFormatted: string | null;
+  priceDifference: number;
+  priceDifferenceFormatted: string | null;
   cabinClass: string | null;
   bookingClass: string | null;
+  isDefault: boolean;
   rules: FarePackageRule[];
+  passengerFares: FarePackagePassengerFare[];
+}
+
+export interface FarePackagePassengerFare {
+  passengerType: string | null;
+  passengerCount: number;
+  baseFare: number;
+  taxes: number;
+  totalFare: number;
+  currency: string | null;
+  totalFareFormatted: string | null;
 }
 
 export interface FarePackageRule {
@@ -291,6 +325,11 @@ export interface FlightSessionData {
 export interface AllocateClientRequest {
   searchId: string;
   productId: string;
+  brandedFareItemId?: string | null;
+  sessionId?: string | null;
+  sessionToken?: string | null;
+  /** RecommendationBox RT sonuçları için gidiş+dönüş FlightId listesi — Allocate SubOptions */
+  subOptions?: string[] | null;
 }
 
 // Server-side'da backend'e gönderilen tam request
@@ -462,21 +501,21 @@ export interface RemoveProductResponse {
 
 // ========== MAKE PAYMENT ==========
 
-// İstemciden gelen — RunningAccount veya CreditCard
+// İstemciden gelen — RunningAccount, CreditCard (3D Secure) veya CreditCardDirect (test)
 export type MakePaymentClientRequest =
   | {
       paymentType: 'RunningAccount';
       searchId: string;
     }
   | {
-      paymentType: 'CreditCard';
+      paymentType: 'CreditCard' | 'CreditCardDirect';
       searchId: string;
       cardHolderName: string;
       cardNumber: string;
-      expireMonth: string;
-      expireYear: string;
+      expiryMonth: string;
+      expiryYear: string;
       cvv: string;
-      installmentCount?: number;
+      installmentOptionId?: string;
     };
 
 // Server-side'da backend'e gönderilen tam request
@@ -487,29 +526,36 @@ export interface MakePaymentBackendRequest {
   productId: string;
   amount: number;
   currency: string;
-  paymentType: 'RunningAccount' | 'CreditCard';
+  paymentType: 'RunningAccount' | 'CreditCard' | 'CreditCardDirect';
   creditCard: CreditCardInfo | null;
-  installmentCount: number;
+  installmentOptionId?: string;
   bookingId?: string | null;
 }
 
 export interface CreditCardInfo {
   cardHolderName: string;
   cardNumber: string;
-  expireMonth: string;
-  expireYear: string;
+  expiryMonth: string;
+  expiryYear: string;
   cvv: string;
 }
 
 export interface MakePaymentResponse {
   hasError: boolean;
   errorMessage: string | null;
-  isPaymentSuccess: boolean;
+  isPaymentSuccessful: boolean;
   is3DSecureRequired: boolean;
   threeDSecureUrl: string | null;
+  threeDSecureHtml: string | null;
   transactionId: string | null;
+  paymentReferenceId: string | null;
+  shoppingFileId: string | null;
   paymentAmount: number;
   currency: string | null;
+  status: string | null;
+  pnr: string | null;
+  grandTotal: number;
+  remainingSum: number;
 }
 
 // ========== FINALIZE SHOPPING ==========
@@ -524,12 +570,15 @@ export interface FinalizeShoppingBackendRequest {
   sessionId: string;
   sessionToken: string;
   shoppingFileId: string;
+  productId: string | null;
+  bookingId: string | null;
 }
 
 export interface FinalizeShoppingResponse {
   hasError: boolean;
   errorMessage: string | null;
   isFinalized: boolean;
+  status: string | null;
   tickets: TicketInfo[];
   bookingCode: string | null;
   pnr: string | null;

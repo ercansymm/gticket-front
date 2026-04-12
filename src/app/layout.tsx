@@ -80,7 +80,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="tr" className={inter.variable}>
-      <body>
+      <body suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>
     </html>

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { makePreBookingClientSchema, validateBody, parseBody } from '@/lib/validations';
-import { filterSensitiveFields, withTimeout, checkRateLimit } from '@/lib/api-helpers';
+import { filterSensitiveFields, normalizeToCamelCase, withTimeout, checkRateLimit } from '@/lib/api-helpers';
 import { logger } from '@/lib/logger';
 
 const API_BASE = process.env.API_BASE_URL;
@@ -30,7 +30,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const sessionData = await sessionRes.json();
+    const sessionDataRaw = await sessionRes.json();
+    const sessionData = normalizeToCamelCase(sessionDataRaw) as Record<string, unknown>;
 
     if (!sessionData.sessionId || !sessionData.sessionToken || !sessionData.shoppingFileId) {
       return NextResponse.json(
@@ -50,13 +51,14 @@ export async function POST(request: NextRequest) {
       contact,
     };
 
-    const { signal, clear } = withTimeout(30_000);
+    const { signal, clear } = withTimeout(60_000);
     const res = await fetch(`${API_BASE}/api/flight/make-prebooking`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json; charset=utf-8',
         'Accept': 'application/json; charset=utf-8',
         'X-Transaction-Id': crypto.randomUUID(),
+        'X-Search-Id': searchId,
       },
       body: JSON.stringify(backendBody),
       signal,
