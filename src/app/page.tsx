@@ -5,6 +5,7 @@
 // 5. satırda bir test yapıldı conflict için eklenecek. 
 
 //  ercanın mergeinden sonra benim kodlarım gidecekmi sağlaması 
+//doğrusunu yazdım leaderim
 
 //ismail e mail branchindeyken test
 import type { Metadata } from "next";
