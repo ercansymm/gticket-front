@@ -3986,10 +3986,36 @@ select.bb-flight-form__input {
 .bb-flight-card__packages {
   display: flex;
   gap: 12px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding-bottom: 8px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+/* Custom scrollbar for packages */
+.bb-flight-card__packages::-webkit-scrollbar {
+  height: 6px;
+}
+
+.bb-flight-card__packages::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.bb-flight-card__packages::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.bb-flight-card__packages::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 .bb-fare-package {
-  flex: 1;
+  flex: 0 0 220px;
+  min-width: 200px;
   padding: 16px;
   border: 1.5px solid var(--ab-border);
   border-top: 3px solid #d1d5db;
@@ -4514,6 +4540,8 @@ select.bb-flight-form__input {
   .bb-flight-card__packages {
     flex-direction: column;
     gap: 10px;
+    overflow-x: visible;
+    padding-bottom: 0;
   }
 
   .bb-flight-card__packages-area {
@@ -4522,6 +4550,7 @@ select.bb-flight-form__input {
 
   .bb-fare-package {
     min-width: unset;
+    flex: 1;
   }
 
   .bb-fare-package__diff {
