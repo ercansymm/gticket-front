@@ -53,12 +53,12 @@ export const AIRLINE_COLORS: Record<string, { bg: string; color: string }> = {
 const FALLBACK_STYLE = { bg: '#6b7280', color: '#fff' };
 
 /**
- * Returns airline logo URL from pics.avs.io CDN.
- * Provides real airline logos for all IATA-coded carriers.
+ * Returns icon-only airline logo from the Kiwi.com CDN.
+ * These are clean symbol logos without airline name text.
  */
-export function getAirlineLogoUrl(code: string | null, size = 200): string | null {
+export function getAirlineLogoUrl(code: string | null, size = 64): string | null {
   if (!code) return null;
-  return `https://pics.avs.io/${size}/${size}/${code}.png`;
+  return `https://images.kiwi.com/airlines/${size}x${size}/${code}.png`;
 }
 
 export function getAirlineBrandStyle(code: string | null): { bg: string; color: string } {

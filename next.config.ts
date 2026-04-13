@@ -12,6 +12,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "pics.avs.io",
       },
+      {
+        protocol: "https",
+        hostname: "images.kiwi.com",
+      },
     ],
     formats: ["image/avif", "image/webp"],
   },
