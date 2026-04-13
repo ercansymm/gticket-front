@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import Calendar, { formatDate } from "../calendar/Calendar";
@@ -59,6 +60,7 @@ const BannerFormOne = () => {
    const dispatch = useDispatch<AppDispatch>();
    const { t, lang } = useTranslation();
    const searchLoading = useSelector((state: RootState) => state.flight.searchLoading);
+   const reduxSearchParams = useSelector((state: RootState) => state.flight.searchParams);
 
    const staticFallback = useMemo(() => staticAirports.map(a => toAirportDto(a, lang)), [lang]);
 
@@ -117,6 +119,7 @@ const BannerFormOne = () => {
    const paxRef = useRef<HTMLDivElement>(null);
    const multiCityRef = useRef<HTMLDivElement>(null);
    const urlCountryCodeResolvedRef = useRef(false);
+   const reduxParamsLoadedRef = useRef(false);
 
    // Calendar open helpers
    const openCalendar = useCallback((target: "depart" | "return") => {
@@ -173,6 +176,47 @@ const BannerFormOne = () => {
       if (urlType === "roundtrip" || urlType === "oneway") setTripType(urlType);
    }, [searchParams]);
 
+   // Redux searchParams'tan form alanlarını doldur (URL parametreleri yoksa)
+   useEffect(() => {
+      if (reduxParamsLoadedRef.current || !reduxSearchParams) return;
+      // URL parametreleri varsa onlar öncelikli
+      if (searchParams?.get("from") || searchParams?.get("to")) return;
+      reduxParamsLoadedRef.current = true;
+
+      const rp = reduxSearchParams;
+      if (rp.origin) setFrom(rp.origin.toUpperCase());
+      if (rp.destination) setTo(rp.destination.toUpperCase());
+      if (rp.departureDate) {
+         const d = new Date(rp.departureDate + 'T00:00:00');
+         if (!isNaN(d.getTime())) setDepartDate(d);
+      }
+      if (rp.returnDate) {
+         const d = new Date(rp.returnDate + 'T00:00:00');
+         if (!isNaN(d.getTime())) setReturnDate(d);
+      }
+      if (rp.flightType === 'RT') setTripType('roundtrip');
+      else if (rp.flightType === 'MP') setTripType('multicity');
+      else setTripType('oneway');
+
+      const cls = (rp.flightClass ?? 'Economy').toLowerCase();
+      if (cls === 'premiumeconomy') setFlightClass('premiumeconomy');
+      else if (cls === 'business') setFlightClass('business');
+      else if (cls === 'first') setFlightClass('first');
+      else setFlightClass('economy');
+
+      setPassengers({
+         adult: rp.adultCount ?? 1,
+         child: rp.childCount ?? 0,
+         infant: rp.infantCount ?? 0,
+      });
+
+      if (rp.originCountryCode) setFromCountryCode(rp.originCountryCode);
+      if (rp.destinationCountryCode) setToCountryCode(rp.destinationCountryCode);
+      if (rp.originIsCity) setFromIsCity(true);
+      if (rp.destinationIsCity) setToIsCity(true);
+   // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, [reduxSearchParams]);
+
    // allAirports yüklenince URL'deki from/to kodlarının countryCode ve isCity'sini resolve et
    // (Dropdown seçiminde zaten set ediliyor; bu effect URL ile gelip allAirports hazır olmadan
    //  mount olan form için çalışır.)
@@ -214,20 +258,46 @@ const BannerFormOne = () => {
    // eslint-disable-next-line react-hooks/exhaustive-deps
    }, [allAirports]);
 
-   // Dışarı tıklanınca dropdown kapat
+   // Dışarı tıklanınca dropdown kapat (mousedown + touchstart for mobile)
    useEffect(() => {
-      const handler = (e: MouseEvent) => {
-         if (fromRef.current && !fromRef.current.contains(e.target as Node)) setFromOpen(false);
-         if (toRef.current && !toRef.current.contains(e.target as Node)) setToOpen(false);
-         if (paxRef.current && !paxRef.current.contains(e.target as Node)) setPassengerOpen(false);
+      const handler = (e: MouseEvent | TouchEvent) => {
+         const target = e.target as Node;
+         if (fromRef.current && !fromRef.current.contains(target)) setFromOpen(false);
+         if (toRef.current && !toRef.current.contains(target)) setToOpen(false);
+         if (paxRef.current && !paxRef.current.contains(target)) setPassengerOpen(false);
          // Close multi-city dropdowns only when clicking outside the multi-city form
-         if (multiCityRef.current && !multiCityRef.current.contains(e.target as Node)) {
+         if (multiCityRef.current && !multiCityRef.current.contains(target)) {
             setSegments(prev => prev.map(s => ({ ...s, fromOpen: false, toOpen: false })));
          }
       };
       document.addEventListener("mousedown", handler);
-      return () => document.removeEventListener("mousedown", handler);
+      document.addEventListener("touchstart", handler, { passive: true });
+      return () => {
+         document.removeEventListener("mousedown", handler);
+         document.removeEventListener("touchstart", handler);
+      };
    }, []);
+
+   // Body scroll lock when pax bottom sheet is open on mobile
+   useEffect(() => {
+      if (!passengerOpen) return;
+      const mq = window.matchMedia("(max-width: 768px)");
+      if (!mq.matches) return;
+      const scrollY = window.scrollY;
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.left = "0";
+      document.body.style.right = "0";
+      document.body.style.overflow = "hidden";
+      return () => {
+         document.body.style.position = "";
+         document.body.style.top = "";
+         document.body.style.left = "";
+         document.body.style.right = "";
+         document.body.style.overflow = "";
+         window.scrollTo(0, scrollY);
+      };
+   }, [passengerOpen]);
 
    /** Seçilen havalimanını allAirports'a ekle (yoksa) — getAirportLabel'ın bulabilmesi için */
    const addToAirportsList = useCallback((airport: AirportDto) => {
@@ -919,35 +989,47 @@ const BannerFormOne = () => {
          { key: "infant", label: t.infant, desc: t.ageRange0_2 },
       ];
 
-      return (
-         <div className="bb-flight-form__pax-dropdown">
-            {paxRows.map(({ key, label, desc }) => (
-               <div key={key} className="bb-pax-row">
+      const closePax = () => setPassengerOpen(false);
+
+      const sheet = (
+         <>
+            <div className="bb-pax-overlay" onClick={closePax} onTouchEnd={(e) => { e.preventDefault(); closePax(); }} />
+            <div className="bb-flight-form__pax-dropdown bb-flight-form__pax-dropdown--portal">
+               <div className="bb-pax-drag-handle" />
+               {paxRows.map(({ key, label, desc }) => (
+                  <div key={key} className="bb-pax-row">
+                     <div>
+                        <span className="bb-pax-label">{label}</span>
+                        <small className="bb-pax-desc">{desc}</small>
+                     </div>
+                     <div className="bb-pax-controls">
+                        <button type="button" onClick={() => updatePassenger(key, -1)} aria-label={`${label} ${t.decrease}`}>−</button>
+                        <span>{passengers[key]}</span>
+                        <button type="button" onClick={() => updatePassenger(key, 1)} aria-label={`${label} ${t.increase}`}>+</button>
+                     </div>
+                  </div>
+               ))}
+               <div className="bb-pax-row bb-pax-row--class">
                   <div>
-                     <span className="bb-pax-label">{label}</span>
-                     <small className="bb-pax-desc">{desc}</small>
+                     <span className="bb-pax-label">{t.class}</span>
                   </div>
-                  <div className="bb-pax-controls">
-                     <button type="button" onClick={() => updatePassenger(key, -1)} aria-label={`${label} ${t.decrease}`}>−</button>
-                     <span>{passengers[key]}</span>
-                     <button type="button" onClick={() => updatePassenger(key, 1)} aria-label={`${label} ${t.increase}`}>+</button>
-                  </div>
+                  <select className="bb-pax-class-select" value={flightClass} onChange={e => setFlightClass(e.target.value)}>
+                     <option value="economy">{t.economy}</option>
+                     <option value="premiumeconomy">{t.premiumEconomy}</option>
+                     <option value="business">{t.business}</option>
+                     <option value="first">{t.first}</option>
+                  </select>
                </div>
-            ))}
-            <div className="bb-pax-row bb-pax-row--class">
-               <div>
-                  <span className="bb-pax-label">{t.class}</span>
-               </div>
-               <select className="bb-pax-class-select" value={flightClass} onChange={e => setFlightClass(e.target.value)}>
-                  <option value="economy">{t.economy}</option>
-                  <option value="premiumeconomy">{t.premiumEconomy}</option>
-                  <option value="business">{t.business}</option>
-                  <option value="first">{t.first}</option>
-               </select>
+               <button type="button" className="bb-pax-apply" onClick={closePax}>{t.apply}</button>
             </div>
-            <button type="button" className="bb-pax-apply" onClick={() => setPassengerOpen(false)}>{t.apply}</button>
-         </div>
+         </>
       );
+
+      // On mobile, portal to body so fixed positioning isn't clipped
+      if (typeof window !== "undefined" && window.innerWidth <= 768) {
+         return createPortal(sheet, document.body);
+      }
+      return sheet;
    }
 
    // ── STANDARD FORM (oneway / roundtrip) ──

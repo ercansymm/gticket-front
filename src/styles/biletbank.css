@@ -1876,6 +1876,12 @@ select.bb-flight-form__input {
   .bb-calendar-drag-handle {
     display: none;
   }
+  .bb-pax-overlay {
+    display: none;
+  }
+  .bb-pax-drag-handle {
+    display: none;
+  }
 }
 
 /* ══════════════════════════════════════════════════════
@@ -3207,17 +3213,79 @@ select.bb-flight-form__input {
     max-width: calc(100vw - 24px);
   }
 
-  /* Passenger dropdown: full width on mobile */
-  .bb-flight-form__pax-dropdown {
+  /* Passenger dropdown: bottom sheet on mobile */
+  .bb-pax-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1099;
+    animation: bb-fade-in 0.2s ease-out;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: none;
+  }
+
+  .bb-flight-form__pax-dropdown,
+  .bb-flight-form__pax-dropdown--portal {
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
     top: auto;
-    border-radius: var(--bb-radius) var(--bb-radius) 0 0;
-    max-height: 60vh;
+    width: 100%;
+    max-width: 100%;
+    max-height: 85vh;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
     z-index: 1100;
+    padding: 16px 16px calc(24px + env(safe-area-inset-bottom, 0px));
+    animation: bb-slide-up 0.3s ease-out;
+    background: var(--bb-white, #fff);
+  }
+
+  .bb-pax-drag-handle {
+    display: block;
+    width: 40px;
+    height: 4px;
+    background: #d1d5db;
+    border-radius: 2px;
+    margin: 0 auto 12px;
+  }
+
+  .bb-pax-controls button {
+    width: 44px;
+    height: 44px;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  .bb-pax-row {
+    padding: 12px 0;
+  }
+
+  .bb-pax-label {
+    font-size: 16px;
+  }
+
+  .bb-pax-desc {
+    font-size: 13px;
+  }
+
+  .bb-pax-class-select {
+    font-size: 15px;
+    padding: 10px 12px;
+    min-height: 44px;
+  }
+
+  .bb-pax-apply {
+    padding: 14px;
+    font-size: 15px;
+    margin-top: 16px;
+    min-height: 48px;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
 
   /* Benefits: vertical stack */
@@ -8820,4 +8888,97 @@ footer,
   .bb-bundle-card__leg-info {
     min-width: 70px;
   }
+}
+
+/* ── Edit Summary Bar & Date Arrows ── */
+.bb-edit-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #f5f5f5;
+  padding: 8px 16px;
+  font-size: 14px;
+  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
+}
+.bb-edit-summary__text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.bb-edit-summary__btn {
+  background: none;
+  border: none;
+  color: #0C4A6E;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.bb-edit-summary__btn:hover { text-decoration: underline; }
+.bb-edit-summary__form {
+  background: #f8fafc;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 12px 16px;
+  overflow: visible;
+  position: relative;
+  z-index: 50;
+}
+
+.bb-date-arrows {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  align-items: center;
+  background: #ffffff;
+  padding: 6px 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+.bb-date-arrows__group {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.bb-date-arrows__btn {
+  width: 34px;
+  height: 34px;
+  border: none;
+  background: #0C4A6E;
+  color: #ffffff;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.bb-date-arrows__btn:hover:not(:disabled) { background: #0a3d5c; }
+.bb-date-arrows__btn:disabled { background: #94a3b8; cursor: not-allowed; }
+.bb-date-arrows__label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #1e293b;
+  white-space: nowrap;
+  padding: 0 14px;
+  line-height: 34px;
+}
+.bb-date-arrows__prefix {
+  font-weight: 700;
+  color: #0C4A6E;
+}
+
+@media (max-width: 640px) {
+  .bb-edit-summary { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .bb-date-arrows { flex-direction: column; gap: 6px; padding: 8px 16px; }
+  .bb-date-arrows__group { width: 100%; justify-content: center; }
+  .bb-date-arrows__label { flex: 1; text-align: center; font-size: 12px; padding: 0 8px; }
+  .bb-date-arrows__btn { min-width: 36px; min-height: 36px; }
 }
