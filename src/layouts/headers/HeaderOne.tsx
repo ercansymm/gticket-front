@@ -26,7 +26,7 @@ const HeaderOne = () => {
             <div className="container">
                <div className="bb-header-inner">
                   <div className="bb-header-left">
-                     <Logo variant="dark" />
+                     <Logo variant="white" />
                   </div>
                   <div className="bb-header-right">
                      {/* Bilet Sorgula */}
