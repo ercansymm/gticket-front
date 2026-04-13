@@ -232,6 +232,6 @@ const FlightCard = ({ flight, onSelect, isSelected = false, allocateLoading = fa
     </div>
   );
 };
-//son
+//son deneme
 
 export default FlightCard;
