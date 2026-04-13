@@ -204,7 +204,6 @@ const FlightCard = ({ flight, onSelect, isSelected = false, allocateLoading = fa
                       {seg.airlineName ?? flight.airlineName} {seg.flightNumber}
                     </span>
                     {seg.durationFormatted && <span className="bb-flight-card__detail-dur">{seg.durationFormatted}</span>}
-                    {seg.equipment && <span className="bb-flight-card__detail-equip">{seg.equipment}</span>}
                     {seg.bookingClassName && <span className="bb-flight-card__detail-class">{seg.bookingClassName}</span>}
                   </div>
                   <div className="bb-flight-card__detail-row">
