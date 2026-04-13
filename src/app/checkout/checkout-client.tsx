@@ -30,6 +30,8 @@ export default function CheckoutClient() {
   const [paymentMethod, setPaymentMethod] = useState<'running_account' | 'credit_card'>('running_account');
   const [agreed, setAgreed] = useState(false);
   const [agreementError, setAgreementError] = useState(false);
+  const [kvkkAgreed, setKvkkAgreed] = useState(false);
+  const [showKvkkModal, setShowKvkkModal] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [cardForm, setCardForm] = useState({
     cardHolderName: '',
@@ -797,12 +799,22 @@ export default function CheckoutClient() {
             </label>
           </div>
 
+          {/* KVKK Consent */}
+          <div className="bb-kvkk-consent">
+            <input type="checkbox" className="bb-kvkk-consent__checkbox" id="kvkkConsent" checked={kvkkAgreed}
+              onChange={(e) => setKvkkAgreed(e.target.checked)}
+            />
+            <label htmlFor="kvkkConsent" className="bb-kvkk-consent__label">
+              <button type="button" className="bb-kvkk-consent__link" onClick={(e) => { e.preventDefault(); setShowKvkkModal(true); }}>KVKK Aydınlatma Metni</button>&apos;ni okudum ve kabul ediyorum.
+            </label>
+          </div>
+
           {/* Action buttons */}
           <div className="bb-checkout__actions">
             <button
               type="button"
-              className="bb-checkout__btn bb-checkout__btn--next"
-              disabled={isProcessing || !productId || !productItemId || !searchId}
+              className={`bb-checkout__btn bb-checkout__btn--next${!kvkkAgreed ? ' bb-checkout__btn--disabled' : ''}`}
+              disabled={isProcessing || !productId || !productItemId || !searchId || !kvkkAgreed}
               onClick={() => {
                 const form = document.querySelector('.bb-passenger-form') as HTMLFormElement;
                 if (form) form.requestSubmit();
@@ -850,8 +862,8 @@ export default function CheckoutClient() {
           </div>
           <button
             type="button"
-            className="bb-checkout__bottom-bar-btn"
-            disabled={isProcessing || !productId || !productItemId || !searchId}
+            className={`bb-checkout__bottom-bar-btn${!kvkkAgreed ? ' bb-checkout__btn--disabled' : ''}`}
+            disabled={isProcessing || !productId || !productItemId || !searchId || !kvkkAgreed}
             onClick={() => {
               const form = document.querySelector('.bb-passenger-form') as HTMLFormElement;
               if (form) form.requestSubmit();
@@ -877,6 +889,34 @@ export default function CheckoutClient() {
             <p className="bb-flight-loading__text">
               Uçuşunuz rezerve ediliyor, Lütfen bekleyiniz<span className="bb-flight-loading__dots"></span>
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* KVKK Modal */}
+      {showKvkkModal && (
+        <div className="bb-modal-overlay" role="dialog" aria-modal="true" aria-label="KVKK Aydinlatma Metni">
+          <div className="bb-modal bb-kvkk-modal">
+            <div className="bb-kvkk-modal__header">
+              <h3 className="bb-kvkk-modal__title">KVKK Aydınlatma Metni</h3>
+              <button type="button" className="bb-kvkk-modal__close" onClick={() => setShowKvkkModal(false)} aria-label="Kapat">&times;</button>
+            </div>
+            <div className="bb-kvkk-modal__body">
+              <p>6698 sayılı Kişisel Verilerin Korunması Kanunu (&ldquo;KVKK&rdquo;) uyarınca, kişisel verileriniz veri sorumlusu olarak GBILET tarafından aşağıda açıklanan kapsamda işlenebilecektir.</p>
+              <h4>Kişisel Verilerin İşlenme Amacı</h4>
+              <p>Toplanan kişisel verileriniz; uçak bileti satış işlemlerinin gerçekleştirilmesi, yasal yükümlülüklerin yerine getirilmesi, müşteri ilişkileri yönetimi ve hizmet kalitesinin artırılması amacıyla işlenmektedir.</p>
+              <h4>İşlenen Kişisel Veriler</h4>
+              <p>Ad, soyad, T.C. kimlik numarası, pasaport numarası, doğum tarihi, cinsiyet, e-posta adresi, telefon numarası, adres bilgileri ve ödeme bilgileri.</p>
+              <h4>Kişisel Verilerin Aktarılması</h4>
+              <p>Kişisel verileriniz; bilet satış işleminin tamamlanması amacıyla havayolu şirketleri, ödeme kuruluşları ve yasal zorunluluk halinde yetkili kamu kurum ve kuruluşlarına aktarılabilecektir.</p>
+              <h4>Kişisel Veri Toplamanın Yöntemi ve Hukuki Sebebi</h4>
+              <p>Kişisel verileriniz, internet sitemiz üzerinden elektronik ortamda toplanmakta olup, KVKK&apos;nın 5(2) maddesi kapsamında işlenmektedir.</p>
+              <h4>Haklarınız</h4>
+              <p>KVKK&apos;nın 11. maddesi gereği; kişisel verilerinizin işlenip işlenmediğini öğrenme, işlenmişse buna ilişkin bilgi talep etme, işlenme amacını öğrenme, yurt içinde veya yurt dışında aktarıldığı üçüncü kişileri bilme, eksik veya yanlış işlenmişse düzeltilmesini isteme, silinmesini veya yok edilmesini isteme haklarına sahipsiniz.</p>
+            </div>
+            <div className="bb-kvkk-modal__footer">
+              <button type="button" className="bb-kvkk-modal__btn" onClick={() => setShowKvkkModal(false)}>Kapat</button>
+            </div>
           </div>
         </div>
       )}

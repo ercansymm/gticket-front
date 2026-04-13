@@ -7361,6 +7361,169 @@ footer,
   75% { transform: translateX(4px); }
 }
 
+/* KVKK Consent */
+.bb-kvkk-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 20px;
+  background: #fafbfc;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  margin-top: 8px;
+}
+
+.bb-kvkk-consent__checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--ab-primary);
+  flex-shrink: 0;
+  margin-top: 1px;
+  cursor: pointer;
+}
+
+.bb-kvkk-consent__label {
+  font-size: 14px;
+  font-weight: 400;
+  color: #4b5563;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.bb-kvkk-consent__link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ab-primary, #E8604C);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.bb-kvkk-consent__link:hover {
+  color: #047857;
+}
+
+/* Disabled payment button */
+.bb-checkout__btn--disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  pointer-events: none;
+}
+
+/* KVKK Modal */
+.bb-kvkk-modal {
+  max-width: 600px;
+  width: 100%;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  max-height: 70vh;
+  overflow: hidden;
+}
+
+.bb-kvkk-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+.bb-kvkk-modal__title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0;
+}
+
+.bb-kvkk-modal__close {
+  background: none;
+  border: none;
+  font-size: 28px;
+  line-height: 1;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.bb-kvkk-modal__close:hover {
+  color: #1a1a2e;
+}
+
+.bb-kvkk-modal__body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.7;
+}
+
+.bb-kvkk-modal__body h4 {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin: 20px 0 8px;
+}
+
+.bb-kvkk-modal__body h4:first-of-type {
+  margin-top: 16px;
+}
+
+.bb-kvkk-modal__body p {
+  margin: 0 0 12px;
+}
+
+.bb-kvkk-modal__footer {
+  padding: 16px 24px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+.bb-kvkk-modal__btn {
+  padding: 10px 28px;
+  background: var(--ab-primary, #E8604C);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.bb-kvkk-modal__btn:hover {
+  opacity: 0.9;
+}
+
+@media (max-width: 640px) {
+  .bb-kvkk-modal {
+    max-width: calc(100% - 32px);
+    max-height: 80vh;
+    margin: 16px;
+    border-radius: 12px;
+  }
+
+  .bb-kvkk-modal__header {
+    padding: 16px 18px;
+  }
+
+  .bb-kvkk-modal__body {
+    padding: 18px;
+  }
+
+  .bb-kvkk-modal__footer {
+    padding: 14px 18px;
+  }
+}
+
 /* ══════════════════════════════════════════════════════
    SUCCESS PAGE — TICKET CARD (Professional)
    ══════════════════════════════════════════════════════ */
