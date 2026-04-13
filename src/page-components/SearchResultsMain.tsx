@@ -9,8 +9,12 @@ import MultiCityBundleCard from '../components/booking/MultiCityBundleCard';
 import FilterSidebar from '../components/booking/FilterSidebar';
 import SortBar from '../components/booking/SortBar';
 // import PriceCalendar, { generateMockPrices } from '../components/flight/PriceCalendar';
-import { searchFlightsThunk, setSelectedFlight, setSelectedReturnFlight, setSelectedBrandedFareItemId, setSelectedLegFlight, clearSelectedLegFlight, clearSelectedLegFlights, allocateFlightThunk, clearAllocate } from '../redux/features/flightSlice';
+import { searchFlightsThunk, setSelectedFlight, setSelectedReturnFlight, setSelectedBrandedFareItemId, setSelectedLegFlight, clearSelectedLegFlight, clearSelectedLegFlights, allocateFlightThunk, clearAllocate, setSearchParams, clearSearch } from '../redux/features/flightSlice';
+import { resetBooking } from '../redux/features/bookingSlice';
+import { resetPayment } from '../redux/features/paymentSlice';
 import { filterFlights, sortFlights, INITIAL_FILTERS } from '../utils/flightFilters';
+import { airports as staticAirports } from '../data/AirportData';
+import BannerFormOne from '../components/common/banner-form/BannerFormOne';
 import type { RootState, AppDispatch } from '../redux/store';
 import type { FlightResult, FlightFilters, FlightSortBy, AllocateResponse, FarePackage } from '@/types';
 
@@ -24,6 +28,21 @@ interface MultiCityPackage {
   bundleProductId: string;
   legs: FlightResult[];
 }
+
+/* ── Turkish date helpers (search edit bar & date nav) ── */
+const TR_MONTHS_SHORT = ['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
+const TR_MONTHS_FULL = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+const TR_DAYS_SHORT = ['Paz','Pzt','Sal','Çar','Per','Cum','Cmt'];
+const TR_DAYS_FULL = ['Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi'];
+
+const CABIN_LABELS: Record<string, string> = { Economy:'Ekonomi', PremiumEconomy:'Premium Ekonomi', Business:'Business', First:'First' };
+
+function trDateShort(s: string) { const d = new Date(s+'T00:00:00'); return `${d.getDate()} ${TR_MONTHS_SHORT[d.getMonth()]} ${d.getFullYear()}, ${TR_DAYS_SHORT[d.getDay()]}`; }
+function trDateLong(s: string) { const d = new Date(s+'T00:00:00'); return `${d.getDate()} ${TR_MONTHS_FULL[d.getMonth()]} ${TR_DAYS_FULL[d.getDay()]}`; }
+function airportCity(code: string) { return staticAirports.find(a => a.code.toUpperCase() === code.toUpperCase())?.cityTr ?? code; }
+function fmtDateApi(d: Date) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function addDays(s: string, n: number) { const d = new Date(s+'T00:00:00'); d.setDate(d.getDate()+n); return d; }
+function isPastOrToday(s: string) { const d = new Date(s+'T00:00:00'); const now = new Date(); now.setHours(0,0,0,0); return d <= now; }
 
 const SORT_OPTIONS: { value: FlightSortBy; label: string }[] = [
   { value: 'cheapest', label: 'En Ucuz' },
@@ -47,6 +66,8 @@ const SearchResultsMain = () => {
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   const [mobileSortOpen, setMobileSortOpen] = useState(false);
   const [priceChangedData, setPriceChangedData] = useState<AllocateResponse | null>(null);
+  const [editFormOpen, setEditFormOpen] = useState(false);
+  const [dateNavLoading, setDateNavLoading] = useState<string | null>(null);
 
   // // Günlük tahmini fiyatlar (mock data)
   // const mockPrices = useMemo(
@@ -454,6 +475,29 @@ const SearchResultsMain = () => {
     }
   };
 
+  // Auto-close edit form when a new search starts (searchLoading flips to true)
+  useEffect(() => {
+    if (searchLoading) setEditFormOpen(false);
+  }, [searchLoading]);
+
+  // Date navigation arrow handler
+  const handleDateNav = useCallback((arrow: 'dep-prev' | 'dep-next' | 'ret-prev' | 'ret-next') => {
+    if (!searchParams || searchLoading) return;
+    let dep = searchParams.departureDate;
+    let ret = searchParams.returnDate ?? null;
+    if (arrow === 'dep-prev') { if (isPastOrToday(dep)) return; dep = fmtDateApi(addDays(dep, -1)); }
+    if (arrow === 'dep-next') { dep = fmtDateApi(addDays(dep, 1)); if (ret && dep >= ret) ret = fmtDateApi(addDays(dep, 1)); }
+    if (arrow === 'ret-prev') { if (!ret) return; const nd = fmtDateApi(addDays(ret, -1)); if (nd <= dep) return; ret = nd; }
+    if (arrow === 'ret-next') { if (!ret) return; ret = fmtDateApi(addDays(ret, 1)); }
+    const p = { ...searchParams, departureDate: dep, returnDate: ret };
+    setDateNavLoading(arrow);
+    dispatch(resetPayment());
+    dispatch(resetBooking());
+    dispatch(clearSearch());
+    dispatch(setSearchParams(p));
+    dispatch(searchFlightsThunk(p)).finally(() => setDateNavLoading(null));
+  }, [searchParams, searchLoading, dispatch]);
+
   /* ── Arama özeti yardımcı bilgileri ── */
   const paxText = searchParams ? [
     (searchParams.adultCount ?? 1) > 0 ? `${searchParams.adultCount ?? 1} Yetişkin` : '',
@@ -575,7 +619,9 @@ const SearchResultsMain = () => {
               <button className="bb-empty-state__btn" onClick={handleRetry}>
                 Tekrar Dene
               </button>
-              <button className="bb-empty-state__btn" style={{ background: '#f1f5f9', color: '#475569' }} onClick={() => router.push('/')}>
+              <button className="bb-empty-state__btn" style={{ background: '#f1f5f9', color: '#475569' }} onClick={() => {
+                router.push('/');
+              }}>
                 Ana Sayfa
               </button>
             </div>
@@ -618,7 +664,9 @@ const SearchResultsMain = () => {
             <p className="bb-empty-state__text">
               Arama kriterlerinize uygun uçuş bulunamadı. Farklı tarih veya güzergah deneyebilirsiniz.
             </p>
-            <button className="bb-empty-state__btn" onClick={() => router.push('/')}>
+            <button className="bb-empty-state__btn" onClick={() => {
+              router.push('/');
+            }}>
               Yeni Arama Yap
             </button>
           </div>
@@ -640,6 +688,58 @@ const SearchResultsMain = () => {
               <p className="bb-spinner-text">Uçuş tahsis ediliyor...</p>
             </div>
           </div>
+        )}
+
+        {/* ── Compact edit summary + date navigation ── */}
+        {searchParams && (
+          <>
+            {/* Summary line with edit toggle */}
+            <div className="bb-edit-summary">
+              <span className="bb-edit-summary__text">
+                {airportCity(searchParams.origin)} → {airportCity(searchParams.destination)}
+                {' | '}{trDateShort(searchParams.departureDate)}
+                {searchParams.flightType === 'RT' && searchParams.returnDate && ` - ${trDateShort(searchParams.returnDate)}`}
+                {' | '}{(searchParams.adultCount ?? 1) + (searchParams.childCount ?? 0) + (searchParams.infantCount ?? 0)} Yolcu
+                {' | '}{CABIN_LABELS[searchParams.flightClass ?? 'Economy'] ?? 'Ekonomi'}
+              </span>
+              <button type="button" className="bb-edit-summary__btn" onClick={() => setEditFormOpen(v => !v)}>
+                Aramayı Düzenle {editFormOpen ? '▲' : '▼'}
+              </button>
+            </div>
+            {editFormOpen && (
+              <div className="bb-edit-summary__form">
+                <BannerFormOne />
+              </div>
+            )}
+
+            {/* Date navigation arrows */}
+            <div className="bb-date-arrows">
+              <div className="bb-date-arrows__group">
+                <button className="bb-date-arrows__btn" disabled={isPastOrToday(searchParams.departureDate) || searchLoading} onClick={() => handleDateNav('dep-prev')} aria-label="Önceki gün">
+                  {dateNavLoading === 'dep-prev' ? <i className="fa-solid fa-spinner fa-spin" /> : <i className="fa-solid fa-chevron-left" />}
+                </button>
+                <span className="bb-date-arrows__label">
+                  <span className="bb-date-arrows__prefix">Gidiş</span> - {trDateLong(searchParams.departureDate)}
+                </span>
+                <button className="bb-date-arrows__btn" disabled={searchLoading} onClick={() => handleDateNav('dep-next')} aria-label="Sonraki gün">
+                  {dateNavLoading === 'dep-next' ? <i className="fa-solid fa-spinner fa-spin" /> : <i className="fa-solid fa-chevron-right" />}
+                </button>
+              </div>
+              {searchParams.flightType === 'RT' && searchParams.returnDate && (
+                <div className="bb-date-arrows__group">
+                  <button className="bb-date-arrows__btn" disabled={(() => { if (!searchParams.returnDate) return true; const r = new Date(searchParams.returnDate+'T00:00:00'); const d = new Date(searchParams.departureDate+'T00:00:00'); return (r.getTime()-d.getTime())/(86400000) <= 1; })() || searchLoading} onClick={() => handleDateNav('ret-prev')} aria-label="Önceki gün">
+                    {dateNavLoading === 'ret-prev' ? <i className="fa-solid fa-spinner fa-spin" /> : <i className="fa-solid fa-chevron-left" />}
+                  </button>
+                  <span className="bb-date-arrows__label">
+                    <span className="bb-date-arrows__prefix">Dönüş</span> - {trDateLong(searchParams.returnDate)}
+                  </span>
+                  <button className="bb-date-arrows__btn" disabled={searchLoading} onClick={() => handleDateNav('ret-next')} aria-label="Sonraki gün">
+                    {dateNavLoading === 'ret-next' ? <i className="fa-solid fa-spinner fa-spin" /> : <i className="fa-solid fa-chevron-right" />}
+                  </button>
+                </div>
+              )}
+            </div>
+          </>
         )}
 
         {/* Arama özeti bar */}
@@ -674,14 +774,9 @@ const SearchResultsMain = () => {
               <span className="bb-search-summary__meta-item">{paxText}</span>
               <span className="bb-search-summary__meta-item">{tripTypeText}</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <span className="bb-search-summary__count">
-                {searchResults.flights.length} uçuş
-              </span>
-              <button className="bb-search-summary__edit" onClick={() => router.push('/')}>
-                Arama Değiştir
-              </button>
-            </div>
+            <span className="bb-search-summary__count">
+              {searchResults.flights.length} uçuş
+            </span>
           </div>
         </div>
 
