@@ -45,8 +45,8 @@ function LegRow({ flight, label, labelColor }: LegRowProps) {
           <Image
             src={logoPath}
             alt={flight.airlineName ?? "airline"}
-            width={32}
-            height={32}
+            width={30}
+            height={30}
             onError={() => setLogoError(true)}
           />
         ) : (

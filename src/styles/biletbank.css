@@ -5669,7 +5669,7 @@ footer,
   width: 48px;
   height: 48px;
   min-width: 48px;
-  border-radius: 50%;
+  border-radius: 10px;
   border: 1px solid #e5e7eb;
   display: flex;
   align-items: center;
@@ -5682,7 +5682,7 @@ footer,
 .bb-checkout__flight-mini-logo img {
   width: 36px;
   height: 36px;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .bb-checkout__flight-mini-body {
@@ -6106,10 +6106,10 @@ footer,
 
 /* Airline logo circle */
 .bb-flight-card__airline-logo {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--ab-bg-light);
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  background: #fff;
   border: 1px solid var(--ab-border);
   display: flex;
   align-items: center;
@@ -6122,9 +6122,9 @@ footer,
 }
 
 .bb-flight-card__airline-logo img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
 }
 
 .bb-flight-card__airline {
@@ -6349,8 +6349,8 @@ footer,
   }
 
   .bb-flight-card__airline-logo {
-    width: 32px;
-    height: 32px;
+    width: 40px;
+    height: 40px;
   }
 }
 
@@ -7903,7 +7903,7 @@ footer,
 
 .tc-pax-table__head {
   display: grid;
-  grid-template-columns: 2fr 1.5fr 1.2fr 0.8fr 0.8fr;
+  grid-template-columns: 2fr 1.5fr 1.2fr 0.8fr 0.8fr 0.8fr;
   gap: 8px;
   padding: 12px 0;
   font-size: 12px;
@@ -7916,7 +7916,7 @@ footer,
 
 .tc-pax-table__row {
   display: grid;
-  grid-template-columns: 2fr 1.5fr 1.2fr 0.8fr 0.8fr;
+  grid-template-columns: 2fr 1.5fr 1.2fr 0.8fr 0.8fr 0.8fr;
   gap: 8px;
   padding: 12px 0;
   font-size: 13px;
@@ -7932,6 +7932,32 @@ footer,
 .tc-pax-table__name {
   font-weight: 600;
   color: #1f2937;
+}
+
+/* Per-passenger PDF download button */
+.tc-btn-pdf {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  background-color: #DC2626;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+}
+
+.tc-btn-pdf:hover {
+  background-color: #B91C1C;
+}
+
+.tc-btn-pdf:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* ── Section 5: Contact & Actions ── */
@@ -8075,7 +8101,7 @@ footer,
 
   .tc-pax-table__head,
   .tc-pax-table__row {
-    grid-template-columns: 1.5fr 1fr 1fr;
+    grid-template-columns: 1.5fr 1fr 1fr 0.7fr;
   }
 
   /* Hide less critical columns on tablet */
@@ -8140,7 +8166,7 @@ footer,
 
   .tc-pax-table__head,
   .tc-pax-table__row {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1fr 0.7fr;
   }
 
   .tc-pax-table__head span:nth-child(3),
@@ -8313,8 +8339,8 @@ footer,
   }
 
   .bb-flight-card__airline-logo {
-    width: 32px;
-    height: 32px;
+    width: 40px;
+    height: 40px;
   }
 
   /* Cookie consent mobile */
@@ -9026,10 +9052,11 @@ footer,
 }
 
 .bb-bundle-card__leg-logo {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
   border: 1px solid #e2e8f0;
+  background: #fff;
   display: flex;
   align-items: center;
   justify-content: center;

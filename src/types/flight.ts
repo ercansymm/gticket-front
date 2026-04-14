@@ -332,6 +332,8 @@ export interface AllocateClientRequest {
   returnProductId?: string | null;
   /** Round-trip: dönüş uçuşunun BrandedFareItemId'si */
   returnBrandedFareItemId?: string | null;
+  /** RecommendationBox bundle: gidiş+dönüş FlightId GUID'leri (SubOptions) */
+  subOptionFlightIds?: string[] | null;
 }
 
 // Server-side'da backend'e gönderilen tam request
