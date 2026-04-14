@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     const validation = validateBody(flightAllocateClientSchema, parsed.data);
     if (!validation.success) return validation.response;
 
-    const { searchId, productId, brandedFareItemId, subOptions } = validation.data;
+    const { searchId, productId, brandedFareItemId, returnProductId, returnBrandedFareItemId } = validation.data;
 
     // 1. Server-side'da session bilgisini al
     const sessionRes = await fetch(`${API_BASE}/api/flight/session/${encodeURIComponent(searchId)}`, {
@@ -51,8 +51,11 @@ export async function POST(request: NextRequest) {
     if (brandedFareItemId) {
       backendBody.brandedFareItemId = brandedFareItemId;
     }
-    if (subOptions && subOptions.length > 0) {
-      backendBody.subOptions = subOptions;
+    if (returnProductId) {
+      backendBody.returnProductId = returnProductId;
+    }
+    if (returnBrandedFareItemId) {
+      backendBody.returnBrandedFareItemId = returnBrandedFareItemId;
     }
 
     const { signal, clear } = withTimeout(30_000);

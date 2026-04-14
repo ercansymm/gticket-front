@@ -323,12 +323,13 @@ const SearchResultsMain = () => {
 
     try {
       if (flight.isRoundTripBundle && flight.bundleProductId) {
-        // RecommendationBox bundle: gidiş+dönüş tek ProductId ile tek seferde allocate edilir.
+        // RecommendationBox bundle: gidiş+dönüş ayrı IO_AllocationItem olarak tek seferde allocate edilir.
         const bundleResult = await dispatch(allocateFlightThunk({
           searchId: searchResults.searchId!,
-          productId: flight.bundleProductId,
-          brandedFareItemId: brandedFareItemId ?? flight.defaultBrandedFareItemId ?? undefined,
-          subOptions: flight.subOptionFlightIds ?? undefined,
+          productId: selectedOutbound.flight.productId!,
+          brandedFareItemId: selectedOutbound.brandedFareItemId ?? selectedOutbound.flight.defaultBrandedFareItemId ?? undefined,
+          returnProductId: flight.productId!,
+          returnBrandedFareItemId: brandedFareItemId ?? flight.defaultBrandedFareItemId ?? undefined,
         })).unwrap();
 
         if (isRealPriceChange(bundleResult, flight, brandedFareItemId)) {
@@ -337,17 +338,13 @@ const SearchResultsMain = () => {
           router.push('/checkout');
         }
       } else {
-        // Bağımsız FlightOption: önce gidiş sonra dönüşü ayrı ayrı allocate et
-        await dispatch(allocateFlightThunk({
+        // Bağımsız FlightOption: gidiş+dönüş iki IO_AllocationItem ile tek seferde allocate et
+        const retResult = await dispatch(allocateFlightThunk({
           searchId: searchResults.searchId!,
           productId: selectedOutbound.flight.productId!,
           brandedFareItemId: selectedOutbound.brandedFareItemId ?? undefined,
-        })).unwrap();
-
-        const retResult = await dispatch(allocateFlightThunk({
-          searchId: searchResults.searchId!,
-          productId: returnSelection.flight.productId!,
-          brandedFareItemId: returnSelection.brandedFareItemId ?? undefined,
+          returnProductId: returnSelection.flight.productId!,
+          returnBrandedFareItemId: returnSelection.brandedFareItemId ?? undefined,
         })).unwrap();
 
         if (isRealPriceChange(retResult, returnSelection.flight, returnSelection.brandedFareItemId)) {
@@ -380,9 +377,10 @@ const SearchResultsMain = () => {
     try {
       const result = await dispatch(allocateFlightThunk({
         searchId: searchResults.searchId!,
-        productId: pkg.bundleProductId,
+        productId: pkg.outbound.productId!,
         brandedFareItemId: brandedFareItemId ?? pkg.outbound.defaultBrandedFareItemId ?? undefined,
-        subOptions: pkg.outbound.subOptionFlightIds ?? undefined,
+        returnProductId: pkg.returnFlight.productId!,
+        returnBrandedFareItemId: brandedFareItemId ?? pkg.returnFlight.defaultBrandedFareItemId ?? undefined,
       })).unwrap();
 
       if (isRealPriceChange(result, pkg.outbound, brandedFareItemId ?? pkg.outbound.defaultBrandedFareItemId)) {
@@ -414,16 +412,15 @@ const SearchResultsMain = () => {
     dispatch(setSelectedFlight(firstLeg));
 
     try {
-      // Bağımsız FlightOption: her bacak için sıralı allocate
-      for (let i = 0; i < totalLegs; i++) {
-        const legFlight = selectedLegFlights[i];
-        if (!legFlight) continue;
-        await dispatch(allocateFlightThunk({
-          searchId: searchResults.searchId!,
-          productId: legFlight.productId!,
-          brandedFareItemId: legFlight.defaultBrandedFareItemId ?? undefined,
-        })).unwrap();
-      }
+      // Bağımsız FlightOption: gidiş + dönüş iki IO_AllocationItem olarak tek seferde allocate et
+      const secondLeg = selectedLegFlights[1];
+      await dispatch(allocateFlightThunk({
+        searchId: searchResults.searchId!,
+        productId: firstLeg.productId!,
+        brandedFareItemId: firstLeg.defaultBrandedFareItemId ?? undefined,
+        returnProductId: secondLeg?.productId ?? undefined,
+        returnBrandedFareItemId: secondLeg?.defaultBrandedFareItemId ?? undefined,
+      })).unwrap();
       router.push('/checkout');
     } catch {
       // Redux hata yönetimi çalışıyor
@@ -440,11 +437,13 @@ const SearchResultsMain = () => {
     dispatch(setSelectedFlight(firstLeg));
 
     try {
+      const secondLeg = pkg.legs.length > 1 ? pkg.legs[1] : null;
       const result = await dispatch(allocateFlightThunk({
         searchId: searchResults.searchId!,
-        productId: pkg.bundleProductId,
+        productId: firstLeg.productId!,
         brandedFareItemId: brandedFareItemId ?? firstLeg.defaultBrandedFareItemId ?? undefined,
-        subOptions: firstLeg.subOptionFlightIds ?? undefined,
+        returnProductId: secondLeg?.productId ?? undefined,
+        returnBrandedFareItemId: secondLeg ? (brandedFareItemId ?? secondLeg.defaultBrandedFareItemId ?? undefined) : undefined,
       })).unwrap();
 
       if (isRealPriceChange(result, firstLeg, brandedFareItemId ?? firstLeg.defaultBrandedFareItemId)) {

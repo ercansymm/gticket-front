@@ -887,7 +887,7 @@ export default function CheckoutClient() {
               <div className="bb-flight-loading__bar-fill"></div>
             </div>
             <p className="bb-flight-loading__text">
-              Uçuşunuz rezerve ediliyor, Lütfen bekleyiniz<span className="bb-flight-loading__dots"></span>
+              Biletiniz en kısa sürede hazır olacak, Lütfen bekleyiniz<span className="bb-flight-loading__dots"></span>
             </p>
           </div>
         </div>
