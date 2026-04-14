@@ -51,7 +51,8 @@ export const flightAllocateClientSchema = z.object({
   searchId: z.string().min(1).max(100),
   productId: z.string().min(1).max(200),
   brandedFareItemId: z.string().max(200).nullish(),
-  subOptions: z.array(z.string().uuid()).max(20).nullish(),
+  returnProductId: z.string().max(200).nullish(),
+  returnBrandedFareItemId: z.string().max(200).nullish(),
 });
 
 // İstemciden gelen remove-product request

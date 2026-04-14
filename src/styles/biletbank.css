@@ -7525,288 +7525,647 @@ footer,
 }
 
 /* ══════════════════════════════════════════════════════
-   SUCCESS PAGE — TICKET CARD (Professional)
+   TICKET CONFIRMATION PAGE — Complete Redesign
    ══════════════════════════════════════════════════════ */
-.bb-success-page {
+
+/* ── Page wrapper ── */
+.tc-page {
   min-height: 100vh;
   background: #f8fafc;
 }
 
-.bb-success {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 40px 16px;
-}
-
-.bb-success__header {
+/* ── Success Banner ── */
+.tc-banner {
+  background: linear-gradient(135deg, var(--ab-primary) 0%, #083550 100%);
+  padding: 48px 24px 60px;
   text-align: center;
-  margin-bottom: 32px;
+  border-radius: 0 0 24px 24px;
 }
 
-.bb-success__icon {
-  width: 72px;
-  height: 72px;
+.tc-banner__icon {
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #22c55e, #16a34a);
+  background: rgba(255, 255, 255, 0.2);
+  border: 3px solid #fff;
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto 16px;
-  box-shadow: 0 8px 24px rgba(34,197,94,.25);
-}
-
-.bb-success__icon svg,
-.bb-success__icon-check {
-  font-size: 36px;
   color: #fff;
 }
 
-.bb-success__title {
-  font-size: 26px;
-  font-weight: 800;
-  color: #1f2937;
+.tc-banner__title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #fff;
   margin: 0 0 8px;
 }
 
-.bb-success__subtitle {
-  font-size: 15px;
-  color: #6b7280;
+.tc-banner__subtitle {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
   margin: 0;
 }
 
-/* PNR Card */
-.bb-success__pnr-card {
-  background: linear-gradient(135deg, var(--ab-secondary) 0%, #1e3a5f 100%);
-  color: #fff;
-  border-radius: 16px;
-  padding: 28px 32px;
-  text-align: center;
-  margin-bottom: 24px;
+/* ── Centered content area ── */
+.tc-content {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 16px 48px;
+}
+
+/* ── Section 1: Reservation Summary Card ── */
+.tc-summary-card {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr;
+  align-items: center;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 24px 28px;
+  margin-top: -30px;
   position: relative;
-  overflow: hidden;
+  z-index: 2;
+  gap: 0;
 }
 
-.bb-success__pnr-card::before {
-  content: '';
-  position: absolute;
-  top: -30px;
-  right: -30px;
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  background: rgba(255,255,255,.05);
+.tc-summary-card__col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 0 12px;
 }
 
-.bb-success__pnr-label {
-  font-size: 13px;
-  color: rgba(255,255,255,.7);
+.tc-summary-card__divider {
+  width: 1px;
+  height: 48px;
+  background: #e5e7eb;
+}
+
+.tc-summary-card__label {
+  font-size: 12px;
+  color: #9ca3af;
   font-weight: 500;
-  margin: 0 0 8px;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
 }
 
-.bb-success__pnr-code {
-  font-size: 36px;
+.tc-summary-card__value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  word-break: break-all;
+}
+
+.tc-summary-card__value--pnr {
+  font-size: 22px;
   font-weight: 800;
-  letter-spacing: 6px;
-  margin: 0 0 8px;
+  color: var(--ab-primary);
+  letter-spacing: 2px;
   font-family: 'Courier New', Courier, monospace;
 }
 
-.bb-success__pnr-hint {
-  font-size: 12px;
-  color: rgba(255,255,255,.6);
+/* ── Loading state ── */
+.tc-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 0;
+}
+
+.tc-loading__spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #bae6fd;
+  border-top-color: var(--ab-primary);
+  border-radius: 50%;
+  animation: tc-spin 0.8s linear infinite;
+  margin-bottom: 12px;
+}
+
+@keyframes tc-spin {
+  to { transform: rotate(360deg); }
+}
+
+.tc-loading__text {
+  font-size: 13px;
+  color: #9ca3af;
   margin: 0;
 }
 
-/* Ticket list */
-.bb-success__tickets {
-  background: #fff;
-  border: 1px solid var(--ab-border);
-  border-radius: 12px;
-  overflow: hidden;
-  margin-bottom: 24px;
+/* ── Section 2: Flight Details ── */
+.tc-flights {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 24px;
 }
 
-.bb-success__tickets-title {
+.tc-flights--single {
+  grid-template-columns: 1fr;
+}
+
+.tc-flight-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.tc-flight-card__header {
   font-size: 15px;
   font-weight: 600;
   color: #1f2937;
-  padding: 16px 20px;
   margin: 0;
+  padding: 16px 20px;
   border-bottom: 1px solid #f0f0f0;
 }
 
-.bb-success__ticket-row {
+.tc-flight-card--outbound .tc-flight-card__header {
+  border-left: 4px solid var(--ab-primary);
+}
+
+.tc-flight-card--return .tc-flight-card__header {
+  border-left: 4px solid #3B82F6;
+}
+
+/* ── Flight Leg ── */
+.tc-flight-leg {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 20px;
-  border-bottom: 1px solid #f8f9fa;
+  padding: 20px 20px 8px;
   gap: 12px;
 }
 
-.bb-success__ticket-row:last-child {
+.tc-flight-leg__point {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 64px;
+}
+
+.tc-flight-leg__time {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1f2937;
+  line-height: 1;
+}
+
+.tc-flight-leg__date {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-top: 4px;
+}
+
+.tc-flight-leg__code {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1f2937;
+  margin-top: 6px;
+}
+
+/* Flight line visualization */
+.tc-flight-leg__line {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 80px;
+}
+
+.tc-flight-leg__duration {
+  font-size: 11px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.tc-flight-leg__connector {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 0;
+}
+
+.tc-flight-leg__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #d1d5db;
+  flex-shrink: 0;
+}
+
+.tc-flight-leg__dash {
+  flex: 1;
+  height: 0;
+  border-top: 2px dashed #d1d5db;
+}
+
+.tc-flight-leg__plane {
+  color: var(--ab-primary);
+  flex-shrink: 0;
+  margin: 0 2px;
+}
+
+.tc-flight-leg__flight-code {
+  font-size: 11px;
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+/* Badges under each leg */
+.tc-flight-leg__badges {
+  display: flex;
+  gap: 6px;
+  padding: 4px 20px 16px;
+  flex-wrap: wrap;
+}
+
+.tc-flight-leg__badge {
+  font-size: 11px;
+  font-weight: 500;
+  color: #6b7280;
+  background: #f3f4f6;
+  padding: 3px 10px;
+  border-radius: 100px;
+}
+
+.tc-flight-leg__badge--class {
+  color: #15803d;
+  background: #dcfce7;
+}
+
+/* Transfer divider */
+.tc-flight-leg__transfer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 20px;
+  margin: 4px 0;
+}
+
+.tc-flight-leg__transfer-line {
+  flex: 1;
+  height: 1px;
+  background: #e5e7eb;
+}
+
+.tc-flight-leg__transfer-text {
+  font-size: 11px;
+  color: #9ca3af;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* ── Generic Card ── */
+.tc-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-top: 16px;
+  overflow: hidden;
+}
+
+.tc-card__header {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+/* ── Section 3: Price Summary ── */
+.tc-price {
+  padding: 16px 20px;
+}
+
+.tc-price__row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 8px 0;
+}
+
+.tc-price__label {
+  font-size: 14px;
+  color: #4b5563;
+  white-space: nowrap;
+}
+
+.tc-price__dots {
+  flex: 1;
+  border-bottom: 1px dotted #d1d5db;
+  min-width: 20px;
+  margin-bottom: 4px;
+}
+
+.tc-price__value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.tc-price__separator {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 8px 0;
+}
+
+.tc-price__row--total .tc-price__label {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.tc-price__value--total {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--ab-primary);
+}
+
+.tc-price__note {
+  font-size: 12px;
+  color: #9ca3af;
+  margin: 12px 0 0;
+}
+
+/* ── Section 4: Passenger Table ── */
+.tc-pax-table {
+  padding: 0 20px 16px;
+}
+
+.tc-pax-table__head {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 1.2fr 0.8fr 0.8fr;
+  gap: 8px;
+  padding: 12px 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.tc-pax-table__row {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 1.2fr 0.8fr 0.8fr;
+  gap: 8px;
+  padding: 12px 0;
+  font-size: 13px;
+  color: #4b5563;
+  border-bottom: 1px solid #f8f9fa;
+  align-items: center;
+}
+
+.tc-pax-table__row:last-child {
   border-bottom: none;
 }
 
-.bb-success__ticket-pax {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.bb-success__ticket-name {
-  font-size: 14px;
+.tc-pax-table__name {
   font-weight: 600;
   color: #1f2937;
 }
 
-.bb-success__ticket-type {
-  font-size: 12px;
-  color: #9ca3af;
+/* ── Section 5: Contact & Actions ── */
+.tc-bottom {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 16px;
 }
 
-.bb-success__ticket-number {
-  font-size: 14px;
-  font-weight: 600;
-  font-family: 'Courier New', Courier, monospace;
-  color: var(--ab-primary);
-  letter-spacing: 1px;
-}
-
-/* Flight detail card */
-.bb-success__flight-card {
+.tc-contact {
   background: #fff;
-  border: 1px solid var(--ab-border);
   border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   padding: 20px;
-  margin-bottom: 24px;
 }
 
-.bb-success__flight-card-title {
+.tc-contact__title {
   font-size: 15px;
   font-weight: 600;
   color: #1f2937;
   margin: 0 0 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #f0f0f0;
 }
 
-.bb-success__segment {
+.tc-contact__row {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 12px 0;
-  border-bottom: 1px solid #f8f9fa;
-}
-
-.bb-success__segment:last-child {
-  border-bottom: none;
-}
-
-.bb-success__segment-route {
-  font-size: 15px;
-  font-weight: 700;
-  color: #1f2937;
-  min-width: 100px;
-}
-
-.bb-success__segment-detail {
-  flex: 1;
-}
-
-.bb-success__segment-datetime {
-  font-size: 13px;
+  gap: 10px;
+  font-size: 14px;
   color: #4b5563;
+  margin-bottom: 10px;
 }
 
-.bb-success__segment-airline {
-  font-size: 12px;
+.tc-contact__row svg {
   color: #9ca3af;
-  margin-top: 2px;
+  flex-shrink: 0;
 }
 
-/* Price total line */
-.bb-success__total {
+.tc-actions {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 20px;
-  background: var(--ab-bg-light);
-  border-radius: 8px;
-  margin-bottom: 24px;
-}
-
-.bb-success__total-label {
-  font-size: 15px;
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.bb-success__total-amount {
-  font-size: 20px;
-  font-weight: 800;
-  color: var(--ab-primary);
-}
-
-/* Action buttons */
-.bb-success__actions {
-  display: flex;
-  gap: 12px;
+  flex-direction: column;
+  gap: 10px;
   justify-content: center;
-  flex-wrap: wrap;
 }
 
-.bb-success__btn {
+/* Buttons */
+.tc-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  padding: 12px 28px;
+  padding: 12px 24px;
   border-radius: 8px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
-  transition: all 0.15s;
-  border: none;
+  transition: all 0.2s ease;
+  text-decoration: none;
 }
 
-.bb-success__btn--primary {
+.tc-btn--green {
+  background: #fff;
+  color: var(--ab-primary);
+  border: 2px solid var(--ab-primary);
+}
+
+.tc-btn--green:hover {
   background: var(--ab-primary);
   color: #fff;
 }
 
-.bb-success__btn--primary:hover {
-  background: var(--ab-primary-hover);
+.tc-btn--green:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
-.bb-success__btn--secondary {
-  background: #f1f5f9;
-  color: #475569;
-  border: 1px solid var(--ab-border);
+.tc-btn--gray {
+  background: #fff;
+  color: #6b7280;
+  border: 2px solid #e5e7eb;
 }
 
-.bb-success__btn--secondary:hover {
-  background: #e2e8f0;
+.tc-btn--gray:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+  color: #374151;
 }
 
+/* ── Disclaimer ── */
+.tc-disclaimer {
+  margin-top: 24px;
+  background: #f3f4f6;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.tc-disclaimer__text {
+  font-size: 11px;
+  color: #9ca3af;
+  line-height: 1.6;
+  margin: 0 0 10px;
+}
+
+.tc-disclaimer__warning {
+  font-size: 12px;
+  color: #DC2626;
+  font-style: italic;
+  margin: 10px 0 0;
+}
+
+/* ══════════════════════════════════════════════════════
+   TICKET CONFIRMATION — Responsive
+   ══════════════════════════════════════════════════════ */
+
+/* Tablet */
 @media (max-width: 768px) {
-  .bb-success {
-    padding: 24px 12px;
+  .tc-summary-card {
+    grid-template-columns: 1fr auto 1fr;
+    gap: 16px;
+    padding: 20px;
   }
-  .bb-success__pnr-code {
-    font-size: 26px;
-    letter-spacing: 3px;
+
+  /* Hide 2nd and 4th dividers, show vertical on mobile grid */
+  .tc-summary-card__divider:nth-child(6) {
+    display: none;
   }
-  .bb-success__title {
-    font-size: 22px;
+
+  .tc-summary-card__col:nth-child(7),
+  .tc-summary-card__col:nth-child(5) {
+    /* Cols 3 & 4 move to second row */
   }
-  .bb-success__ticket-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 6px;
+
+  .tc-flights {
+    grid-template-columns: 1fr;
+  }
+
+  .tc-bottom {
+    grid-template-columns: 1fr;
+  }
+
+  .tc-pax-table__head,
+  .tc-pax-table__row {
+    grid-template-columns: 1.5fr 1fr 1fr;
+  }
+
+  /* Hide less critical columns on tablet */
+  .tc-pax-table__head span:nth-child(4),
+  .tc-pax-table__head span:nth-child(5),
+  .tc-pax-table__row span:nth-child(4),
+  .tc-pax-table__row span:nth-child(5) {
+    display: none;
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .tc-banner {
+    padding: 36px 16px 48px;
+    border-radius: 0 0 16px 16px;
+  }
+
+  .tc-banner__title {
+    font-size: 20px;
+  }
+
+  .tc-summary-card {
+    grid-template-columns: 1fr;
+    gap: 0;
+    padding: 16px;
+    margin-top: -24px;
+  }
+
+  .tc-summary-card__divider {
+    width: 100%;
+    height: 1px;
+    margin: 8px 0;
+  }
+
+  .tc-summary-card__col {
+    flex-direction: row;
+    justify-content: space-between;
+    text-align: left;
+    padding: 6px 0;
+  }
+
+  .tc-summary-card__value--pnr {
+    font-size: 18px;
+  }
+
+  .tc-flight-leg {
+    padding: 12px 12px 6px;
+  }
+
+  .tc-flight-leg__time {
+    font-size: 15px;
+  }
+
+  .tc-flight-leg__point {
+    min-width: 48px;
+  }
+
+  .tc-flight-leg__badges {
+    padding: 4px 12px 12px;
+  }
+
+  .tc-pax-table__head,
+  .tc-pax-table__row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .tc-pax-table__head span:nth-child(3),
+  .tc-pax-table__head span:nth-child(4),
+  .tc-pax-table__head span:nth-child(5),
+  .tc-pax-table__row span:nth-child(3),
+  .tc-pax-table__row span:nth-child(4),
+  .tc-pax-table__row span:nth-child(5) {
+    display: none;
+  }
+
+  .tc-bottom {
+    grid-template-columns: 1fr;
+  }
+
+  .tc-price__label {
+    font-size: 12px;
+  }
+
+  .tc-price__value {
+    font-size: 13px;
+  }
+
+  .tc-price__value--total {
+    font-size: 16px;
   }
 }
 

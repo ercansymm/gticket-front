@@ -328,8 +328,10 @@ export interface AllocateClientRequest {
   brandedFareItemId?: string | null;
   sessionId?: string | null;
   sessionToken?: string | null;
-  /** RecommendationBox RT sonuçları için gidiş+dönüş FlightId listesi — Allocate SubOptions */
-  subOptions?: string[] | null;
+  /** Round-trip: dönüş uçuşunun ProductId'si */
+  returnProductId?: string | null;
+  /** Round-trip: dönüş uçuşunun BrandedFareItemId'si */
+  returnBrandedFareItemId?: string | null;
 }
 
 // Server-side'da backend'e gönderilen tam request
@@ -642,6 +644,9 @@ export interface ReadShoppingFileResponse {
   bookingCode: string | null;
   pnr: string | null;
   totalFare: number;
+  grandTotal: number;
+  baseFare: number;
+  taxes: number;
   currency: string | null;
   passengers: ReadShoppingPassenger[];
   segments: AllocateSegment[];

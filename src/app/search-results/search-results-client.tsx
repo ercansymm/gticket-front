@@ -43,7 +43,7 @@ export default function SearchResultsClient() {
             document.title = "0:00 | ATABILET";
             return 0;
           }
-          const next = prev - 1;
+          const next = prev - 1; 
           const minutes = Math.floor(next / 60);
           const seconds = next % 60;
           document.title = `${minutes}:${seconds.toString().padStart(2, "0")} | ATABILET`;
