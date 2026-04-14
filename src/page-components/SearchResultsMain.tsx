@@ -323,13 +323,14 @@ const SearchResultsMain = () => {
 
     try {
       if (flight.isRoundTripBundle && flight.bundleProductId) {
-        // RecommendationBox bundle: gidiş+dönüş ayrı IO_AllocationItem olarak tek seferde allocate edilir.
+        // RecommendationBox bundle: tek IO_AllocationItem + SubOptions (gidiş+dönüş FlightId'leri)
         const bundleResult = await dispatch(allocateFlightThunk({
           searchId: searchResults.searchId!,
           productId: selectedOutbound.flight.productId!,
           brandedFareItemId: selectedOutbound.brandedFareItemId ?? selectedOutbound.flight.defaultBrandedFareItemId ?? undefined,
           returnProductId: flight.productId!,
           returnBrandedFareItemId: brandedFareItemId ?? flight.defaultBrandedFareItemId ?? undefined,
+          subOptionFlightIds: selectedOutbound.flight.subOptionFlightIds ?? flight.subOptionFlightIds ?? undefined,
         })).unwrap();
 
         if (isRealPriceChange(bundleResult, flight, brandedFareItemId)) {
@@ -381,6 +382,7 @@ const SearchResultsMain = () => {
         brandedFareItemId: brandedFareItemId ?? pkg.outbound.defaultBrandedFareItemId ?? undefined,
         returnProductId: pkg.returnFlight.productId!,
         returnBrandedFareItemId: brandedFareItemId ?? pkg.returnFlight.defaultBrandedFareItemId ?? undefined,
+        subOptionFlightIds: pkg.outbound.subOptionFlightIds ?? undefined,
       })).unwrap();
 
       if (isRealPriceChange(result, pkg.outbound, brandedFareItemId ?? pkg.outbound.defaultBrandedFareItemId)) {
@@ -444,6 +446,7 @@ const SearchResultsMain = () => {
         brandedFareItemId: brandedFareItemId ?? firstLeg.defaultBrandedFareItemId ?? undefined,
         returnProductId: secondLeg?.productId ?? undefined,
         returnBrandedFareItemId: secondLeg ? (brandedFareItemId ?? secondLeg.defaultBrandedFareItemId ?? undefined) : undefined,
+        subOptionFlightIds: firstLeg.subOptionFlightIds ?? undefined,
       })).unwrap();
 
       if (isRealPriceChange(result, firstLeg, brandedFareItemId ?? firstLeg.defaultBrandedFareItemId)) {

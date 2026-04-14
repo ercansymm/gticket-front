@@ -68,8 +68,8 @@ const FlightCard = ({ flight, onSelect, isSelected = false, allocateLoading = fa
               <Image
                 src={logoPath}
                 alt={flight.airlineName ?? 'airline'}
-                width={40}
-                height={40}
+                width={36}
+                height={36}
                 onError={() => setLogoError(true)}
               />
             ) : (
