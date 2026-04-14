@@ -18,9 +18,13 @@ export async function GET(
       return NextResponse.json({ error: 'Geçersiz shopping file ID' }, { status: 400 });
     }
 
+    // Forward sequenceNo query param if present
+    const sequenceNo = request.nextUrl.searchParams.get('sequenceNo');
+    const queryString = sequenceNo ? `?sequenceNo=${encodeURIComponent(sequenceNo)}` : '';
+
     const { signal, clear } = withTimeout(30_000);
     const res = await fetch(
-      `${API_BASE}/api/ticket/pdf/${encodeURIComponent(shoppingFileId)}`,
+      `${API_BASE}/api/ticket/pdf/${encodeURIComponent(shoppingFileId)}${queryString}`,
       {
         headers: {
           'Accept': 'application/pdf',

@@ -161,17 +161,17 @@ export default function SuccessClient() {
   const tickets = finalizeResult?.tickets ?? [];
   const isFinalized = finalizeResult?.isFinalized ?? urlFinalized;
 
-  const handleDownloadPdf = useCallback(async () => {
+  const handleDownloadPdf = useCallback(async (sequenceNo: number, passengerName: string) => {
     if (!shoppingFileId || pdfLoading) return;
     setPdfLoading(true);
     try {
-      const response = await fetch(`/api/ticket/pdf/${shoppingFileId}`);
+      const response = await fetch(`/api/ticket/pdf/${shoppingFileId}?sequenceNo=${sequenceNo}`);
       if (!response.ok) throw new Error('PDF download failed');
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `AtaBilet-${pnr}.pdf`;
+      a.download = `AtaBilet-${pnr}-${passengerName.replace(/\s+/g, '_')}.pdf`;
       a.click();
       window.URL.revokeObjectURL(url);
     } catch (error) {
@@ -458,6 +458,7 @@ export default function SuccessClient() {
                   <span>Doğum Tarihi</span>
                   <span>Cinsiyet</span>
                   <span>Yolcu Tipi</span>
+                  <span>PDF</span>
                 </div>
                 {readResult?.passengers
                   ? readResult.passengers.map((pax, idx) => {
@@ -467,25 +468,63 @@ export default function SuccessClient() {
                            p.lastName?.toUpperCase() === pax.lastName?.toUpperCase())
                       );
                       const paxType = pax.paxType ?? bookingPax?.paxType ?? null;
+                      const seqNo = pax.sequenceNo ?? bookingPax?.sequenceNo ?? (idx + 1);
+                      const fullName = `${pax.firstName} ${pax.lastName}`;
                       return (
                         <div key={idx} className="tc-pax-table__row">
-                          <span className="tc-pax-table__name">{pax.firstName} {pax.lastName}</span>
+                          <span className="tc-pax-table__name">{fullName}</span>
                           <span>{bookingPax?.citizenNo ?? bookingPax?.passportNo ?? '—'}</span>
                           <span>{bookingPax?.birthDate ? formatDateTurkish(bookingPax.birthDate) : '—'}</span>
                           <span>{formatGender(bookingPax?.gender ?? null)}</span>
                           <span>{formatPaxType(paxType)}</span>
+                          <span>
+                            {shoppingFileId && (
+                              <button
+                                className="tc-btn-pdf"
+                                onClick={() => handleDownloadPdf(seqNo, fullName)}
+                                disabled={pdfLoading}
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                  <polyline points="7 10 12 15 17 10" />
+                                  <line x1="12" y1="15" x2="12" y2="3" />
+                                </svg>
+                                {pdfLoading ? '...' : 'PDF İndir'}
+                              </button>
+                            )}
+                          </span>
                         </div>
                       );
                     })
-                  : passengers.map((pax, idx) => (
-                      <div key={idx} className="tc-pax-table__row">
-                        <span className="tc-pax-table__name">{pax.firstName} {pax.lastName}</span>
-                        <span>{pax.citizenNo ?? pax.passportNo ?? '—'}</span>
-                        <span>{pax.birthDate ? formatDateTurkish(pax.birthDate) : '—'}</span>
-                        <span>{formatGender(pax.gender)}</span>
-                        <span>{formatPaxType(pax.paxType)}</span>
-                      </div>
-                    ))
+                  : passengers.map((pax, idx) => {
+                      const seqNo = pax.sequenceNo ?? (idx + 1);
+                      const fullName = `${pax.firstName} ${pax.lastName}`;
+                      return (
+                        <div key={idx} className="tc-pax-table__row">
+                          <span className="tc-pax-table__name">{fullName}</span>
+                          <span>{pax.citizenNo ?? pax.passportNo ?? '—'}</span>
+                          <span>{pax.birthDate ? formatDateTurkish(pax.birthDate) : '—'}</span>
+                          <span>{formatGender(pax.gender)}</span>
+                          <span>{formatPaxType(pax.paxType)}</span>
+                          <span>
+                            {shoppingFileId && (
+                              <button
+                                className="tc-btn-pdf"
+                                onClick={() => handleDownloadPdf(seqNo, fullName)}
+                                disabled={pdfLoading}
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                  <polyline points="7 10 12 15 17 10" />
+                                  <line x1="12" y1="15" x2="12" y2="3" />
+                                </svg>
+                                {pdfLoading ? '...' : 'PDF İndir'}
+                              </button>
+                            )}
+                          </span>
+                        </div>
+                      );
+                    })
                 }
               </div>
             </div>
@@ -515,20 +554,6 @@ export default function SuccessClient() {
             </div>
 
             <div className="tc-actions">
-              {shoppingFileId && (
-                <button
-                  className="tc-btn tc-btn--green"
-                  onClick={handleDownloadPdf}
-                  disabled={pdfLoading}
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="7 10 12 15 17 10" />
-                    <line x1="12" y1="15" x2="12" y2="3" />
-                  </svg>
-                  {pdfLoading ? 'İndiriliyor...' : 'PDF Olarak İndir'}
-                </button>
-              )}
               <button className="tc-btn tc-btn--gray" onClick={handleGoHome}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />

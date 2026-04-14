@@ -7,10 +7,14 @@ const passengerItemSchema = z.object({
   lastName: z.string().min(2).max(50).trim().regex(/^[A-ZÇĞİÖŞÜa-zçğıöşü\s'-]+$/, 'Geçersiz soyisim'),
   gender: z.enum(['M', 'F']),
   birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  citizenNo: z.string().length(11).regex(/^\d{11}$/).nullable().optional(),
-  passportNo: z.string().min(5).max(20).regex(/^[A-Z0-9]+$/i).nullable().optional(),
-  passportCountry: z.string().length(2).regex(/^[A-Z]{2}$/i).nullable().optional(),
-  passportExpiry: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+  citizenNo: z.string().length(11).regex(/^\d{11}$/).nullable().optional()
+    .or(z.literal('')).transform(v => v || null),
+  passportNo: z.string().min(5).max(20).regex(/^[A-Z0-9]+$/i).nullable().optional()
+    .or(z.literal('')).transform(v => v || null),
+  passportCountry: z.string().length(2).regex(/^[A-Z]{2}$/i).nullable().optional()
+    .or(z.literal('')).transform(v => v || null),
+  passportExpiry: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional()
+    .or(z.literal('')).transform(v => v || null),
   nationality: z.string().length(2).regex(/^[A-Z]{2}$/i).optional().default('TR'),
   tempTag: z.string().max(200).nullable().optional(),
   paxReferenceId: z.string().max(200).nullable().optional(),

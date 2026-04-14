@@ -7903,7 +7903,7 @@ footer,
 
 .tc-pax-table__head {
   display: grid;
-  grid-template-columns: 2fr 1.5fr 1.2fr 0.8fr 0.8fr;
+  grid-template-columns: 2fr 1.5fr 1.2fr 0.8fr 0.8fr 0.8fr;
   gap: 8px;
   padding: 12px 0;
   font-size: 12px;
@@ -7916,7 +7916,7 @@ footer,
 
 .tc-pax-table__row {
   display: grid;
-  grid-template-columns: 2fr 1.5fr 1.2fr 0.8fr 0.8fr;
+  grid-template-columns: 2fr 1.5fr 1.2fr 0.8fr 0.8fr 0.8fr;
   gap: 8px;
   padding: 12px 0;
   font-size: 13px;
@@ -7932,6 +7932,32 @@ footer,
 .tc-pax-table__name {
   font-weight: 600;
   color: #1f2937;
+}
+
+/* Per-passenger PDF download button */
+.tc-btn-pdf {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  background-color: #DC2626;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+}
+
+.tc-btn-pdf:hover {
+  background-color: #B91C1C;
+}
+
+.tc-btn-pdf:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* ── Section 5: Contact & Actions ── */
@@ -8075,7 +8101,7 @@ footer,
 
   .tc-pax-table__head,
   .tc-pax-table__row {
-    grid-template-columns: 1.5fr 1fr 1fr;
+    grid-template-columns: 1.5fr 1fr 1fr 0.7fr;
   }
 
   /* Hide less critical columns on tablet */
@@ -8140,7 +8166,7 @@ footer,
 
   .tc-pax-table__head,
   .tc-pax-table__row {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1fr 0.7fr;
   }
 
   .tc-pax-table__head span:nth-child(3),
