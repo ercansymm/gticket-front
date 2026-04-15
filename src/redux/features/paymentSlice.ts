@@ -9,6 +9,7 @@ import {
   logoutSession,
   getBookingById,
   getBookingByPnr,
+  lookupBookingByPnrAndLastName,
   cancelBooking,
   getBookingStatus,
 } from '../../api/flight';
@@ -218,15 +219,15 @@ export const getBookingByIdThunk = createAsyncThunk(
 
 export const getBookingByPnrThunk = createAsyncThunk(
   'payment/getBookingByPnr',
-  async (pnr: string, { rejectWithValue }) => {
+  async ({ pnr, lastName }: { pnr: string; lastName: string }, { rejectWithValue }) => {
     try {
-      const result = await getBookingByPnr(pnr);
+      const result = await lookupBookingByPnrAndLastName(pnr, lastName);
       if (result.hasError) {
         return rejectWithValue(result.errorMessage || 'PNR bulunamadı');
       }
       return result;
     } catch (error: any) {
-      return rejectWithValue(extractErrorMessage(error, 'PNR bulunamadı'));
+      return rejectWithValue(extractErrorMessage(error, 'Girilen PNR ve soyad ile eşleşen rezervasyon bulunamadı'));
     }
   },
 );

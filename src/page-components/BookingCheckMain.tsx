@@ -72,7 +72,7 @@ const BookingCheckMain = () => {
       e.preventDefault();
       if (!validate()) return;
       dispatch(clearBookingDetail());
-      dispatch(getBookingByPnrThunk(pnr.trim()));
+      dispatch(getBookingByPnrThunk({ pnr: pnr.trim(), lastName: surname.trim() }));
    };
 
    const statusInfo = bookingDetail?.status ? BOOKING_STATUS_MAP[bookingDetail.status] : null;
