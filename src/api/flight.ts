@@ -99,6 +99,12 @@ export const getBookingByPnr = async (pnr: string): Promise<BookingDetailRespons
   return response.data;
 };
 
+// InternalPnr + Soyad ile booking sorgulama
+export const lookupBookingByPnrAndLastName = async (pnr: string, lastName: string): Promise<BookingDetailResponse> => {
+  const response = await apiClient.get<BookingDetailResponse>(`/flight/booking/lookup/${encodeURIComponent(pnr)}/${encodeURIComponent(lastName)}`);
+  return response.data;
+};
+
 // Rezervasyon iptali
 export const cancelBooking = async (params: CancelBookingClientRequest): Promise<CancelBookingResponse> => {
   const response = await apiClient.post<CancelBookingResponse>('/flight/cancel-booking', params);
