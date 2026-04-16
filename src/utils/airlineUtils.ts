@@ -53,13 +53,11 @@ export const AIRLINE_COLORS: Record<string, { bg: string; color: string }> = {
 const FALLBACK_STYLE = { bg: '#6b7280', color: '#fff' };
 
 /**
- * Returns airline logo URL served from the backend static files.
- * Path: /images/airlines/{CODE}.png
+ * Returns airline logo URL from images.kiwi.com (icon-only, no wordmark).
  */
 export function getAirlineLogoUrl(code: string | null, size = 64): string | null {
   if (!code) return null;
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? '';
-  return `${baseUrl}/images/airlines/${code.toUpperCase()}.png`;
+  return `https://images.kiwi.com/airlines/64x64/${code.toUpperCase()}.png`;
 }
 
 export function getAirlineBrandStyle(code: string | null): { bg: string; color: string } {
