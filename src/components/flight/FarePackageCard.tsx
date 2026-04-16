@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { FarePackage, FarePackageRule } from '@/types';
+import { useCurrency } from '@/context/CurrencyContext';
 
 interface FarePackageCardProps {
   pkg: FarePackage;
@@ -126,6 +127,7 @@ function getRuleLabel(serviceGroup: string | null, description: string | null): 
 
 const FarePackageCard = ({ pkg, isActive, onSelect, compact = false }: FarePackageCardProps) => {
   const [paxOpen, setPaxOpen] = useState(false);
+  const { formatPrice } = useCurrency();
 
   return (
     <div
@@ -166,7 +168,7 @@ const FarePackageCard = ({ pkg, isActive, onSelect, compact = false }: FarePacka
           <span className="bb-pkg-card__diff">{pkg.priceDifferenceFormatted}</span>
         )}
         <span className="bb-pkg-card__total">
-          {pkg.totalFareFormatted ?? `${pkg.totalFare.toLocaleString('tr-TR', { minimumFractionDigits: 0 })} ${pkg.currency ?? 'TRY'}`}
+          {formatPrice(pkg.totalFare)}
         </span>
       </div>
 
@@ -189,7 +191,7 @@ const FarePackageCard = ({ pkg, isActive, onSelect, compact = false }: FarePacka
                 <div key={idx} className="bb-pkg-card__pax-row">
                   <span>{PAX_TYPE_LABELS[(pf.passengerType ?? 'ADT').toUpperCase()] ?? pf.passengerType} x{pf.passengerCount}</span>
                   <span>
-                    {pf.totalFareFormatted ?? `${pf.totalFare.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ${pf.currency ?? 'TRY'}`}
+                    {formatPrice(pf.totalFare)}
                   </span>
                 </div>
               ))}

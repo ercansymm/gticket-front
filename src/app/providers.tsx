@@ -9,6 +9,7 @@ import { Provider } from "react-redux";
 import store from "@/redux/store";
 import { hydrateCart } from "@/redux/features/cartSlice";
 import { LanguageProvider } from "@/context/LanguageContext";
+import { CurrencyProvider } from "@/context/CurrencyContext";
 import { ToastContainer } from "react-toastify";
 import ScrollToTop from "@/components/common/ScrollToTop";
 import SessionIdBadge from "@/components/dev/SessionIdBadge";
@@ -29,11 +30,13 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     >
       <Provider store={store}>
         <LanguageProvider>
+          <CurrencyProvider>
           <HydrateCart />
           {children}
           <ScrollToTop />
           <SessionIdBadge />
           <ToastContainer position="top-center" />
+          </CurrencyProvider>
         </LanguageProvider>
       </Provider>
     </SessionProvider>

@@ -16,6 +16,7 @@ import type { PassengerItem, ContactInfo, MakePreBookingResponse } from '@/types
 import { useSessionTimeout } from '@/hooks/UseSessionTimeout';
 import { airports } from '@/data/AirportData';
 import { AIRLINE_COLORS, getAirlineLogoUrl, getAirlineBrandStyle } from '@/utils/airlineUtils';
+import { useCurrency } from '@/context/CurrencyContext';
 
 const FALLBACK_STYLE = { bg: '#6b7280', color: '#fff' };
 
@@ -24,6 +25,7 @@ export default function CheckoutClient() {
   const dispatch = useDispatch<AppDispatch>();
   const { data: session } = useSession();
   const { showWarning: sessionWarning, dismissWarning: dismissSessionWarning } = useSessionTimeout();
+  const { formatPrice, currency: displayCurrency } = useCurrency();
   const [priceChangedResult, setPriceChangedResult] = useState<MakePreBookingResponse | null>(null);
 
   /* ── Payment state ── */
@@ -837,13 +839,19 @@ export default function CheckoutClient() {
                 <i className="fa-solid fa-receipt" />
                 Fiyat Detayı
               </h3>
-              <div className="bb-checkout__price-row"><span>Bilet Ücreti</span><span>{priceSummary.totalBaseFare.toFixed(2)} {priceSummary.currency}</span></div>
-              <div className="bb-checkout__price-row"><span>Vergiler &amp; Harçlar</span><span>{priceSummary.totalTaxes.toFixed(2)} {priceSummary.currency}</span></div>
+              <div className="bb-checkout__price-row"><span>Bilet Ücreti</span><span>{formatPrice(priceSummary.totalBaseFare)}</span></div>
+              <div className="bb-checkout__price-row"><span>Vergiler &amp; Harçlar</span><span>{formatPrice(priceSummary.totalTaxes)}</span></div>
               {priceSummary.totalServiceFee > 0 && (
-                <div className="bb-checkout__price-row"><span>Hizmet Bedeli</span><span>{priceSummary.totalServiceFee.toFixed(2)} {priceSummary.currency}</span></div>
+                <div className="bb-checkout__price-row"><span>Hizmet Bedeli</span><span>{formatPrice(priceSummary.totalServiceFee)}</span></div>
               )}
-              <div className="bb-checkout__price-row bb-checkout__price-row--total"><span>Genel Toplam</span><span>{priceSummary.grandTotal.toFixed(2)} {priceSummary.currency}</span></div>
+              <div className="bb-checkout__price-row bb-checkout__price-row--total"><span>Genel Toplam</span><span>{formatPrice(priceSummary.grandTotal)}</span></div>
               <div className="bb-checkout__price-pax">{paxSummaryText}</div>
+              {displayCurrency !== 'TRY' && (
+                <div className="bb-currency-note">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  Ödeme {priceSummary.grandTotal.toFixed(2)} TRY olarak tahsil edilecektir.
+                </div>
+              )}
             </div>
 
             {/* Secure badge */}
@@ -858,7 +866,7 @@ export default function CheckoutClient() {
         <div className="bb-checkout__bottom-bar">
           <div>
             <div className="bb-checkout__bottom-bar-info">{paxSummaryText} toplam tutar</div>
-            <div className="bb-checkout__bottom-bar-price">{priceSummary.grandTotal.toFixed(2)} {priceSummary.currency}</div>
+            <div className="bb-checkout__bottom-bar-price">{formatPrice(priceSummary.grandTotal)}</div>
           </div>
           <button
             type="button"
@@ -935,14 +943,14 @@ export default function CheckoutClient() {
                   <div className="bb-modal__price-old">
                     <span className="bb-modal__price-label">Onceki Fiyat</span>
                     <span className="bb-modal__price-amount bb-modal__price-amount--old">
-                      {priceChangedResult.oldPrice.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} {priceChangedResult.currency ?? 'TRY'}
+                      {formatPrice(priceChangedResult.oldPrice)}
                     </span>
                   </div>
                 )}
                 <div className="bb-modal__price-new">
                   <span className="bb-modal__price-label">Yeni Fiyat</span>
                   <span className="bb-modal__price-amount bb-modal__price-amount--new">
-                    {priceChangedResult.totalFare?.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} {priceChangedResult.currency ?? 'TRY'}
+                    {formatPrice(priceChangedResult.totalFare ?? 0)}
                   </span>
                 </div>
               </div>

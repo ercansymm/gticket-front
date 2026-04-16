@@ -11,6 +11,7 @@ import { clearSearch } from '@/redux/features/flightSlice';
 import type { RootState, AppDispatch } from '@/redux/store';
 import type { AllocateSegment } from '@/types/flight';
 import { getTurkishAirportInfo } from '@/utils/airportTurkishNames';
+import { useCurrency } from '@/context/CurrencyContext';
 
 function getCityName(code: string | null): string {
   if (!code) return '';
@@ -109,6 +110,7 @@ export default function SuccessClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [pdfLoading, setPdfLoading] = useState(false);
+  const { formatPrice } = useCurrency();
 
   const { searchId, allocateResult, selectedFlight, selectedReturnFlight, searchParams: flightSearchParams } = useSelector((state: RootState) => state.flight);
   const { passengers, contactInfo, preBookingResult } = useSelector((state: RootState) => state.booking);
@@ -157,7 +159,7 @@ export default function SuccessClient() {
   };
 
   const shoppingFileId = allocateResult?.shoppingFileId;
-  const pnr = finalizeResult?.pnr ?? finalizeResult?.bookingCode ?? preBookingResult?.bookingCode ?? urlPnr ?? '—';
+  const pnr = finalizeResult?.internalPnr ?? urlPnr ?? '—';
   const tickets = finalizeResult?.tickets ?? [];
   const isFinalized = finalizeResult?.isFinalized ?? urlFinalized;
 
@@ -422,7 +424,7 @@ export default function SuccessClient() {
                   <span className="tc-price__label">Esas Ücret / Base Fare</span>
                   <span className="tc-price__dots" />
                   <span className="tc-price__value">
-                    {baseFare.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} {currency}
+                    {formatPrice(baseFare)}
                   </span>
                 </div>
               )}
@@ -431,7 +433,7 @@ export default function SuccessClient() {
                   <span className="tc-price__label">Vergiler ve Ücretler / Taxes</span>
                   <span className="tc-price__dots" />
                   <span className="tc-price__value">
-                    {taxes.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} {currency}
+                    {formatPrice(taxes)}
                   </span>
                 </div>
               )}
@@ -440,7 +442,7 @@ export default function SuccessClient() {
                 <span className="tc-price__label">TOPLAM / TOTAL</span>
                 <span className="tc-price__dots" />
                 <span className="tc-price__value tc-price__value--total">
-                  {totalFare.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} {currency}
+                  {formatPrice(totalFare)}
                 </span>
               </div>
               <p className="tc-price__note">Taxes / Fees / Charges included in total fare.</p>

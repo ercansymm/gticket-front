@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import type { FlightResult, FarePackage } from "@/types";
 import { getAirlineLogoUrl, getAirlineBrandStyle, getAirlineInitials } from '@/utils/airlineUtils';
+import { useCurrency } from '@/context/CurrencyContext';
 
 interface BundleFlightCardProps {
   outbound: FlightResult;
@@ -108,6 +109,7 @@ interface FarePkgRowProps {
 }
 
 function FarePkgRow({ pkg, isSelected, isDefault, onPick, onContinue, loading }: FarePkgRowProps) {
+  const { formatPrice } = useCurrency();
   const diffText = pkg.priceDifferenceFormatted
     ? `+${pkg.priceDifferenceFormatted}`
     : null;
@@ -148,9 +150,8 @@ function FarePkgRow({ pkg, isSelected, isDefault, onPick, onContinue, loading }:
       {/* Fiyat */}
       <div className="bb-bundle-card__fare-price">
         <span className="bb-bundle-card__fare-price-amount">
-          {pkg.totalFareFormatted ?? pkg.totalFare.toLocaleString("tr-TR")}
+          {formatPrice(pkg.totalFare)}
         </span>
-        <span className="bb-bundle-card__fare-price-currency">{pkg.currency ?? "TRY"}</span>
         {diffText && (
           <span className="bb-bundle-card__fare-price-diff">{diffText}</span>
         )}
@@ -181,7 +182,7 @@ export default function BundleFlightCard({
   onSelect,
   loading = false,
 }: BundleFlightCardProps) {
-  const currency = outbound.currency ?? "TRY";
+  const { formatPrice } = useCurrency();
   const farePackages = outbound.farePackages ?? [];
   const hasFares = farePackages.length > 1;
 
@@ -195,9 +196,7 @@ export default function BundleFlightCard({
   const displayFare = (hasFares && selectedPkg)
     ? selectedPkg.totalFare
     : (outbound.totalFare ?? 0);
-  const displayFormatted = (hasFares && selectedPkg?.totalFareFormatted)
-    ? selectedPkg.totalFareFormatted
-    : displayFare.toLocaleString("tr-TR", { minimumFractionDigits: 0 });
+  const displayFormatted = formatPrice(displayFare);
 
   const handleContinue = (pkg: FarePackage) => {
     onSelect(pkg.brandedFareItemId);
@@ -257,7 +256,6 @@ export default function BundleFlightCard({
             <span className="bb-bundle-card__price-label">Toplam</span>
             <div className="bb-bundle-card__price">
               <span className="bb-bundle-card__price-amount">{displayFormatted}</span>
-              <span className="bb-bundle-card__price-currency">{currency}</span>
             </div>
             <span className="bb-bundle-card__price-note">Gidiş + dönüş dahil</span>
           </div>

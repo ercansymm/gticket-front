@@ -223,11 +223,15 @@ export const getBookingByPnrThunk = createAsyncThunk(
     try {
       const result = await lookupBookingByPnrAndLastName(pnr, lastName);
       if (result.hasError) {
-        return rejectWithValue(result.errorMessage || 'PNR bulunamadı');
+        return rejectWithValue(result.errorMessage || 'Girilen PNR ve soyad ile eşleşen rezervasyon bulunamadı.');
       }
       return result;
     } catch (error: any) {
-      return rejectWithValue(extractErrorMessage(error, 'Girilen PNR ve soyad ile eşleşen rezervasyon bulunamadı'));
+      const status = error.response?.status;
+      if (status === 404) {
+        return rejectWithValue('Girilen PNR ve soyad ile eşleşen rezervasyon bulunamadı.');
+      }
+      return rejectWithValue(extractErrorMessage(error, 'Sorgulama sırasında bir hata oluştu. Lütfen tekrar deneyin.'));
     }
   },
 );
