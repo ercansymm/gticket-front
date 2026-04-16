@@ -6,7 +6,13 @@ import { useTranslation } from "../context/LanguageContext"
 import { useDispatch, useSelector } from "react-redux"
 import { getBookingByPnrThunk, clearBookingDetail } from "../redux/features/paymentSlice"
 import type { RootState, AppDispatch } from "../redux/store"
-import type { BookingStatus } from "@/types/flight"
+import { Search, Loader2, SearchX, AlertTriangle, ArrowLeft } from "lucide-react"
+import PnrHeaderCard from "../components/pnr/PnrHeaderCard"
+import FlightSegmentCard from "../components/pnr/FlightSegmentCard"
+import PassengerListCard from "../components/pnr/PassengerListCard"
+import PriceBreakdownCard from "../components/pnr/PriceBreakdownCard"
+import ActionPanel from "../components/pnr/ActionPanel"
+import RulesAccordion from "../components/pnr/RulesAccordion"
 
 const turkishToEnglishUpper = (value: string): string => {
    const charMap: Record<string, string> = {
@@ -26,16 +32,6 @@ const turkishToEnglishUpper = (value: string): string => {
       .map(char => charMap[char] || char)
       .join('')
       .toUpperCase();
-};
-
-const BOOKING_STATUS_MAP: Record<string, { label: string; color: string }> = {
-   PreBooked: { label: 'Ön Rezervasyon', color: '#eab308' },
-   Reserved: { label: 'Rezerve Edildi', color: '#f59e0b' },
-   Confirmed: { label: 'Onaylandı', color: '#10b981' },
-   Paid: { label: 'Ödendi', color: '#3b82f6' },
-   Ticketed: { label: 'Biletlendi', color: '#22c55e' },
-   Cancelled: { label: 'İptal Edildi', color: '#ef4444' },
-   Failed: { label: 'Hata Oluştu', color: '#6b7280' },
 };
 
 const BookingCheckMain = () => {
@@ -75,140 +71,270 @@ const BookingCheckMain = () => {
       dispatch(getBookingByPnrThunk({ pnr: pnr.trim(), lastName: surname.trim() }));
    };
 
-   const statusInfo = bookingDetail?.status ? BOOKING_STATUS_MAP[bookingDetail.status] : null;
+   const handleNewSearch = () => {
+      dispatch(clearBookingDetail());
+      setPnr("");
+      setSurname("");
+      setErrors({});
+   };
+
+   const isCancelled = bookingDetail?.status === "Cancelled";
+   const hasResult = bookingDetail && !bookingDetail.hasError;
+
+   // Segment labels for round-trip detection
+   const getSegmentLabel = (idx: number, total: number): string | undefined => {
+      if (total <= 1) return undefined;
+      if (idx === 0) return "Gidiş";
+      if (idx === total - 1 && total === 2) return "Dönüş";
+      return `Segment ${idx + 1}`;
+   };
+
+   // Action handlers (placeholder — wire up to real logic)
+   const handleDownloadPdf = () => {
+      // TODO: integrate with PDF download endpoint
+   };
+   const handleSendEmail = () => {
+      // TODO: integrate with email endpoint
+   };
+   const handlePrint = () => {
+      window.print();
+   };
+   const handleCancel = () => {
+      // TODO: integrate with cancel endpoint
+   };
+   const handleChange = () => {
+      // TODO: integrate with change flow
+   };
+   const handleOpenTicket = () => {
+      // TODO: integrate with open ticket flow
+   };
 
    return (
       <>
          <TrustBar />
          <HeaderOne />
-         <main style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 16px", background: "#f8f9fa" }}>
-            <div style={{ width: '100%', maxWidth: 600 }}>
-               <div className="bb-booking-check-card">
-                  <h1 className="bb-booking-check-card__title">{t.bookingCheckTitle}</h1>
-                  <form onSubmit={handleSubmit}>
-                     <div className="bb-flight-form__field" style={{ marginBottom: 16 }}>
-                        <label className="bb-flight-form__label">{t.pnrCode}</label>
-                        <input
-                           type="text"
-                           className={`bb-flight-form__input ${errors.pnr ? "bb-flight-form__input--error" : ""}`}
-                           placeholder={t.pnrPlaceholder}
-                           value={pnr}
-                           onChange={handlePnrChange}
-                           maxLength={10}
-                           autoComplete="off"
-                        />
-                        {errors.pnr && <span className="bb-flight-form__error">{errors.pnr}</span>}
+         <main className="pnr-page">
+            {/* ===== SEARCH FORM ===== */}
+            {!hasResult && (
+               <div className="pnr-page__center">
+                  <div className="pnr-card">
+                     <h1 className="pnr-search__title">
+                        {t.bookingCheckTitle}
+                     </h1>
+                     <form onSubmit={handleSubmit}>
+                        <div className="pnr-search__field">
+                           <label className="pnr-search__label">
+                              {t.pnrCode}
+                           </label>
+                           <input
+                              type="text"
+                              className={`pnr-search__input pnr-search__input--pnr ${errors.pnr ? "pnr-search__input--error" : ""}`}
+                              placeholder={t.pnrPlaceholder}
+                              value={pnr}
+                              onChange={handlePnrChange}
+                              maxLength={10}
+                              autoComplete="off"
+                           />
+                           {errors.pnr && (
+                              <span className="pnr-search__error">{errors.pnr}</span>
+                           )}
+                        </div>
+                        <div className="pnr-search__field">
+                           <label className="pnr-search__label">
+                              {t.lastName}
+                           </label>
+                           <input
+                              type="text"
+                              className={`pnr-search__input ${errors.surname ? "pnr-search__input--error" : ""}`}
+                              placeholder={t.lastNamePlaceholder}
+                              value={surname}
+                              onChange={handleSurnameChange}
+                              autoComplete="off"
+                           />
+                           {errors.surname && (
+                              <span className="pnr-search__error">{errors.surname}</span>
+                           )}
+                        </div>
+                        <button
+                           type="submit"
+                           disabled={bookingDetailLoading}
+                           className="pnr-search__btn"
+                        >
+                           {bookingDetailLoading ? (
+                              <>
+                                 <Loader2 size={16} className="pnr-spin" />
+                                 Sorgulanıyor...
+                              </>
+                           ) : (
+                              <>
+                                 <Search size={16} />
+                                 {t.query}
+                              </>
+                           )}
+                        </button>
+                     </form>
+                  </div>
+
+                  {/* Loading skeleton */}
+                  {bookingDetailLoading && (
+                     <div className="pnr-skeleton">
+                        <div className="pnr-card">
+                           <div className="pnr-skeleton__block" style={{ width: 96, height: 16, marginBottom: 12 }} />
+                           <div className="pnr-skeleton__block" style={{ width: 192, height: 32, marginBottom: 16 }} />
+                           <div className="pnr-skeleton__block" style={{ width: 128, height: 12 }} />
+                        </div>
+                        <div className="pnr-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                           <div>
+                              <div className="pnr-skeleton__block" style={{ width: 64, height: 32, marginBottom: 8 }} />
+                              <div className="pnr-skeleton__block" style={{ width: 48, height: 12 }} />
+                           </div>
+                           <div className="pnr-skeleton__block" style={{ width: 80, height: 16 }} />
+                           <div style={{ textAlign: 'right' }}>
+                              <div className="pnr-skeleton__block" style={{ width: 64, height: 32, marginBottom: 8, marginLeft: 'auto' }} />
+                              <div className="pnr-skeleton__block" style={{ width: 48, height: 12, marginLeft: 'auto' }} />
+                           </div>
+                        </div>
                      </div>
-                     <div className="bb-flight-form__field" style={{ marginBottom: 16 }}>
-                        <label className="bb-flight-form__label">{t.lastName}</label>
-                        <input
-                           type="text"
-                           className={`bb-flight-form__input ${errors.surname ? "bb-flight-form__input--error" : ""}`}
-                           placeholder={t.lastNamePlaceholder}
-                           value={surname}
-                           onChange={handleSurnameChange}
-                           autoComplete="off"
-                        />
-                        {errors.surname && <span className="bb-flight-form__error">{errors.surname}</span>}
+                  )}
+
+                  {/* Error state */}
+                  {bookingDetailError && (
+                     <div className="pnr-card" style={{ marginTop: 24, borderColor: '#FECACA' }}>
+                        <div className="pnr-error">
+                           <div className="pnr-error__icon">
+                              <AlertTriangle size={20} />
+                           </div>
+                           <div>
+                              <h3 className="pnr-error__title">Sorgulama Başarısız</h3>
+                              <p className="pnr-error__text">{bookingDetailError}</p>
+                           </div>
+                        </div>
+                        <button
+                           type="button"
+                           onClick={handleNewSearch}
+                           className="pnr-retry-btn"
+                           style={{ width: '100%', marginTop: 16 }}
+                        >
+                           Tekrar Dene
+                        </button>
                      </div>
-                     <button type="submit" className="bb-flight-form__submit" data-event="booking_check" style={{ width: "100%" }} disabled={bookingDetailLoading}>
-                        {bookingDetailLoading ? (
-                           <span>Sorgulanıyor...</span>
-                        ) : (
-                           <><i className="fa-solid fa-magnifying-glass"></i> {t.query}</>
-                        )}
-                     </button>
-                  </form>
+                  )}
+
+                  {/* Empty state — PNR not found */}
+                  {bookingDetail?.hasError && !bookingDetailError && (
+                     <div className="pnr-card" style={{ marginTop: 24 }}>
+                        <div className="pnr-empty">
+                           <div className="pnr-empty__icon">
+                              <SearchX size={28} />
+                           </div>
+                           <h3 className="pnr-empty__title">Rezervasyon Bulunamadı</h3>
+                           <p className="pnr-empty__text">
+                              Girilen PNR kodu ve soyad ile eşleşen bir rezervasyon bulunamadı. Lütfen bilgilerinizi kontrol ederek tekrar deneyin.
+                           </p>
+                           <button
+                              type="button"
+                              onClick={handleNewSearch}
+                              className="pnr-retry-btn"
+                           >
+                              Yeni Sorgulama
+                           </button>
+                        </div>
+                     </div>
+                  )}
                </div>
+            )}
 
-               {/* Error */}
-               {bookingDetailError && (
-                  <div className="bb-booking-check-card" style={{ marginTop: 16, borderLeft: '4px solid #ef4444' }}>
-                     <p style={{ color: '#ef4444', fontWeight: 500, margin: 0 }}>{bookingDetailError}</p>
-                     <button
-                        type="button"
-                        className="bb-flight-form__submit"
-                        style={{ marginTop: 12, width: '100%' }}
-                        onClick={() => { dispatch(clearBookingDetail()); }}
-                     >
-                        Tekrar Dene
-                     </button>
+            {/* ===== RESULT VIEW ===== */}
+            {hasResult && (
+               <div className="pnr-page__wide">
+                  {/* Back to search */}
+                  <button type="button" onClick={handleNewSearch} className="pnr-back">
+                     <ArrowLeft size={16} />
+                     Yeni Sorgulama
+                  </button>
+
+                  <div className="pnr-page__grid">
+                     {/* Main content */}
+                     <div className="pnr-page__main">
+                        {/* A. Header Card */}
+                        <PnrHeaderCard
+                           booking={bookingDetail}
+                           onDownloadPdf={handleDownloadPdf}
+                           onSendEmail={handleSendEmail}
+                           onPrint={handlePrint}
+                        />
+
+                        {/* B. Flight Segments */}
+                        {bookingDetail.segments?.map((seg, idx) => (
+                           <FlightSegmentCard
+                              key={idx}
+                              segment={seg}
+                              index={idx}
+                              label={getSegmentLabel(idx, bookingDetail.segments?.length ?? 0)}
+                           />
+                        ))}
+
+                        {/* C. Passenger & Price */}
+                        <div className="pnr-info-grid">
+                           <PassengerListCard
+                              passengers={bookingDetail.passengers ?? []}
+                              tickets={bookingDetail.tickets ?? []}
+                           />
+                           <PriceBreakdownCard booking={bookingDetail} />
+                        </div>
+
+                        {/* D. Rules Accordion */}
+                        <RulesAccordion />
+                     </div>
+
+                     {/* Sidebar — Action Panel (desktop only, hidden on mobile via CSS) */}
+                     <div>
+                        <ActionPanel
+                           isCancelled={isCancelled}
+                           onCancel={handleCancel}
+                           onChange={handleChange}
+                           onOpenTicket={handleOpenTicket}
+                        />
+                     </div>
                   </div>
-               )}
 
-               {/* Result */}
-               {bookingDetail && !bookingDetail.hasError && (
-                  <div className="bb-booking-check-card" style={{ marginTop: 16 }}>
-                     {/* Header */}
-                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                        <h2 style={{ margin: 0, fontSize: 18 }}>Rezervasyon Detayı</h2>
-                        {statusInfo && (
-                           <span style={{
-                              display: 'inline-block',
-                              padding: '4px 12px',
-                              borderRadius: 20,
-                              fontSize: 13,
-                              fontWeight: 600,
-                              color: '#fff',
-                              backgroundColor: statusInfo.color,
-                           }}>
-                              {statusInfo.label}
-                           </span>
+                  {/* Mobile sticky bottom action bar */}
+                  <div className="pnr-mobile-bar">
+                     <div className="pnr-mobile-bar__inner">
+                        {isCancelled ? (
+                           <div className="pnr-mobile-bar__cancelled">
+                              <AlertTriangle size={16} />
+                              Bu bilet iptal edilmiştir
+                           </div>
+                        ) : (
+                           <>
+                              <button
+                                 type="button"
+                                 onClick={handleCancel}
+                                 className="pnr-mobile-bar__btn pnr-mobile-bar__btn--cancel"
+                              >
+                                 İptal Et
+                              </button>
+                              <button
+                                 type="button"
+                                 onClick={handleChange}
+                                 className="pnr-mobile-bar__btn pnr-mobile-bar__btn--primary"
+                              >
+                                 Değişiklik
+                              </button>
+                              <button
+                                 type="button"
+                                 onClick={handleOpenTicket}
+                                 className="pnr-mobile-bar__btn pnr-mobile-bar__btn--secondary"
+                              >
+                                 Açık Bilet
+                              </button>
+                           </>
                         )}
                      </div>
-
-                     {/* PNR */}
-                     <div style={{ textAlign: 'center', padding: '16px 0', borderBottom: '1px solid #e5e7eb', marginBottom: 16 }}>
-                        <div style={{ fontSize: 13, color: '#6b7280' }}>PNR Kodu</div>
-                        <div style={{ fontSize: 28, fontWeight: 700, letterSpacing: 4, color: '#1d4ed8' }}>
-                           {bookingDetail.pnr ?? bookingDetail.bookingCode ?? '—'}
-                        </div>
-                     </div>
-
-                     {/* Route & segments */}
-                     {bookingDetail.segments?.map((seg, idx) => (
-                        <div key={idx} style={{ padding: '12px 0', borderBottom: '1px solid #f3f4f6' }}>
-                           <div style={{ fontWeight: 600 }}>
-                              {seg.originCode} → {seg.destinationCode}
-                           </div>
-                           <div style={{ fontSize: 13, color: '#6b7280' }}>
-                              {seg.departureDay} {seg.departureTime} — {seg.arrivalDay} {seg.arrivalTime}
-                           </div>
-                           <div style={{ fontSize: 12, color: '#6b7280' }}>
-                              {seg.marketingAirline} {seg.flightNumber}
-                           </div>
-                        </div>
-                     ))}
-
-                     {/* Passengers */}
-                     {bookingDetail.passengers?.length > 0 && (
-                        <div style={{ marginTop: 16, marginBottom: 16 }}>
-                           <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 8 }}>Yolcular</h3>
-                           {bookingDetail.passengers.map((pax, idx) => (
-                              <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #f3f4f6' }}>
-                                 <span>{pax.firstName} {pax.lastName}</span>
-                                 <span style={{ fontFamily: 'monospace', fontSize: 13, color: '#6b7280' }}>
-                                    {pax.ticketNumber ?? pax.paxType}
-                                 </span>
-                              </div>
-                           ))}
-                        </div>
-                     )}
-
-                     {/* Price */}
-                     <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderTop: '2px solid #e5e7eb', fontWeight: 700 }}>
-                        <span>Toplam</span>
-                        <span>{(bookingDetail.grandTotal || bookingDetail.totalFare)?.toFixed(2)} {bookingDetail.currency}</span>
-                     </div>
-
-                     {bookingDetail.createdAt && (
-                        <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 8 }}>
-                           Oluşturulma: {new Date(bookingDetail.createdAt).toLocaleString('tr-TR')}
-                        </div>
-                     )}
                   </div>
-               )}
-            </div>
+               </div>
+            )}
          </main>
          <FooterOne />
       </>
