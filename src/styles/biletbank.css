@@ -9755,7 +9755,8 @@ footer,
   /* Ensure airline logos and colored backgrounds print correctly */
   img,
   .pnr-flight__airline-logo,
-  .pnr-card {
+  .pnr-card { 
+    
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
