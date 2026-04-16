@@ -3,6 +3,7 @@ import Image from 'next/image';
 import type { FlightResult, FarePackage } from '@/types';
 import FarePackageSelector from './FarePackageSelector';
 import { getAirlineLogoUrl, getAirlineBrandStyle, getAirlineInitials } from '@/utils/airlineUtils';
+import { useCurrency } from '@/context/CurrencyContext';
 
 interface FlightCardProps {
   flight: FlightResult;
@@ -30,6 +31,7 @@ const FlightCard = ({ flight, onSelect, isSelected = false, allocateLoading = fa
   const baggageDisplay = getBaggageDisplay(flight);
   const logoPath = getAirlineLogoUrl(flight.airlineCode);
   const brandStyle = getAirlineBrandStyle(flight.airlineCode);
+  const { formatPrice, currency, getCurrencySymbol } = useCurrency();
 
   const hasPackages = flight.farePackages && flight.farePackages.length > 1;
 
@@ -41,9 +43,7 @@ const FlightCard = ({ flight, onSelect, isSelected = false, allocateLoading = fa
 
   // Displayed price: selected package price or flight's totalFare
   const displayPrice = (hasPackages && selectedPkg) ? selectedPkg.totalFare : flight.totalFare;
-  const displayPriceFormatted = (hasPackages && selectedPkg?.totalFareFormatted)
-    ? selectedPkg.totalFareFormatted
-    : displayPrice?.toLocaleString('tr-TR', { minimumFractionDigits: 0 });
+  const displayPriceFormatted = formatPrice(displayPrice);
 
   const handlePackageSelect = (pkg: FarePackage) => {
     setSelectedPkg(pkg);
@@ -114,7 +114,6 @@ const FlightCard = ({ flight, onSelect, isSelected = false, allocateLoading = fa
         <div className="bb-flight-card__price-section">
           <div className="bb-flight-card__price-amount">
             {displayPriceFormatted}
-            <span className="bb-flight-card__price-currency">{flight.currency ?? 'TRY'}</span>
           </div>
           <button
             className="bb-flight-card__select-btn"

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import type { FlightResult, FarePackage } from "@/types";
 import { getAirlineLogoUrl, getAirlineBrandStyle, getAirlineInitials } from '@/utils/airlineUtils';
+import { useCurrency } from '@/context/CurrencyContext';
 
 interface MultiCityBundleCardProps {
   legs: FlightResult[];
@@ -109,6 +110,7 @@ function FarePkgRow({
   onContinue,
   loading,
 }: FarePkgRowProps) {
+  const { formatPrice } = useCurrency();
   const diffText = pkg.priceDifferenceFormatted
     ? `+${pkg.priceDifferenceFormatted}`
     : null;
@@ -144,10 +146,7 @@ function FarePkgRow({
 
       <div className="bb-bundle-card__fare-price">
         <span className="bb-bundle-card__fare-price-amount">
-          {pkg.totalFareFormatted ?? pkg.totalFare.toLocaleString("tr-TR")}
-        </span>
-        <span className="bb-bundle-card__fare-price-currency">
-          {pkg.currency ?? "TRY"}
+          {formatPrice(pkg.totalFare)}
         </span>
         {diffText && (
           <span className="bb-bundle-card__fare-price-diff">{diffText}</span>
@@ -178,7 +177,7 @@ export default function MultiCityBundleCard({
   const firstLeg = legs[0];
   if (!firstLeg) return null;
 
-  const currency = firstLeg.currency ?? "TRY";
+  const { formatPrice } = useCurrency();
   const farePackages = firstLeg.farePackages ?? [];
   const hasFares = farePackages.length > 1;
 
@@ -191,10 +190,7 @@ export default function MultiCityBundleCard({
     hasFares && selectedPkg
       ? selectedPkg.totalFare
       : firstLeg.totalFare ?? 0;
-  const displayFormatted =
-    hasFares && selectedPkg?.totalFareFormatted
-      ? selectedPkg.totalFareFormatted
-      : displayFare.toLocaleString("tr-TR", { minimumFractionDigits: 0 });
+  const displayFormatted = formatPrice(displayFare);
 
   const handleContinue = (pkg: FarePackage) => {
     onSelect(pkg.brandedFareItemId);
@@ -261,7 +257,6 @@ export default function MultiCityBundleCard({
               <span className="bb-bundle-card__price-amount">
                 {displayFormatted}
               </span>
-              <span className="bb-bundle-card__price-currency">{currency}</span>
             </div>
             <span className="bb-bundle-card__price-note">
               Tum ucuslar dahil

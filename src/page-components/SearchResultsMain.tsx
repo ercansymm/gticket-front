@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import HeaderOne from '../layouts/headers/HeaderOne';
+import { useCurrency } from '@/context/CurrencyContext';
 import FooterOne from '../layouts/footers/FooterOne';
 import FlightCard from '../components/booking/FlightCard';
 import BundleFlightCard from '../components/booking/BundleFlightCard';
@@ -57,6 +58,7 @@ const SORT_OPTIONS: { value: FlightSortBy; label: string }[] = [
 const SearchResultsMain = () => {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
+  const { formatPrice } = useCurrency();
   const { searchResults, searchLoading, searchError, searchParams, allocateLoading, allocateError, selectedFlight, selectedLegFlights } = useSelector(
     (state: RootState) => state.flight
   );
@@ -947,7 +949,7 @@ const SearchResultsMain = () => {
                             {selectedOutbound.flight.departureTime} → {selectedOutbound.flight.arrivalTime}
                           </span>
                           <span className="bb-selected-summary__price">
-                            {selectedOutbound.flight.totalFare?.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} {selectedOutbound.flight.currency ?? 'TRY'}
+                            {formatPrice(selectedOutbound.flight.totalFare ?? 0)}
                           </span>
                         </div>
                         <button className="bb-selected-summary__change" onClick={handleClearOutbound}>
@@ -1097,7 +1099,7 @@ const SearchResultsMain = () => {
                                   {legSelected.departureTime} → {legSelected.arrivalTime}
                                 </span>
                                 <span className="bb-selected-summary__price">
-                                  {legSelected.totalFare?.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} {legSelected.currency ?? 'TRY'}
+                                  {formatPrice(legSelected.totalFare ?? 0)}
                                 </span>
                               </div>
                               <button className="bb-selected-summary__change" onClick={() => dispatch(clearSelectedLegFlight(leg.legIndex))}>
@@ -1172,14 +1174,14 @@ const SearchResultsMain = () => {
                   <div className="bb-modal__price-old">
                     <span className="bb-modal__price-label">Eski Fiyat</span>
                     <span className="bb-modal__price-amount bb-modal__price-amount--old">
-                      {selectedFlight?.totalFare?.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} {selectedFlight?.currency ?? 'TRY'}
+                      {formatPrice(selectedFlight?.totalFare ?? 0)}
                     </span>
                   </div>
                   <span className="bb-modal__price-arrow">→</span>
                   <div className="bb-modal__price-new">
                     <span className="bb-modal__price-label">Yeni Fiyat</span>
                     <span className="bb-modal__price-amount bb-modal__price-amount--new">
-                      {priceChangedData.priceSummary?.grandTotal?.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} {priceChangedData.priceSummary?.currency ?? 'TRY'}
+                      {formatPrice(priceChangedData.priceSummary?.grandTotal ?? 0)}
                     </span>
                   </div>
                 </div>

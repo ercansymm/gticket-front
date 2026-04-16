@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import Offcanvas from "./Menu/Offcanvas";
 import Logo from "../../components/common/Logo";
 import { useTranslation } from "../../context/LanguageContext";
+import CurrencySelector from "../../components/common/CurrencySelector";
 
 /** AtaBilet — Header. Logo, navigasyon, destek hattı, bilet sorgula, dil seçici ve giriş butonu. */
 const HeaderOne = () => {
@@ -69,6 +70,9 @@ const HeaderOne = () => {
                         )}
                      </div>
                      <span className="bb-divider d-none d-sm-block"></span>
+
+                     {/* Currency Selector — arama sonrası görünür */}
+                     <CurrencySelector />
 
                      {/* Login */}
                      <Link href="/login" className="bb-header-btn bb-header-btn--login d-none d-sm-inline-flex">

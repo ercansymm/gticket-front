@@ -586,6 +586,7 @@ export interface FinalizeShoppingResponse {
   tickets: TicketInfo[];
   bookingCode: string | null;
   pnr: string | null;
+  internalPnr: string | null;
 }
 
 export interface TicketInfo {
