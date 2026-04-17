@@ -104,9 +104,13 @@ const SearchResultsMain = () => {
   }, [mobileFilterOpen]);
 
   // Reset filters when new search results arrive so no filter is active initially
+  // If directFlightsOnly was selected in search form, pre-apply it
   useEffect(() => {
     if (searchResults?.flights) {
-      setFilters(INITIAL_FILTERS);
+      setFilters({
+        ...INITIAL_FILTERS,
+        directOnly: searchParams?.directFlightsOnly ?? false,
+      });
     }
   }, [searchResults]);
 
