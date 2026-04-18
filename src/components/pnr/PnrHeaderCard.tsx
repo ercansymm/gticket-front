@@ -39,7 +39,7 @@ export default function PnrHeaderCard({
       <div className="pnr-header">
         <div className="pnr-header__left">
           <div className="pnr-header__meta">
-            <span className="pnr-header__meta-label">PNR Kodu</span>
+            <span className="pnr-header__meta-label">ATA PNR Kodu</span>
             {statusInfo && (
               <span className={`pnr-badge ${statusInfo.badgeClass}`}>
                 {statusInfo.label}

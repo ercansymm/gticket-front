@@ -9,6 +9,7 @@ import BundleFlightCard from '../components/booking/BundleFlightCard';
 import MultiCityBundleCard from '../components/booking/MultiCityBundleCard';
 import FilterSidebar from '../components/booking/FilterSidebar';
 import SortBar from '../components/booking/SortBar';
+import FlightSearchLoading from '../components/flight/FlightSearchLoading';
 // import PriceCalendar, { generateMockPrices } from '../components/flight/PriceCalendar';
 import { searchFlightsThunk, setSelectedFlight, setSelectedReturnFlight, setSelectedBrandedFareItemId, setSelectedLegFlight, clearSelectedLegFlight, clearSelectedLegFlights, allocateFlightThunk, clearAllocate, setSearchParams, clearSearch } from '../redux/features/flightSlice';
 import { resetBooking } from '../redux/features/bookingSlice';
@@ -104,9 +105,13 @@ const SearchResultsMain = () => {
   }, [mobileFilterOpen]);
 
   // Reset filters when new search results arrive so no filter is active initially
+  // If directFlightsOnly was selected in search form, pre-apply it
   useEffect(() => {
     if (searchResults?.flights) {
-      setFilters(INITIAL_FILTERS);
+      setFilters({
+        ...INITIAL_FILTERS,
+        directOnly: searchParams?.directFlightsOnly ?? false,
+      });
     }
   }, [searchResults]);
 
@@ -521,46 +526,15 @@ const SearchResultsMain = () => {
       <>
         <HeaderOne />
         <main className="bb-search-results" style={{ position: 'relative' }}>
-          {/* Spinner card overlay */}
-          <div className="bb-flight-loading-overlay">
-            <div className="bb-flight-loading__card" style={{ maxWidth: 420, padding: '36px 32px' }}>
-              <div className="bb-flight-loading__logo" style={{ fontSize: 28, marginBottom: 16 }}>
-                <span style={{ color: '#DC2626' }}>Ata</span>
-                <span style={{ color: '#0F172A' }}>Bilet</span>
-              </div>
-              <div className="bb-flight-loading__bar">
-                <div className="bb-flight-loading__bar-fill"></div>
-              </div>
-              {loadingSegments ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 14 }}>
-                  {loadingSegments.map((seg, i) => (
-                    <div key={i} className="bb-flight-loading__route" style={{ fontSize: 14 }}>
-                      <span style={{ fontWeight: 600 }}>{seg.origin}</span>
-                      <i className="fa-solid fa-arrow-right" style={{ fontSize: 11, color: '#0C4A6E', margin: '0 8px' }}></i>
-                      <span style={{ fontWeight: 600 }}>{seg.destination}</span>
-                      <span style={{ marginLeft: 10, color: '#6b7280', fontSize: 12 }}>{seg.departureDate}</span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="bb-flight-loading__route" style={{ fontSize: 15, marginTop: 14 }}>
-                  <span style={{ fontWeight: 600 }}>{searchParams?.origin ?? '...'}</span>
-                  <i className="fa-solid fa-plane" style={{ fontSize: 13, color: '#0C4A6E', margin: '0 10px' }}></i>
-                  <span style={{ fontWeight: 600 }}>{searchParams?.destination ?? '...'}</span>
-                  {searchParams?.flightType === 'RT' && (
-                    <span style={{ marginLeft: 10, color: '#6b7280', fontSize: 12 }}>
-                      {searchParams?.departureDate} — {searchParams?.returnDate}
-                    </span>
-                  )}
-                  {searchParams?.flightType !== 'RT' && searchParams?.departureDate && (
-                    <span style={{ marginLeft: 10, color: '#6b7280', fontSize: 12 }}>{searchParams.departureDate}</span>
-                  )}
-                </div>
-              )}
-              <div style={{ marginTop: 8, fontSize: 13, color: '#6b7280' }}>{paxText} &middot; {tripTypeText}</div>
-              <p className="bb-flight-loading__text">Uçuşlar aranıyor<span className="bb-flight-loading__dots"></span></p>
-            </div>
-          </div>
+          {/* Immersive loading overlay */}
+          <FlightSearchLoading
+            origin={loadingSegments ? loadingSegments[0].origin : (searchParams?.origin ?? '...')}
+            destination={loadingSegments ? loadingSegments[loadingSegments.length - 1].destination : (searchParams?.destination ?? '...')}
+            departureDate={loadingSegments ? loadingSegments[0].departureDate : (searchParams?.departureDate ?? '')}
+            passengerCount={(searchParams?.adultCount ?? 1) + (searchParams?.childCount ?? 0) + (searchParams?.infantCount ?? 0)}
+            cabinClass={searchParams?.flightClass ?? 'Economy'}
+            tripType={searchParams?.flightType === 'RT' ? 'round-trip' : 'one-way'}
+          />
 
           {/* Background skeleton */}
           <div className="bb-search-summary">

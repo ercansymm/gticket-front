@@ -77,7 +77,6 @@ export default function AirlineLogo({
           printColorAdjust: "exact",
         }}
         loading="lazy"
-        crossOrigin="anonymous"
       />
     </span>
   );

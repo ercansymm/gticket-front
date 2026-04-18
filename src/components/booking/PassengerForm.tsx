@@ -424,9 +424,7 @@ export default function PassengerForm({ passengers, onSubmit, loading, disabled,
         {/* Panel body */}
         {isOpen && (
           <div className="bb-pax-panel__body">
-            <p className="bb-pax-panel__notice">
-              Lütfen adınızı ve soyadınızı pasaport veya nüfus cüzdanınızda göründüğü gibi eksiksiz yazınız.
-            </p>
+           
 
             {/* Gender */}
             <div className="bb-pax-panel__row">

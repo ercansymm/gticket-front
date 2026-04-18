@@ -4,7 +4,6 @@ import { useEffect, useCallback, useRef, useState, useMemo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import Image from 'next/image';
 import HeaderOne from '@/layouts/headers/HeaderOne';
 import FooterOne from '@/layouts/footers/FooterOne';
 import PassengerForm from '@/components/booking/PassengerForm';
@@ -15,10 +14,8 @@ import type { RootState, AppDispatch } from '@/redux/store';
 import type { PassengerItem, ContactInfo, MakePreBookingResponse } from '@/types/booking';
 import { useSessionTimeout } from '@/hooks/UseSessionTimeout';
 import { airports } from '@/data/AirportData';
-import { AIRLINE_COLORS, getAirlineLogoUrl, getAirlineBrandStyle } from '@/utils/airlineUtils';
 import { useCurrency } from '@/context/CurrencyContext';
-
-const FALLBACK_STYLE = { bg: '#6b7280', color: '#fff' };
+import AirlineLogo from '@/components/common/AirlineLogo';
 
 export default function CheckoutClient() {
   const router = useRouter();
@@ -395,10 +392,6 @@ export default function CheckoutClient() {
   // Guard: render nothing until allocate data is ready
   if (!allocateResult || !selectedFlight) return null;
 
-  const airlineCode = selectedFlight.airlineCode;
-  const logoPath = getAirlineLogoUrl(airlineCode);
-  const brandStyle = getAirlineBrandStyle(airlineCode);
-
   // Multi-city: ordered list of leg flights
   const isMultiCity = searchParams?.flightType === 'MP';
   const legFlightsList = isMultiCity
@@ -409,477 +402,517 @@ export default function CheckoutClient() {
         .filter(Boolean)
     : [];
 
+  /* ── Helpers ── */
+  const triggerPassengerSubmit = () => {
+    const form = document.querySelector('.bb-passenger-form') as HTMLFormElement | null;
+    if (form) form.requestSubmit();
+  };
+
+  /* ═══════════════════════════════════════════════════
+     DESIGN — clean, minimal, single-accent
+     ═══════════════════════════════════════════════════ */
+  const F = `'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif`;
+
+  const T = {
+    bg: '#f8f9fa',
+    surface: '#ffffff',
+    border: '#dadce0',
+    borderLight: '#e8eaed',
+    text: '#202124',
+    textSec: '#5f6368',
+    textMuted: '#80868b',
+    accent: '#1a73e8',
+    accentLight: '#e8f0fe',
+    accentDark: '#1557b0',
+    error: '#d93025',
+    errorBg: '#fce8e6',
+    warnBg: '#fef7e0',
+    warnText: '#b06000',
+    warnBorder: '#f5e6b8',
+  };
+
+  /* ── Computed ── */
+  const tripTypeLabel =
+    searchParams?.flightType === 'RT' ? 'Gidiş-Dönüş'
+    : searchParams?.flightType === 'MP' ? 'Çoklu Rota'
+    : 'Tek Yön';
+  const headerOriginCity = airports.find(a => a.code === selectedFlight.originCode)?.cityTr ?? selectedFlight.originCode;
+  const headerDestCity = (() => {
+    if (isMultiCity && legFlightsList.length > 0) {
+      const last = legFlightsList[legFlightsList.length - 1];
+      return airports.find(a => a.code === last?.destinationCode)?.cityTr ?? last?.destinationCode ?? '';
+    }
+    return airports.find(a => a.code === selectedFlight.destinationCode)?.cityTr ?? selectedFlight.destinationCode;
+  })();
+  const headerDateText = selectedFlight.departureDate ?? '';
+
+  /* ── Flight row ── */
+  const renderFlightRow = (flight: typeof selectedFlight, legLabel?: string, isFirst?: boolean) => {
+    if (!flight) return null;
+    const airCode = flight.airlineCode ?? '??';
+    const originCity = airports.find(a => a.code === flight.originCode)?.cityTr ?? '';
+    const destCity = airports.find(a => a.code === flight.destinationCode)?.cityTr ?? '';
+    return (
+      <div style={{
+        paddingTop: isFirst ? 0 : 16,
+        marginTop: isFirst ? 0 : 16,
+        borderTop: isFirst ? 'none' : `1px solid ${T.borderLight}`,
+      }}>
+        {legLabel && (
+          <div style={{
+            fontSize: 11, fontWeight: 600, color: T.accent,
+            letterSpacing: '0.04em', textTransform: 'uppercase' as const,
+            marginBottom: 12, fontFamily: F,
+          }}>
+            {legLabel}
+          </div>
+        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+          <AirlineLogo code={airCode} size={36} />
+          <div style={{ minWidth: 70 }}>
+            <div style={{ fontSize: 18, fontWeight: 600, color: T.text, lineHeight: 1, fontFamily: F }}>{flight.departureTime}</div>
+            <div style={{ fontSize: 12, color: T.textMuted, marginTop: 3, fontFamily: F }}>{flight.originCode}{originCity ? ` · ${originCity}` : ''}</div>
+          </div>
+          <div style={{ flex: 1, minWidth: 100, textAlign: 'center', padding: '0 8px' }}>
+            <div style={{ fontSize: 11, color: T.textMuted, marginBottom: 6, fontFamily: F }}>{flight.durationFormatted ?? ''}</div>
+            <div style={{ position: 'relative', height: 1, background: T.border }}>
+              <div style={{ position: 'absolute', right: -3, top: -3, width: 7, height: 7, borderRadius: '50%', background: T.accent }} />
+            </div>
+            <div style={{ fontSize: 11, color: T.textMuted, marginTop: 6, fontFamily: F }}>
+              {flight.flightNumber}{flight.cabinClass ? ` · ${flight.cabinClass}` : ''}
+            </div>
+            {flight.departureDate && (
+              <div style={{ fontSize: 11, color: T.textMuted, marginTop: 2, fontFamily: F }}>{flight.departureDate}</div>
+            )}
+          </div>
+          <div style={{ minWidth: 70, textAlign: 'right' }}>
+            <div style={{ fontSize: 18, fontWeight: 600, color: T.text, lineHeight: 1, fontFamily: F }}>{flight.arrivalTime}</div>
+            <div style={{ fontSize: 12, color: T.textMuted, marginTop: 3, fontFamily: F }}>{flight.destinationCode}{destCity ? ` · ${destCity}` : ''}</div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const payDisabled = isProcessing || !productId || !productItemId || !searchId || !kvkkAgreed;
+
+  /* ═══════════ RENDER ═══════════ */
   return (
     <>
       <HeaderOne />
-      <main className="bb-checkout bb-checkout--full">
-        {/* Session timeout warning */}
-        {sessionWarning && (
-          <div className="bb-countdown">
-            <span className="bb-countdown__icon">&#9201;</span>
-            <span className="bb-countdown__text">Oturumunuz sona ermek üzere. Lütfen işleminizi tamamlayın.</span>
-            <button type="button" onClick={dismissSessionWarning} style={{ background: 'none', border: 'none', fontWeight: 700, cursor: 'pointer', color: '#92400e', fontSize: 16 }}>&#10005;</button>
-          </div>
-        )}
+      <main style={{ minHeight: '100vh', background: T.bg, fontFamily: F, color: T.textSec }}>
 
-        {/* Auth banner */}
-        {session?.user ? (
-          <div className="bb-checkout__auth-banner bb-checkout__auth-banner--member">
-            Hoş geldiniz, <strong>{session.user.name || session.user.email}</strong>
-          </div>
-        ) : (
-          <div className="bb-checkout__auth-banner bb-checkout__auth-banner--guest">
-            Misafir olarak devam ediyorsunuz. Biletlerinizi takip etmek için
-            <a href={`/login?callbackUrl=/checkout`} style={{ fontWeight: 600, marginLeft: 4, color: 'inherit', textDecoration: 'underline' }}>
-              giriş yapabilirsiniz
-            </a>.
-          </div>
-        )}
-
-        {/* Warnings */}
-        {isPriceChanged && (
-          <div className="bb-checkout__price-warning">
-            Fiyat güncellenmiştir. Lütfen yeni fiyatı kontrol ediniz.
-          </div>
-        )}
-        {(!productId || !productItemId || !searchId) && (
-          <div className="bb-checkout__price-warning">
-            Uçuş tahsis bilgileri eksik. Lütfen geri dönüp tekrar uçuş seçiniz.
-          </div>
-        )}
-        {updatePassengersError && (
-          <div className="bb-checkout__price-warning">{updatePassengersError}</div>
-        )}
-        {preBookingError && !isProcessing && (
-          <div className="bb-checkout__price-warning">
-            <p>{preBookingError}</p>
-            <div style={{ display: 'flex', gap: 12, marginTop: 10, flexWrap: 'wrap' }}>
-              <button
-                type="button"
-                className="bb-checkout__btn bb-checkout__btn--next"
-                disabled={preBookingLoading}
-                onClick={() => {
-                  const form = document.querySelector('.bb-passenger-form') as HTMLFormElement;
-                  if (form) form.requestSubmit();
-                }}
-              >Tekrar Dene</button>
-              <button type="button" className="bb-checkout__btn bb-checkout__btn--back" onClick={() => router.push('/search-results')}>Farklı Uçuş Seç</button>
+        {/* ── Top strip ── */}
+        <div style={{ background: T.surface, borderBottom: `1px solid ${T.borderLight}` }}>
+          <div style={{ maxWidth: 1100, margin: '0 auto', padding: '12px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+            <div>
+              <span style={{ fontSize: 15, fontWeight: 600, color: T.text, fontFamily: F }}>
+                {headerOriginCity} &#8594; {headerDestCity}
+              </span>
+              <span style={{ fontSize: 13, color: T.textMuted, marginLeft: 12, fontFamily: F }}>
+                {tripTypeLabel}{headerDateText ? ` · ${headerDateText}` : ''}{paxSummaryText ? ` · ${paxSummaryText}` : ''}
+              </span>
             </div>
+            {!session?.user && (
+              <a href="/login?callbackUrl=/checkout"
+                style={{ fontSize: 13, color: T.accent, fontWeight: 500, textDecoration: 'none', fontFamily: F }}>
+                Giriş yap
+              </a>
+            )}
           </div>
-        )}
-        {paymentError && !isProcessing && (
-          <div className="bb-checkout__price-warning">
-            <i className="fa-solid fa-circle-exclamation" style={{ marginRight: 8 }} />{paymentError}
-          </div>
-        )}
-        {threeDSError && (
-          <div className="bb-checkout__price-warning">
-            <i className="fa-solid fa-circle-exclamation" style={{ marginRight: 8 }} />{threeDSError}
-          </div>
-        )}
-        {finalizeError && !isProcessing && (
-          <div className="bb-checkout__price-warning">
-            <i className="fa-solid fa-circle-exclamation" style={{ marginRight: 8 }} />
-            {/duplicate|zaten biletlen/i.test(finalizeError)
-              ? 'Biletleme işlemi zaten tamamlanmış görünüyor. Bilet sorgulama sayfasına yönlendiriliyorsunuz...'
-              : finalizeError}
-            <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
-              <button type="button" className="bb-checkout__btn bb-checkout__btn--next" style={{ fontSize: 13, padding: '6px 16px' }} onClick={() => router.push('/bilet-sorgula')}>Bilet Sorgula</button>
-              {!/duplicate|zaten biletlen/i.test(finalizeError) && (
-                <button
-                  type="button"
-                  className="bb-checkout__btn bb-checkout__btn--back"
-                  style={{ fontSize: 13, padding: '6px 16px' }}
-                  onClick={() => {
-                    if (finalizeTimeoutRef.current) { clearTimeout(finalizeTimeoutRef.current); finalizeTimeoutRef.current = null; }
-                    dispatch(clearFinalizeError());
-                    hasFinalized.current = false;
-                  }}
-                >Tekrar Dene</button>
+        </div>
+
+        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 20px 120px 20px' }}>
+
+          {/* ── Alerts ── */}
+          {sessionWarning && (
+            <div style={{
+              background: T.warnBg, border: `1px solid ${T.warnBorder}`,
+              color: T.warnText, padding: '10px 16px', borderRadius: 8,
+              fontSize: 13, fontFamily: F, marginBottom: 16,
+              display: 'flex', alignItems: 'center', gap: 10,
+            }}>
+              <span style={{ flex: 1 }}>Oturumunuz sona ermek üzere. Lütfen işleminizi tamamlayın.</span>
+              <button type="button" onClick={dismissSessionWarning}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.warnText, fontSize: 16, lineHeight: 1, padding: 2 }}
+                aria-label="Kapat">&#10005;</button>
+            </div>
+          )}
+
+          {(isPriceChanged || (!productId || !productItemId || !searchId) || updatePassengersError || (preBookingError && !isProcessing) || (paymentError && !isProcessing) || threeDSError || (finalizeError && !isProcessing)) && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
+              {isPriceChanged && (
+                <div style={{ background: T.warnBg, border: `1px solid ${T.warnBorder}`, color: T.warnText, padding: '10px 16px', borderRadius: 8, fontSize: 13, fontFamily: F }}>
+                  Fiyat güncellenmiştir. Lütfen yeni fiyatı kontrol ediniz.
+                </div>
               )}
-            </div>
-          </div>
-        )}
-
-        {/* ═════ TWO-COLUMN PRO LAYOUT ═════ */}
-        <div className="bb-checkout__pro-grid">
-          {/* ── Main Column ── */}
-          <div className="bb-checkout__col-main">
-
-          {/* Flight Summary */}
-          <div className="bb-checkout__card">
-            <h3 className="bb-checkout__card-title">
-              <i className="fa-solid fa-plane" />
-              Uçuş Özeti
-            </h3>
-
-            {/* Multi-city: show all leg flights */}
-            {isMultiCity && legFlightsList.length > 0 ? (
-              legFlightsList.map((legFlight, idx) => {
-                const legAirlineCode = legFlight.airlineCode;
-                const legLogo = getAirlineLogoUrl(legAirlineCode);
-                const legBrand = getAirlineBrandStyle(legAirlineCode);
-                return (
-                  <div key={idx}>
-                    <div className="bb-checkout__leg-label">{idx + 1}. Uçuş</div>
-                    <div className="bb-checkout__flight-mini">
-                      <div className="bb-checkout__flight-mini-logo"
-                        style={!legLogo ? { background: legBrand.bg, color: legBrand.color, border: 'none' } : undefined}
-                      >
-                        {legLogo ? (
-                          <Image src={legLogo} alt={legFlight.airlineName ?? 'airline'} width={36} height={36}
-                            onError={(e) => {
-                              const target = e.currentTarget.parentElement;
-                              if (target) { target.style.background = legBrand.bg; target.style.color = legBrand.color; target.style.border = 'none'; }
-                              e.currentTarget.style.display = 'none';
-                            }}
-                          />
-                        ) : (
-                          <span style={{ fontWeight: 700, fontSize: 13, letterSpacing: 1 }}>{legAirlineCode ?? '??'}</span>
-                        )}
-                      </div>
-                      <div className="bb-checkout__flight-mini-body">
-                        <div className="bb-checkout__flight-mini-airline">
-                          {legFlight.airlineName}
-                          <span style={{ fontWeight: 400, color: '#6b7280', marginLeft: 8, fontSize: 13 }}>{legFlight.flightNumber}</span>
-                        </div>
-                        <div className="bb-checkout__flight-mini-route">
-                          {legFlight.departureTime}<span className="bb-checkout__flight-mini-arrow">&rarr;</span>{legFlight.arrivalTime}
-                        </div>
-                        <div className="bb-checkout__flight-timeline-codes">
-                          <span className="bb-checkout__flight-timeline-code">{legFlight.originCode}</span>
-                          <span className="bb-checkout__flight-timeline-code">{legFlight.destinationCode}</span>
-                        </div>
-                        <div className="bb-checkout__flight-timeline">
-                          <span className="bb-checkout__flight-timeline-dot" />
-                          <div className="bb-checkout__flight-timeline-line">
-                            <span className="bb-checkout__flight-timeline-plane"><i className="fa-solid fa-plane" /></span>
-                          </div>
-                          <span className="bb-checkout__flight-timeline-dot" />
-                        </div>
-                        <div className="bb-checkout__flight-mini-meta">
-                          <span className="bb-checkout__flight-mini-detail">{legFlight.departureDate}</span>
-                          {legFlight.durationFormatted && <span className="bb-checkout__flight-mini-duration">{legFlight.durationFormatted}</span>}
-                          {legFlight.isDirect ? (
-                            <span className="bb-checkout__flight-badge bb-checkout__flight-badge--direct">Direkt</span>
-                          ) : (
-                            <span className="bb-checkout__flight-badge bb-checkout__flight-badge--stop">{legFlight.stopText}</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+              {(!productId || !productItemId || !searchId) && (
+                <div style={{ background: T.errorBg, border: `1px solid #f5c6c2`, color: '#c5221f', padding: '10px 16px', borderRadius: 8, fontSize: 13, fontFamily: F }}>
+                  Uçuş tahsis bilgileri eksik. Lütfen geri dönüp tekrar uçuş seçiniz.
+                </div>
+              )}
+              {updatePassengersError && (
+                <div style={{ background: T.errorBg, border: `1px solid #f5c6c2`, color: '#c5221f', padding: '10px 16px', borderRadius: 8, fontSize: 13, fontFamily: F }}>{updatePassengersError}</div>
+              )}
+              {preBookingError && !isProcessing && (
+                <div style={{ background: T.errorBg, border: `1px solid #f5c6c2`, color: '#c5221f', padding: '10px 16px', borderRadius: 8, fontSize: 13, fontFamily: F }}>
+                  <div>{preBookingError}</div>
+                  <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                    <button type="button" disabled={preBookingLoading} onClick={triggerPassengerSubmit}
+                      style={{ background: T.accent, color: '#fff', border: 'none', padding: '6px 14px', fontSize: 12, fontWeight: 500, borderRadius: 6, cursor: 'pointer', fontFamily: F }}>
+                      Tekrar dene
+                    </button>
+                    <button type="button" onClick={() => router.push('/search-results')}
+                      style={{ background: T.surface, color: T.textSec, border: `1px solid ${T.border}`, padding: '6px 14px', fontSize: 12, fontWeight: 500, borderRadius: 6, cursor: 'pointer', fontFamily: F }}>
+                      Farklı uçuş seç
+                    </button>
                   </div>
-                );
-              })
-            ) : (
-              /* Single / Round-trip flights */
-              <>
-                <div className="bb-checkout__flight-mini">
-                  <div className="bb-checkout__flight-mini-logo"
-                    style={!logoPath ? { background: brandStyle.bg, color: brandStyle.color, border: 'none' } : undefined}
-                  >
-                    {logoPath ? (
-                      <Image src={logoPath} alt={selectedFlight.airlineName ?? 'airline'} width={36} height={36}
-                        onError={(e) => {
-                          const target = e.currentTarget.parentElement;
-                          if (target) { target.style.background = brandStyle.bg; target.style.color = brandStyle.color; target.style.border = 'none'; }
-                          e.currentTarget.style.display = 'none';
-                          const fallback = document.createElement('span');
-                          fallback.style.fontWeight = '700'; fallback.style.fontSize = '13px'; fallback.style.letterSpacing = '1px';
-                          fallback.textContent = airlineCode ?? '??';
-                          target?.appendChild(fallback);
-                        }}
-                      />
-                    ) : (
-                      <span style={{ fontWeight: 700, fontSize: 13, letterSpacing: 1 }}>{airlineCode ?? '??'}</span>
+                </div>
+              )}
+              {paymentError && !isProcessing && (
+                <div style={{ background: T.errorBg, border: `1px solid #f5c6c2`, color: '#c5221f', padding: '10px 16px', borderRadius: 8, fontSize: 13, fontFamily: F }}>{paymentError}</div>
+              )}
+              {threeDSError && (
+                <div style={{ background: T.errorBg, border: `1px solid #f5c6c2`, color: '#c5221f', padding: '10px 16px', borderRadius: 8, fontSize: 13, fontFamily: F }}>{threeDSError}</div>
+              )}
+              {finalizeError && !isProcessing && (
+                <div style={{ background: T.errorBg, border: `1px solid #f5c6c2`, color: '#c5221f', padding: '10px 16px', borderRadius: 8, fontSize: 13, fontFamily: F }}>
+                  <div>
+                    {/duplicate|zaten biletlen/i.test(finalizeError)
+                      ? 'Biletleme işlemi zaten tamamlanmış görünüyor. Bilet sorgulama sayfasına yönlendiriliyorsunuz...'
+                      : finalizeError}
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                    <button type="button" onClick={() => router.push('/bilet-sorgula')}
+                      style={{ background: T.accent, color: '#fff', border: 'none', padding: '6px 14px', fontSize: 12, fontWeight: 500, borderRadius: 6, cursor: 'pointer', fontFamily: F }}>
+                      Bilet sorgula
+                    </button>
+                    {!/duplicate|zaten biletlen/i.test(finalizeError) && (
+                      <button type="button"
+                        style={{ background: T.surface, color: T.textSec, border: `1px solid ${T.border}`, padding: '6px 14px', fontSize: 12, fontWeight: 500, borderRadius: 6, cursor: 'pointer', fontFamily: F }}
+                        onClick={() => {
+                          if (finalizeTimeoutRef.current) { clearTimeout(finalizeTimeoutRef.current); finalizeTimeoutRef.current = null; }
+                          dispatch(clearFinalizeError());
+                          hasFinalized.current = false;
+                        }}>
+                        Tekrar dene
+                      </button>
                     )}
                   </div>
-                  <div className="bb-checkout__flight-mini-body">
-                    <div className="bb-checkout__flight-mini-airline">
-                      {selectedFlight.airlineName}
-                      <span style={{ fontWeight: 400, color: '#6b7280', marginLeft: 8, fontSize: 13 }}>{selectedFlight.flightNumber}</span>
-                    </div>
-                    <div className="bb-checkout__flight-mini-route">
-                      {selectedFlight.departureTime}<span className="bb-checkout__flight-mini-arrow">&rarr;</span>{selectedFlight.arrivalTime}
-                    </div>
-                    <div className="bb-checkout__flight-timeline-codes">
-                      <span className="bb-checkout__flight-timeline-code">{selectedFlight.originCode}</span>
-                      <span className="bb-checkout__flight-timeline-code">{selectedFlight.destinationCode}</span>
-                    </div>
-                    <div className="bb-checkout__flight-timeline">
-                      <span className="bb-checkout__flight-timeline-dot" />
-                      <div className="bb-checkout__flight-timeline-line">
-                        <span className="bb-checkout__flight-timeline-plane"><i className="fa-solid fa-plane" /></span>
-                      </div>
-                      <span className="bb-checkout__flight-timeline-dot" />
-                    </div>
-                    <div className="bb-checkout__flight-mini-meta">
-                      <span className="bb-checkout__flight-mini-detail">{selectedFlight.departureDate}</span>
-                      {selectedFlight.durationFormatted && <span className="bb-checkout__flight-mini-duration">{selectedFlight.durationFormatted}</span>}
-                      {selectedFlight.isDirect ? (
-                        <span className="bb-checkout__flight-badge bb-checkout__flight-badge--direct">Direkt</span>
-                      ) : (
-                        <span className="bb-checkout__flight-badge bb-checkout__flight-badge--stop">{selectedFlight.stopText}</span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="bb-checkout__flight-mini-right">
-                    <span className="bb-checkout__flight-mini-date">{selectedFlight.departureDate}</span>
-                    {selectedFlight.durationFormatted && <span className="bb-checkout__flight-mini-duration">{selectedFlight.durationFormatted}</span>}
-                  </div>
                 </div>
-                {selectedReturnFlight && (
+              )}
+            </div>
+          )}
+
+          {/* ═══ Layout ═══ */}
+          <div className="chk-layout" style={{ display: 'flex', flexDirection: 'column', gap: 24, alignItems: 'flex-start' }}>
+
+            {/* ─── LEFT ─── */}
+            <div className="chk-left" style={{ flex: 1, minWidth: 0, width: '100%' }}>
+
+              {/* Flight info */}
+              <div style={{
+                background: T.surface, border: `1px solid ${T.borderLight}`, borderRadius: 8,
+                padding: '18px 20px', marginBottom: 16,
+              }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: T.text, marginBottom: 14, fontFamily: F }}>Uçuş Bilgileri</div>
+                {isMultiCity && legFlightsList.length > 0 ? (
+                  legFlightsList.map((legFlight, idx) => (
+                    <div key={idx}>{renderFlightRow(legFlight, `${idx + 1}. Uçuş`, idx === 0)}</div>
+                  ))
+                ) : (
                   <>
-                    <div className="bb-checkout__flight-mini">
-                      <div className="bb-checkout__flight-mini-logo"
-                        style={{ background: getAirlineBrandStyle(selectedReturnFlight.airlineCode).bg, color: getAirlineBrandStyle(selectedReturnFlight.airlineCode).color, border: 'none' }}
-                      >
-                        <img src={getAirlineLogoUrl(selectedReturnFlight.airlineCode) ?? ''} alt={selectedReturnFlight.airlineName ?? ''} width={36} height={36} style={{ display: 'block' }}
-                          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
-                        />
-                      </div>
-                      <div className="bb-checkout__flight-mini-body">
-                        <div className="bb-checkout__flight-mini-airline">
-                          {selectedReturnFlight.airlineName}
-                          <span style={{ fontWeight: 400, color: '#6b7280', marginLeft: 8, fontSize: 13 }}>{selectedReturnFlight.flightNumber}</span>
-                        </div>
-                        <div className="bb-checkout__flight-mini-route">
-                          {selectedReturnFlight.departureTime}<span className="bb-checkout__flight-mini-arrow">&rarr;</span>{selectedReturnFlight.arrivalTime}
-                        </div>
-                        <div className="bb-checkout__flight-timeline-codes">
-                          <span className="bb-checkout__flight-timeline-code">{selectedReturnFlight.originCode}</span>
-                          <span className="bb-checkout__flight-timeline-code">{selectedReturnFlight.destinationCode}</span>
-                        </div>
-                        <div className="bb-checkout__flight-timeline">
-                          <span className="bb-checkout__flight-timeline-dot" />
-                          <div className="bb-checkout__flight-timeline-line">
-                            <span className="bb-checkout__flight-timeline-plane"><i className="fa-solid fa-plane" /></span>
-                          </div>
-                          <span className="bb-checkout__flight-timeline-dot" />
-                        </div>
-                        <div className="bb-checkout__flight-mini-meta">
-                          <span className="bb-checkout__flight-mini-detail">{selectedReturnFlight.departureDate}</span>
-                          {selectedReturnFlight.durationFormatted && <span className="bb-checkout__flight-mini-duration">{selectedReturnFlight.durationFormatted}</span>}
-                          {selectedReturnFlight.isDirect ? (
-                            <span className="bb-checkout__flight-badge bb-checkout__flight-badge--direct">Direkt</span>
-                          ) : (
-                            <span className="bb-checkout__flight-badge bb-checkout__flight-badge--stop">{selectedReturnFlight.stopText}</span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="bb-checkout__flight-mini-right">
-                        <span className="bb-checkout__flight-mini-date">{selectedReturnFlight.departureDate}</span>
-                        {selectedReturnFlight.durationFormatted && <span className="bb-checkout__flight-mini-duration">{selectedReturnFlight.durationFormatted}</span>}
-                      </div>
-                    </div>
+                    {renderFlightRow(selectedFlight, selectedReturnFlight ? 'Gidiş' : undefined, true)}
+                    {selectedReturnFlight && renderFlightRow(selectedReturnFlight, 'Dönüş', false)}
                   </>
                 )}
-              </>
-            )}
-            <div className="bb-checkout__price-pax">{paxSummaryText}</div>
-          </div>
-
-          {/* ──── Passenger Form ──── */}
-          <PassengerForm
-            passengers={passengers}
-            onSubmit={handlePassengerSubmit}
-            loading={updatePassengersLoading}
-            isInternational={isInternational}
-          />
-
-          {/* ── Payment Method Selection ── */}
-          <div className="bb-pay-methods">
-            <div className="bb-pay-methods__header">
-              <i className="fa-solid fa-credit-card" />
-              <span>Ödeme Yöntemi Seçin</span>
-            </div>
-            <div className="bb-pay-methods__body">
-              {/* Running Account */}
-              <div
-                className={`bb-payment-method ${paymentMethod === 'running_account' ? 'bb-payment-method--active' : ''}`}
-                onClick={() => setPaymentMethod('running_account')}
-              >
-                <div className="bb-payment-method__radio" />
-                <div className="bb-payment-method__icon"><i className="fa-solid fa-building-columns" /></div>
-                <div className="bb-payment-method__info">
-                  <p className="bb-payment-method__name">Cari Hesap ile Ödeme</p>
-                  <p className="bb-payment-method__desc">Acente cari hesabınızdan tahsil edilir</p>
-                </div>
               </div>
 
-              {/* Credit Card */}
-              <div
-                className={`bb-payment-method ${paymentMethod === 'credit_card' ? 'bb-payment-method--active' : ''}`}
-                onClick={() => setPaymentMethod('credit_card')}
-              >
-                <div className="bb-payment-method__radio" />
-                <div className="bb-payment-method__icon"><i className="fa-regular fa-credit-card" /></div>
-                <div className="bb-payment-method__info">
-                  <p className="bb-payment-method__name">Kredi Kartı ile Ödeme</p>
-                  <p className="bb-payment-method__desc">Visa, Mastercard, Amex</p>
-                </div>
+              {/* Passenger form */}
+              <div style={{
+                background: T.surface, border: `1px solid ${T.borderLight}`, borderRadius: 8,
+                padding: '18px 20px', marginBottom: 16,
+              }}>
+                <PassengerForm
+                  passengers={passengers}
+                  onSubmit={handlePassengerSubmit}
+                  loading={updatePassengersLoading}
+                  isInternational={isInternational}
+                />
               </div>
 
-              {/* Credit Card Form */}
-              {paymentMethod === 'credit_card' && (
-                <div className="bb-card-form">
-                  <div className="bb-card-form__row">
-                    <div className={`bb-card-form__field ${cardErrors.cardHolderName ? 'bb-card-form__field--error' : ''}`}>
-                      <label className="bb-card-form__label">Kart Üzerindeki İsim</label>
-                      <input type="text" className="bb-card-form__input" placeholder="AD SOYAD"
+              {/* Payment */}
+              <div style={{
+                background: T.surface, border: `1px solid ${T.borderLight}`, borderRadius: 8,
+                padding: '18px 20px', marginBottom: 16,
+              }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: T.text, marginBottom: 14, fontFamily: F }}>Ödeme Yöntemi</div>
+
+                <div style={{ display: 'flex', gap: 10, marginBottom: paymentMethod === 'credit_card' ? 18 : 0 }}>
+                  {([
+                    { id: 'running_account' as const, label: 'Cari Hesap' },
+                    { id: 'credit_card' as const, label: 'Kredi / Banka Kartı' },
+                  ]).map(opt => {
+                    const sel = paymentMethod === opt.id;
+                    return (
+                      <button key={opt.id} type="button" onClick={() => setPaymentMethod(opt.id)}
+                        style={{
+                          flex: 1, padding: '12px 14px', borderRadius: 8, cursor: 'pointer',
+                          fontSize: 13, fontWeight: sel ? 500 : 400, fontFamily: F,
+                          border: sel ? `2px solid ${T.accent}` : `1px solid ${T.border}`,
+                          background: sel ? T.accentLight : T.surface,
+                          color: sel ? T.accent : T.textSec,
+                          transition: 'all .15s',
+                        }}>
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {paymentMethod === 'credit_card' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: T.textSec, marginBottom: 5, fontFamily: F }}>Kart üzerindeki isim</label>
+                      <input type="text" placeholder="Ad Soyad"
                         value={cardForm.cardHolderName}
-                        onChange={e => { setCardForm(prev => ({ ...prev, cardHolderName: e.target.value })); setCardErrors(prev => ({ ...prev, cardHolderName: '' })); }}
+                        onChange={e => { setCardForm(p => ({ ...p, cardHolderName: e.target.value })); setCardErrors(p => ({ ...p, cardHolderName: '' })); }}
                         maxLength={100} autoComplete="cc-name"
-                      />
-                      {cardErrors.cardHolderName && <span className="bb-card-form__error">{cardErrors.cardHolderName}</span>}
+                        style={{
+                          width: '100%', height: 44, fontSize: 14, padding: '0 12px',
+                          border: `1px solid ${cardErrors.cardHolderName ? T.error : T.border}`,
+                          borderRadius: 8, background: T.surface, color: T.text, outline: 'none',
+                          fontFamily: F, boxSizing: 'border-box' as const,
+                        }} />
+                      {cardErrors.cardHolderName && <div style={{ fontSize: 12, color: T.error, marginTop: 4, fontFamily: F }}>{cardErrors.cardHolderName}</div>}
                     </div>
-                  </div>
-                  <div className="bb-card-form__row">
-                    <div className={`bb-card-form__field ${cardErrors.cardNumber ? 'bb-card-form__field--error' : ''}`}>
-                      <label className="bb-card-form__label">Kart Numarası</label>
-                      <div className="bb-card-form__input-wrap">
-                        <input type="text" inputMode="numeric" className="bb-card-form__input" placeholder="0000 0000 0000 0000"
-                          value={cardForm.cardNumber.replace(/(\d{4})(?=\d)/g, '$1 ')}
-                          onChange={e => { const v = e.target.value.replace(/\D/g, '').slice(0, 16); setCardForm(prev => ({ ...prev, cardNumber: v })); setCardErrors(prev => ({ ...prev, cardNumber: '' })); }}
-                          maxLength={19} autoComplete="cc-number"
-                        />
-                        <i className="fa-regular fa-credit-card bb-card-form__card-icon" />
+                    <div>
+                      <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: T.textSec, marginBottom: 5, fontFamily: F }}>Kart numarası</label>
+                      <input type="text" inputMode="numeric" placeholder="0000 0000 0000 0000"
+                        value={cardForm.cardNumber.replace(/(\d{4})(?=\d)/g, '$1 ')}
+                        onChange={e => { const v = e.target.value.replace(/\D/g, '').slice(0, 16); setCardForm(p => ({ ...p, cardNumber: v })); setCardErrors(p => ({ ...p, cardNumber: '' })); }}
+                        maxLength={19} autoComplete="cc-number"
+                        style={{
+                          width: '100%', height: 44, fontSize: 14, padding: '0 12px',
+                          border: `1px solid ${cardErrors.cardNumber ? T.error : T.border}`,
+                          borderRadius: 8, background: T.surface, color: T.text, outline: 'none',
+                          fontFamily: F, boxSizing: 'border-box' as const, letterSpacing: '0.04em',
+                        }} />
+                      {cardErrors.cardNumber && <div style={{ fontSize: 12, color: T.error, marginTop: 4, fontFamily: F }}>{cardErrors.cardNumber}</div>}
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+                      <div>
+                        <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: T.textSec, marginBottom: 5, fontFamily: F }}>Ay</label>
+                        <select value={cardForm.expiryMonth}
+                          onChange={e => { setCardForm(p => ({ ...p, expiryMonth: e.target.value })); setCardErrors(p => ({ ...p, expiryMonth: '' })); }}
+                          autoComplete="cc-exp-month" style={{
+                            width: '100%', height: 44, fontSize: 14, padding: '0 10px',
+                            border: `1px solid ${cardErrors.expiryMonth ? T.error : T.border}`,
+                            borderRadius: 8, background: T.surface, color: T.text, fontFamily: F, boxSizing: 'border-box' as const,
+                          }}>
+                          <option value="">Ay</option>
+                          {Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0')).map(m => (
+                            <option key={m} value={m}>{m}</option>
+                          ))}
+                        </select>
+                        {cardErrors.expiryMonth && <div style={{ fontSize: 12, color: T.error, marginTop: 4, fontFamily: F }}>{cardErrors.expiryMonth}</div>}
                       </div>
-                      {cardErrors.cardNumber && <span className="bb-card-form__error">{cardErrors.cardNumber}</span>}
+                      <div>
+                        <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: T.textSec, marginBottom: 5, fontFamily: F }}>Yıl</label>
+                        <select value={cardForm.expiryYear}
+                          onChange={e => { setCardForm(p => ({ ...p, expiryYear: e.target.value })); setCardErrors(p => ({ ...p, expiryYear: '' })); }}
+                          autoComplete="cc-exp-year" style={{
+                            width: '100%', height: 44, fontSize: 14, padding: '0 10px',
+                            border: `1px solid ${cardErrors.expiryYear ? T.error : T.border}`,
+                            borderRadius: 8, background: T.surface, color: T.text, fontFamily: F, boxSizing: 'border-box' as const,
+                          }}>
+                          <option value="">Yıl</option>
+                          {Array.from({ length: 10 }, (_, i) => String(new Date().getFullYear() + i)).map(y => (
+                            <option key={y} value={y}>{y}</option>
+                          ))}
+                        </select>
+                        {cardErrors.expiryYear && <div style={{ fontSize: 12, color: T.error, marginTop: 4, fontFamily: F }}>{cardErrors.expiryYear}</div>}
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: T.textSec, marginBottom: 5, fontFamily: F }}>CVC</label>
+                        <input type="password" inputMode="numeric" placeholder="***"
+                          value={cardForm.cvv}
+                          onChange={e => { const v = e.target.value.replace(/\D/g, '').slice(0, 4); setCardForm(p => ({ ...p, cvv: v })); setCardErrors(p => ({ ...p, cvv: '' })); }}
+                          maxLength={4} autoComplete="cc-csc"
+                          style={{
+                            width: '100%', height: 44, fontSize: 14, padding: '0 12px',
+                            border: `1px solid ${cardErrors.cvv ? T.error : T.border}`,
+                            borderRadius: 8, background: T.surface, color: T.text, outline: 'none',
+                            fontFamily: F, boxSizing: 'border-box' as const,
+                          }} />
+                        {cardErrors.cvv && <div style={{ fontSize: 12, color: T.error, marginTop: 4, fontFamily: F }}>{cardErrors.cvv}</div>}
+                      </div>
                     </div>
                   </div>
-                  <div className="bb-card-form__row bb-card-form__row--triple">
-                    <div className={`bb-card-form__field ${cardErrors.expiryMonth ? 'bb-card-form__field--error' : ''}`}>
-                      <label className="bb-card-form__label">Ay</label>
-                      <select className="bb-card-form__input bb-card-form__select" value={cardForm.expiryMonth}
-                        onChange={e => { setCardForm(prev => ({ ...prev, expiryMonth: e.target.value })); setCardErrors(prev => ({ ...prev, expiryMonth: '' })); }}
-                        autoComplete="cc-exp-month"
-                      >
-                        <option value="">Ay</option>
-                        {Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0')).map(m => (
-                          <option key={m} value={m}>{m}</option>
-                        ))}
-                      </select>
-                      {cardErrors.expiryMonth && <span className="bb-card-form__error">{cardErrors.expiryMonth}</span>}
+                )}
+              </div>
+
+              {/* Agreements */}
+              <div style={{
+                background: T.surface, border: `1px solid ${T.borderLight}`, borderRadius: 8,
+                padding: '18px 20px', marginBottom: 16,
+              }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: T.text, marginBottom: 12, fontFamily: F }}>Sözleşmeler</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <label htmlFor="paymentAgreement" className="bb-agreement" style={{
+                    display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px',
+                    borderRadius: 6, cursor: 'pointer',
+                    border: agreementError && !agreed ? `1px solid #f5c6c2` : '1px solid transparent',
+                    background: agreementError && !agreed ? T.errorBg : 'transparent',
+                    transition: 'all .1s',
+                  }}>
+                    <input type="checkbox" id="paymentAgreement" checked={agreed}
+                      onChange={(e) => { setAgreed(e.target.checked); if (e.target.checked) setAgreementError(false); }}
+                      style={{ marginTop: 2, width: 16, height: 16, accentColor: T.accent, flexShrink: 0, cursor: 'pointer' }} />
+                    <span style={{ fontSize: 13, color: T.textSec, lineHeight: 1.6, fontFamily: F }}>
+                      Satış koşullarını ve{' '}
+                      <span style={{ color: T.accent, fontWeight: 500, cursor: 'pointer' }}>mesafeli satış sözleşmesini</span>{' '}
+                      okudum, kabul ediyorum. Yolcu bilgilerinin doğruluğunu onaylıyorum.
+                    </span>
+                  </label>
+                  <label htmlFor="kvkkConsent" style={{
+                    display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px',
+                    borderRadius: 6, cursor: 'pointer',
+                  }}>
+                    <input type="checkbox" id="kvkkConsent" checked={kvkkAgreed}
+                      onChange={(e) => setKvkkAgreed(e.target.checked)}
+                      style={{ marginTop: 2, width: 16, height: 16, accentColor: T.accent, flexShrink: 0, cursor: 'pointer' }} />
+                    <span style={{ fontSize: 13, color: T.textSec, lineHeight: 1.6, fontFamily: F }}>
+                      <button type="button" onClick={(e) => { e.preventDefault(); setShowKvkkModal(true); }}
+                        style={{ background: 'none', border: 'none', padding: 0, color: T.accent, cursor: 'pointer', fontWeight: 500, fontSize: 'inherit', fontFamily: 'inherit' }}>
+                        KVKK Aydınlatma Metni
+                      </button>
+                      &apos;ni okudum ve kabul ediyorum.
+                    </span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* ─── RIGHT ─── */}
+            <aside className="chk-sidebar" style={{ width: '100%', minWidth: 0 }}>
+              <div style={{
+                background: T.surface, border: `1px solid ${T.borderLight}`, borderRadius: 8,
+                padding: '18px 20px',
+              }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: T.text, marginBottom: 14, fontFamily: F }}>Fiyat Özeti</div>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  {paxCounts.adult > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', fontSize: 13, fontFamily: F, borderBottom: `1px solid ${T.borderLight}` }}>
+                      <span style={{ color: T.textMuted }}>{paxCounts.adult} &#215; Yetişkin</span>
+                      <span style={{ color: T.text, fontWeight: 500 }}>{formatPrice(priceSummary.totalBaseFare)}</span>
                     </div>
-                    <div className={`bb-card-form__field ${cardErrors.expiryYear ? 'bb-card-form__field--error' : ''}`}>
-                      <label className="bb-card-form__label">Yıl</label>
-                      <select className="bb-card-form__input bb-card-form__select" value={cardForm.expiryYear}
-                        onChange={e => { setCardForm(prev => ({ ...prev, expiryYear: e.target.value })); setCardErrors(prev => ({ ...prev, expiryYear: '' })); }}
-                        autoComplete="cc-exp-year"
-                      >
-                        <option value="">Yıl</option>
-                        {Array.from({ length: 10 }, (_, i) => String(new Date().getFullYear() + i)).map(y => (
-                          <option key={y} value={y}>{y}</option>
-                        ))}
-                      </select>
-                      {cardErrors.expiryYear && <span className="bb-card-form__error">{cardErrors.expiryYear}</span>}
+                  )}
+                  {paxCounts.child > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', fontSize: 13, fontFamily: F, borderBottom: `1px solid ${T.borderLight}` }}>
+                      <span style={{ color: T.textMuted }}>{paxCounts.child} &#215; Çocuk</span>
+                      <span style={{ color: T.text, fontWeight: 500 }}>—</span>
                     </div>
-                    <div className={`bb-card-form__field ${cardErrors.cvv ? 'bb-card-form__field--error' : ''}`}>
-                      <label className="bb-card-form__label">CVV</label>
-                      <input type="password" inputMode="numeric" className="bb-card-form__input" placeholder="•••"
-                        value={cardForm.cvv}
-                        onChange={e => { const v = e.target.value.replace(/\D/g, '').slice(0, 4); setCardForm(prev => ({ ...prev, cvv: v })); setCardErrors(prev => ({ ...prev, cvv: '' })); }}
-                        maxLength={4} autoComplete="cc-csc"
-                      />
-                      {cardErrors.cvv && <span className="bb-card-form__error">{cardErrors.cvv}</span>}
+                  )}
+                  {paxCounts.infant > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', fontSize: 13, fontFamily: F, borderBottom: `1px solid ${T.borderLight}` }}>
+                      <span style={{ color: T.textMuted }}>{paxCounts.infant} &#215; Bebek</span>
+                      <span style={{ color: T.text, fontWeight: 500 }}>—</span>
                     </div>
+                  )}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', fontSize: 13, fontFamily: F, borderBottom: `1px solid ${T.borderLight}` }}>
+                    <span style={{ color: T.textMuted }}>Vergiler ve harçlar</span>
+                    <span style={{ color: T.text, fontWeight: 500 }}>{formatPrice(priceSummary.totalTaxes)}</span>
                   </div>
+                  {priceSummary.totalServiceFee > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', fontSize: 13, fontFamily: F, borderBottom: `1px solid ${T.borderLight}` }}>
+                      <span style={{ color: T.textMuted }}>Hizmet bedeli</span>
+                      <span style={{ color: T.text, fontWeight: 500 }}>{formatPrice(priceSummary.totalServiceFee)}</span>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          </div>
 
-          {/* Agreement */}
-          <div className={`bb-agreement ${agreementError && !agreed ? 'bb-agreement--error' : ''}`}>
-            <input type="checkbox" className="bb-agreement__checkbox" id="paymentAgreement" checked={agreed}
-              onChange={(e) => { setAgreed(e.target.checked); if (e.target.checked) setAgreementError(false); }}
-            />
-            <label htmlFor="paymentAgreement" className="bb-agreement__text">
-              Satış koşullarını ve <span className="bb-agreement__link">mesafeli satış sözleşmesini</span> okudum, kabul ediyorum.
-              Yolcu bilgilerinin doğruluğunu onaylıyorum.
-            </label>
-          </div>
-
-          {/* KVKK Consent */}
-          <div className="bb-kvkk-consent">
-            <input type="checkbox" className="bb-kvkk-consent__checkbox" id="kvkkConsent" checked={kvkkAgreed}
-              onChange={(e) => setKvkkAgreed(e.target.checked)}
-            />
-            <label htmlFor="kvkkConsent" className="bb-kvkk-consent__label">
-              <button type="button" className="bb-kvkk-consent__link" onClick={(e) => { e.preventDefault(); setShowKvkkModal(true); }}>KVKK Aydınlatma Metni</button>&apos;ni okudum ve kabul ediyorum.
-            </label>
-          </div>
-
-          {/* Action buttons */}
-          <div className="bb-checkout__actions">
-            <button
-              type="button"
-              className={`bb-checkout__btn bb-checkout__btn--next${!kvkkAgreed ? ' bb-checkout__btn--disabled' : ''}`}
-              disabled={isProcessing || !productId || !productItemId || !searchId || !kvkkAgreed}
-              onClick={() => {
-                const form = document.querySelector('.bb-passenger-form') as HTMLFormElement;
-                if (form) form.requestSubmit();
-              }}
-            >
-              {isProcessing ? 'İşlem Yapılıyor...' : <><i className="fa-solid fa-lock" />Ödemeyi Tamamla</>}
-            </button>
-            <button type="button" className="bb-checkout__btn bb-checkout__btn--back" onClick={() => router.push('/search-results')}
-              disabled={isProcessing}>
-              &larr; Geri Dön
-            </button>
-          </div>
-
-          </div>
-
-          {/* ── Sidebar: Price Summary ── */}
-          <div className="bb-checkout__col-aside">
-            <div className="bb-checkout__card">
-              <h3 className="bb-checkout__card-title">
-                <i className="fa-solid fa-receipt" />
-                Fiyat Detayı
-              </h3>
-              <div className="bb-checkout__price-row"><span>Bilet Ücreti</span><span>{formatPrice(priceSummary.totalBaseFare)}</span></div>
-              <div className="bb-checkout__price-row"><span>Vergiler &amp; Harçlar</span><span>{formatPrice(priceSummary.totalTaxes)}</span></div>
-              {priceSummary.totalServiceFee > 0 && (
-                <div className="bb-checkout__price-row"><span>Hizmet Bedeli</span><span>{formatPrice(priceSummary.totalServiceFee)}</span></div>
-              )}
-              <div className="bb-checkout__price-row bb-checkout__price-row--total"><span>Genel Toplam</span><span>{formatPrice(priceSummary.grandTotal)}</span></div>
-              <div className="bb-checkout__price-pax">{paxSummaryText}</div>
-              {displayCurrency !== 'TRY' && (
-                <div className="bb-currency-note">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                  Ödeme {priceSummary.grandTotal.toFixed(2)} TRY olarak tahsil edilecektir.
+                <div style={{
+                  marginTop: 14, paddingTop: 14,
+                  borderTop: `1px solid ${T.border}`,
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+                }}>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: T.text, fontFamily: F }}>Toplam</span>
+                  <span style={{ fontSize: 22, fontWeight: 700, color: T.text, fontFamily: F, letterSpacing: '-0.02em' }}>
+                    {formatPrice(priceSummary.grandTotal)}
+                  </span>
                 </div>
-              )}
-            </div>
 
-            {/* Secure badge */}
-            <div className="bb-pay-price__secure">
-              <i className="fa-solid fa-shield-halved" />
-              <span>256-bit SSL ile güvenli ödeme</span>
-            </div>
+                {displayCurrency !== 'TRY' && (
+                  <div style={{ marginTop: 6, fontSize: 11, color: T.textMuted, fontFamily: F }}>
+                    Ödeme {priceSummary.grandTotal.toFixed(2)} TRY olarak tahsil edilecektir.
+                  </div>
+                )}
+              </div>
+
+              <button type="button" className="chk-desktop-pay"
+                disabled={payDisabled}
+                onClick={triggerPassengerSubmit}
+                style={{
+                  width: '100%', padding: '14px 20px', marginTop: 12,
+                  background: payDisabled ? '#a8c7fa' : T.accent,
+                  color: '#fff', border: 'none', borderRadius: 8,
+                  fontSize: 15, fontWeight: 600, cursor: payDisabled ? 'not-allowed' : 'pointer',
+                  fontFamily: F, opacity: isProcessing ? 0.8 : 1,
+                  transition: 'background .15s',
+                }}>
+                {isProcessing ? 'İşleniyor...' : 'Ödemeyi Tamamla'}
+              </button>
+
+              <div style={{
+                marginTop: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                fontSize: 11, color: T.textMuted, fontFamily: F,
+              }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={T.textMuted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                256-bit SSL ile güvenli ödeme
+              </div>
+            </aside>
           </div>
         </div>
 
-        {/* Mobile bottom sticky bar */}
-        <div className="bb-checkout__bottom-bar">
+        {/* Mobile bottom bar */}
+        <div className="chk-mobile-bar" style={{
+          position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100,
+          background: T.surface, borderTop: `1px solid ${T.border}`,
+          padding: '10px 16px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+        }}>
           <div>
-            <div className="bb-checkout__bottom-bar-info">{paxSummaryText} toplam tutar</div>
-            <div className="bb-checkout__bottom-bar-price">{formatPrice(priceSummary.grandTotal)}</div>
+            <div style={{ fontSize: 11, color: T.textMuted, fontFamily: F }}>Toplam</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: T.text, fontFamily: F }}>
+              {formatPrice(priceSummary.grandTotal)}
+            </div>
           </div>
-          <button
-            type="button"
-            className={`bb-checkout__bottom-bar-btn${!kvkkAgreed ? ' bb-checkout__btn--disabled' : ''}`}
-            disabled={isProcessing || !productId || !productItemId || !searchId || !kvkkAgreed}
-            onClick={() => {
-              const form = document.querySelector('.bb-passenger-form') as HTMLFormElement;
-              if (form) form.requestSubmit();
-            }}
-          >
-            {isProcessing ? 'İşlem...' : 'Öde'}
+          <button type="button"
+            disabled={payDisabled}
+            onClick={triggerPassengerSubmit}
+            style={{
+              background: payDisabled ? '#a8c7fa' : T.accent,
+              color: '#fff', border: 'none', borderRadius: 8,
+              padding: '11px 24px', fontSize: 14, fontWeight: 600,
+              cursor: payDisabled ? 'not-allowed' : 'pointer', fontFamily: F,
+            }}>
+            {isProcessing ? 'İşleniyor...' : 'Ödemeyi Tamamla'}
           </button>
         </div>
+
+        <style jsx>{`
+          .chk-mobile-bar { display: flex; }
+          .chk-desktop-pay { display: block; }
+          @media (min-width: 1024px) {
+            :global(.chk-layout) { flex-direction: row !important; }
+            :global(.chk-sidebar) { width: 360px !important; flex-shrink: 0; position: sticky; top: 20px; align-self: flex-start; }
+            .chk-mobile-bar { display: none !important; }
+          }
+          @media (max-width: 1023px) {
+            :global(main) { padding-bottom: 80px !important; }
+          }
+        `}</style>
       </main>
       <FooterOne />
 
@@ -910,7 +943,7 @@ export default function CheckoutClient() {
               <button type="button" className="bb-kvkk-modal__close" onClick={() => setShowKvkkModal(false)} aria-label="Kapat">&times;</button>
             </div>
             <div className="bb-kvkk-modal__body">
-              <p>6698 sayılı Kişisel Verilerin Korunması Kanunu (&ldquo;KVKK&rdquo;) uyarınca, kişisel verileriniz veri sorumlusu olarak GBILET tarafından aşağıda açıklanan kapsamda işlenebilecektir.</p>
+              <p>6698 sayılı Kişisel Verilerin Korunması Kanunu (&ldquo;KVKK&rdquo;) uyarınca, kişisel verileriniz veri sorumlusu olarak ATABİLET tarafından aşağıda açıklanan kapsamda işlenebilecektir.</p>
               <h4>Kişisel Verilerin İşlenme Amacı</h4>
               <p>Toplanan kişisel verileriniz; uçak bileti satış işlemlerinin gerçekleştirilmesi, yasal yükümlülüklerin yerine getirilmesi, müşteri ilişkileri yönetimi ve hizmet kalitesinin artırılması amacıyla işlenmektedir.</p>
               <h4>İşlenen Kişisel Veriler</h4>

@@ -1,6 +1,5 @@
 "use client";
 
-import { User } from "lucide-react";
 import type { ReadShoppingPassenger, TicketInfo } from "@/types/flight";
 
 interface PassengerListCardProps {
@@ -38,9 +37,6 @@ export default function PassengerListCard({
 
           return (
             <div key={idx} className="pnr-passenger-row">
-              <div className="pnr-passenger-row__avatar">
-                <User size={16} />
-              </div>
               <div className="pnr-passenger-row__info">
                 <div className="pnr-passenger-row__name-line">
                   <span className="pnr-passenger-row__name">

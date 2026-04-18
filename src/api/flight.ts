@@ -99,10 +99,88 @@ export const getBookingByPnr = async (pnr: string): Promise<BookingDetailRespons
   return response.data;
 };
 
+// --- Helpers for booking lookup response parsing ---
+function parseDate(val: string | null | undefined): string | null {
+  if (!val) return null;
+  try {
+    const d = new Date(val);
+    if (isNaN(d.getTime())) return null;
+    return d.toLocaleDateString("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric" });
+  } catch {
+    return null;
+  }
+}
+
+function parseTime(timeVal: string | null | undefined, dateVal: string | null | undefined): string | null {
+  // If timeVal is already "HH:mm" format, return as is
+  if (timeVal && /^\d{1,2}:\d{2}$/.test(timeVal)) return timeVal;
+  // If timeVal is an ISO string, extract time
+  if (timeVal) {
+    try {
+      const d = new Date(timeVal);
+      if (!isNaN(d.getTime())) return d.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
+    } catch { /* fall through */ }
+  }
+  // Last resort: extract time from the date field
+  if (dateVal) {
+    try {
+      const d = new Date(dateVal);
+      if (!isNaN(d.getTime()) && (d.getHours() !== 0 || d.getMinutes() !== 0)) {
+        return d.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
+      }
+    } catch { /* ignore */ }
+  }
+  return null;
+}
+
 // InternalPnr + Soyad ile booking sorgulama
 export const lookupBookingByPnrAndLastName = async (pnr: string, lastName: string): Promise<BookingDetailResponse> => {
-  const response = await apiClient.get<BookingDetailResponse>(`/flight/booking/lookup/${encodeURIComponent(pnr)}/${encodeURIComponent(lastName)}`);
-  return response.data;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const response = await apiClient.get<any>(`/flight/booking/lookup/${encodeURIComponent(pnr)}/${encodeURIComponent(lastName)}`);
+  const raw = response.data;
+
+  // Backend fareDetails array → flat price fields
+  const fare = Array.isArray(raw.fareDetails) ? raw.fareDetails[0] : null;
+
+  // Backend segments: parse dates & times properly
+  const segments = Array.isArray(raw.segments)
+    ? raw.segments.map((s: Record<string, unknown>) => {
+        // DepartureDate/ArrivalDate are ISO strings → format as "18 Nis 2026"
+        const depDate = parseDate(s.departureDate as string | null);
+        const arrDate = parseDate(s.arrivalDate as string | null);
+        // DepartureTime/ArrivalTime are "HH:mm" strings or ISO → extract time
+        const depTime = parseTime(s.departureTime as string | null, s.departureDate as string | null);
+        const arrTime = parseTime(s.arrivalTime as string | null, s.arrivalDate as string | null);
+        return {
+          ...s,
+          departureDay: depDate,
+          arrivalDay: arrDate,
+          departureTime: depTime,
+          arrivalTime: arrTime,
+        };
+      })
+    : [];
+
+  return {
+    hasError: false,
+    errorMessage: null,
+    bookingId: raw.id ?? null,
+    bookingCode: raw.bookingCode ?? null,
+    pnr: raw.pnr ?? null,
+    status: raw.status ?? null,
+    grandTotal: raw.grandTotal ?? 0,
+    totalFare: fare?.grandTotal ?? raw.grandTotal ?? 0,
+    baseFare: fare?.baseFare ?? 0,
+    taxes: fare?.totalTax ?? 0,
+    serviceFee: fare?.serviceFee ?? 0,
+    currency: fare?.currency ?? raw.currency ?? null,
+    createdAt: raw.createdAt ?? null,
+    isFinalized: raw.isFinalized ?? false,
+    isGuest: raw.isGuest ?? false,
+    passengers: raw.passengers ?? [],
+    segments,
+    tickets: raw.tickets ?? [],
+  } as BookingDetailResponse;
 };
 
 // Rezervasyon iptali

@@ -108,7 +108,7 @@ const BannerFormOne = () => {
 
    // Advanced search (kept for API — controlled via baggage toggle only)
    const [baggageOnly, setBaggageOnly] = useState(false);
-   const [directOnly] = useState(false);
+   const [directOnly, setDirectOnly] = useState(false);
    const [airlines] = useState<string[]>([]);
 
    const [fromHighlight, setFromHighlight] = useState(-1);
@@ -214,6 +214,7 @@ const BannerFormOne = () => {
       if (rp.destinationCountryCode) setToCountryCode(rp.destinationCountryCode);
       if (rp.originIsCity) setFromIsCity(true);
       if (rp.destinationIsCity) setToIsCity(true);
+      if (rp.directFlightsOnly) setDirectOnly(true);
    // eslint-disable-next-line react-hooks/exhaustive-deps
    }, [reduxSearchParams]);
 
@@ -780,7 +781,7 @@ const BannerFormOne = () => {
       return (
          <form role="search" aria-label={t.groupFlightRequest} onSubmit={handleSubmit} className="bb-flight-form">
             <div className="bb-flight-form__trip-toggle mb-15">
-               {renderTripToggle(tripType, setTripType, t)}
+               {renderTripToggle(tripType, setTripType, t, directOnly, setDirectOnly)}
             </div>
             <h3 className="bb-group-title mb-15">{t.groupFlightRequest}</h3>
             <div className="bb-flight-form__fields bb-flight-form__fields--group">
@@ -843,7 +844,7 @@ const BannerFormOne = () => {
       return (
          <form role="search" aria-label={t.multiCity} onSubmit={handleSubmit} className="bb-flight-form">
             <div className="bb-flight-form__trip-toggle mb-15">
-               {renderTripToggle(tripType, setTripType, t)}
+               {renderTripToggle(tripType, setTripType, t, directOnly, setDirectOnly)}
             </div>
             <div className="bb-multicity-segments" ref={multiCityRef}>
                {segments.map((seg, idx) => (
@@ -1037,7 +1038,7 @@ const BannerFormOne = () => {
       <form role="search" aria-label={t.searchFlight} onSubmit={handleSubmit} className="bb-flight-form">
          {/* Sefer tipi toggle */}
          <div className="bb-flight-form__trip-toggle mb-15">
-            {renderTripToggle(tripType, setTripType, t)}
+            {renderTripToggle(tripType, setTripType, t, directOnly, setDirectOnly)}
          </div>
 
          <div className="bb-flight-form__fields">
@@ -1215,27 +1216,6 @@ const BannerFormOne = () => {
                </button>
             </div>
          </div>
-
-         {/* Bagajlı Arama — form altı satır */}
-         <div className="bb-flight-form__baggage-row">
-            <div className="bb-baggage-toggle">
-               <span>{t.baggageIncluded}</span>
-               <div
-                  className={`bb-baggage-switch ${baggageOnly ? 'active' : ''}`}
-                  onClick={() => setBaggageOnly(!baggageOnly)}
-                  role="switch"
-                  aria-checked={baggageOnly}
-               />
-            </div>
-            <div className="bb-baggage-info">
-               <i className="fa-solid fa-circle-info bb-baggage-info__icon"></i>
-               <div className="bb-baggage-info__tooltip">
-                  {lang === 'tr'
-                     ? 'Bagajlı arama açıldığında, sadece bagaj hakkı dahil olan uçuşlar listelenir. Kapalıyken tüm uçuşlar (el bagajı dahil) gösterilir.'
-                     : 'When baggage search is on, only flights with checked baggage are shown. When off, all flights (including carry-on only) are listed.'}
-               </div>
-            </div>
-         </div>
       </form>
    );
 };
@@ -1245,6 +1225,8 @@ function renderTripToggle(
    active: TripType,
    setType: (t: TripType) => void,
    t: ReturnType<typeof import("../../../context/LanguageContext").useTranslation>["t"],
+   directOnly?: boolean,
+   setDirectOnly?: (v: boolean) => void,
 ) {
    const types: { value: TripType; label: string; icon?: string; disabled?: boolean; badge?: string }[] = [
       { value: "oneway", label: t.oneWay },
@@ -1269,6 +1251,22 @@ function renderTripToggle(
                )}
             </label>
          ))}
+
+         {setDirectOnly && (
+            <label
+               className={`bb-trip-checkbox ${directOnly ? "bb-trip-checkbox--active" : ""}`}
+               onClick={(e) => { e.preventDefault(); setDirectOnly(!directOnly); }}
+            >
+               <span className="bb-trip-checkbox__box">
+                  {directOnly && (
+                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M2 6L5 9L10 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                     </svg>
+                  )}
+               </span>
+               {t.nonstop}
+            </label>
+         )}
       </>
    );
 }
