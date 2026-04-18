@@ -17,6 +17,8 @@ import { resetPayment } from '../redux/features/paymentSlice';
 import { filterFlights, sortFlights, INITIAL_FILTERS } from '../utils/flightFilters';
 import { airports as staticAirports } from '../data/AirportData';
 import BannerFormOne from '../components/common/banner-form/BannerFormOne';
+import { EmailSearchResultsButton } from '../components/flight/EmailSearchResultsButton';
+import { mapToEmailFlights } from '../utils/emailMappers';
 import type { RootState, AppDispatch } from '../redux/store';
 import type { FlightResult, FlightFilters, FlightSortBy, AllocateResponse, FarePackage } from '@/types';
 
@@ -790,6 +792,29 @@ const SearchResultsMain = () => {
             onChange={setFilters}
             resultCount={displayedFlights.length}
             totalCount={searchResults.flights.length}
+            footerSlot={
+              <div>
+                <h4 className="text-sm font-semibold text-[#0a1628] mb-2">
+                  Arama Sonuçlarını Paylaş
+                </h4>
+                <p className="text-xs text-slate-600 mb-3">
+                  Uçuş seçeneklerini e-posta ile kendinize gönderebilirsiniz.
+                </p>
+                <EmailSearchResultsButton
+                  flights={mapToEmailFlights(displayedFlights)}
+                  searchCriteria={{
+                    origin: searchParams?.origin ?? '',
+                    destination: searchParams?.destination ?? '',
+                    departureDate: searchParams?.departureDate ?? '',
+                    passengerCount:
+                      (searchParams?.adultCount ?? 1) +
+                      (searchParams?.childCount ?? 0) +
+                      (searchParams?.infantCount ?? 0),
+                  }}
+                  variant="sidebar"
+                />
+              </div>
+            }
           />
           <div className="bb-mobile-filter-drawer__footer">
             <button className="bb-mobile-filter-drawer__reset" onClick={() => setFilters(INITIAL_FILTERS)}>
@@ -841,6 +866,29 @@ const SearchResultsMain = () => {
               onChange={setFilters}
               resultCount={displayedFlights.length}
               totalCount={searchResults.flights.length}
+              footerSlot={
+                <div>
+                  <h4 className="text-sm font-semibold text-[#0a1628] mb-2">
+                    Arama Sonuçlarını Paylaş
+                  </h4>
+                  <p className="text-xs text-slate-600 mb-3">
+                    Uçuş seçeneklerini e-posta ile kendinize gönderebilirsiniz.
+                  </p>
+                  <EmailSearchResultsButton
+                    flights={mapToEmailFlights(displayedFlights)}
+                    searchCriteria={{
+                      origin: searchParams?.origin ?? '',
+                      destination: searchParams?.destination ?? '',
+                      departureDate: searchParams?.departureDate ?? '',
+                      passengerCount:
+                        (searchParams?.adultCount ?? 1) +
+                        (searchParams?.childCount ?? 0) +
+                        (searchParams?.infantCount ?? 0),
+                    }}
+                    variant="sidebar"
+                  />
+                </div>
+              }
             />
           </div>
 
