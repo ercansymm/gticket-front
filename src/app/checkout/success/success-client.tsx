@@ -173,7 +173,7 @@ export default function SuccessClient() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `AtaBilet-${pnr}-${passengerName.replace(/\s+/g, '_')}.pdf`;
+      a.download = `AtaBilet-${displayPnr}-${passengerName.replace(/\s+/g, '_')}.pdf`;
       a.click();
       window.URL.revokeObjectURL(url);
     } catch (error) {
@@ -181,7 +181,7 @@ export default function SuccessClient() {
     } finally {
       setPdfLoading(false);
     }
-  }, [shoppingFileId, pnr, pdfLoading]);
+  }, [shoppingFileId, displayPnr, pdfLoading]);
 
   if (!hasReduxData && !hasUrlData) return null;
 
@@ -367,7 +367,7 @@ export default function SuccessClient() {
           <div className="tc-summary-card">
             <div className="tc-summary-card__col">
               <span className="tc-summary-card__label">PNR Kodu</span>
-              <span className="tc-summary-card__value tc-summary-card__value--pnr">{pnr}</span>
+              <span className="tc-summary-card__value tc-summary-card__value--pnr">{displayPnr}</span>
             </div>
             <div className="tc-summary-card__divider" />
             <div className="tc-summary-card__col">
