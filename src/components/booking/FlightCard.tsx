@@ -11,24 +11,14 @@ interface FlightCardProps {
   onOpenPackages?: () => void;
   isSelected?: boolean;
   allocateLoading?: boolean;
+  isBest?: boolean;
 }
 
-function getBaggageDisplay(flight: FlightResult): string | null {
-  if (flight.baggageInfo?.displayText) return flight.baggageInfo.displayText;
-  if (flight.freeBaggageAllowances && flight.freeBaggageAllowances.length > 0) {
-    const bag = flight.freeBaggageAllowances[0];
-    if (bag.allowance && bag.unit) {
-      return `${bag.allowance} ${bag.unit}`;
-    }
-  }
-  return null;
-}
 
-const FlightCard = ({ flight, onSelect, isSelected = false, allocateLoading = false }: FlightCardProps) => {
+const FlightCard = ({ flight, onSelect, isSelected = false, allocateLoading = false, isBest = false }: FlightCardProps) => {
   const [logoError, setLogoError] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const baggageDisplay = getBaggageDisplay(flight);
   const logoPath = getAirlineLogoUrl(flight.airlineCode);
   const brandStyle = getAirlineBrandStyle(flight.airlineCode);
   const { formatPrice, currency, getCurrencySymbol } = useCurrency();
@@ -55,7 +45,20 @@ const FlightCard = ({ flight, onSelect, isSelected = false, allocateLoading = fa
   };
 
   return (
-    <div className={`bb-flight-card ${isSelected ? 'bb-flight-card--selected' : ''}`}>
+    <div className={`bb-flight-card ${isSelected ? 'bb-flight-card--selected' : ''} ${isBest ? 'bb-flight-card--best' : ''}`}>
+      {isBest && (
+        <div
+          className="bb-flight-card__best-badge"
+          role="img"
+          aria-label="En uygun uçuş"
+          title="Fiyat, süre ve aktarma sayısına göre en iyi seçenek"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 2l2.9 6.6L22 9.3l-5.4 4.7L18.2 22 12 18.3 5.8 22l1.6-8L2 9.3l7.1-.7L12 2z" />
+          </svg>
+          <span>En Uygun Uçuş</span>
+        </div>
+      )}
       {/* Üst kısım: havayolu + zaman çizgisi + fiyat + genişlet butonu */}
       <div className="bb-flight-card__top">
         {/* Airline */}
@@ -138,31 +141,8 @@ const FlightCard = ({ flight, onSelect, isSelected = false, allocateLoading = fa
         </div>
       </div>
 
-      {/* Badges + Details toggle */}
+      {/* Details toggle row */}
       <div className="bb-flight-card__badges-row">
-        {flight.isDirect ? (
-          <span className="bb-flight-card__badge bb-flight-card__badge--direct">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg> Direkt
-          </span>
-        ) : (
-          <span className="bb-flight-card__badge bb-flight-card__badge--stop">{flight.stopText}</span>
-        )}
-        <span className={`bb-flight-card__badge ${flight.isRefundable ? 'bb-flight-card__badge--refundable' : 'bb-flight-card__badge--nonrefundable'}`}>
-          {flight.refundableText}
-        </span>
-        {baggageDisplay && (
-          <span className="bb-flight-card__badge bb-flight-card__badge--baggage">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="6" y="4" width="12" height="16" rx="1" /><path d="M9 4V2" /><path d="M15 4V2" /><path d="M6 14h12" /></svg> {baggageDisplay}
-          </span>
-        )}
-        {flight.cabinClassName && (
-          <span className="bb-flight-card__badge bb-flight-card__badge--cabin">{flight.cabinClassName}</span>
-        )}
-        {flight.availableSeats > 0 && flight.availableSeats <= 9 && (
-          <span className="bb-flight-card__badge bb-flight-card__badge--seats">
-            {flight.availableSeatsText}
-          </span>
-        )}
         <button
           type="button"
           className="bb-flight-card__details-toggle"
