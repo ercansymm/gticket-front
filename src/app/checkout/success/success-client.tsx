@@ -159,7 +159,7 @@ export default function SuccessClient() {
   };
 
   const shoppingFileId = allocateResult?.shoppingFileId;
-  const pnr = finalizeResult?.internalPnr ?? urlPnr ?? '—';
+  const displayPnr = finalizeResult?.pnr ?? finalizeResult?.internalPnr ?? urlPnr;
   const tickets = finalizeResult?.tickets ?? [];
   const isFinalized = finalizeResult?.isFinalized ?? urlFinalized;
 
