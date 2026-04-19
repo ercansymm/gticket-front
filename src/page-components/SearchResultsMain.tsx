@@ -17,10 +17,9 @@ import { resetPayment } from '../redux/features/paymentSlice';
 import { filterFlights, sortFlights, INITIAL_FILTERS } from '../utils/flightFilters';
 import { airports as staticAirports } from '../data/AirportData';
 import BannerFormOne from '../components/common/banner-form/BannerFormOne';
-import { EmailSearchResultsButton } from '../components/flight/EmailSearchResultsButton';
-import { mapToEmailFlights } from '../utils/emailMappers';
 import type { RootState, AppDispatch } from '../redux/store';
 import type { FlightResult, FlightFilters, FlightSortBy, AllocateResponse, FarePackage } from '@/types';
+import { findBestFlightId } from '../utils/flightScoring';
 
 interface BundlePackage {
   bundleProductId: string;
@@ -248,6 +247,15 @@ const SearchResultsMain = () => {
   const regularReturn = useMemo(
     () => returnFlights.filter(f => !f.isRoundTripBundle),
     [returnFlights]
+  );
+
+  // "En Uygun Uçuş" — filtrelenmiş (regular, non-bundle) listeler üzerinden hesaplanır.
+  // Sıralama değişse bile aynı uçuş vurgulu kalır.
+  const bestOutboundId = useMemo(() => findBestFlightId(regularOutbound), [regularOutbound]);
+  const bestReturnId = useMemo(() => findBestFlightId(regularReturn), [regularReturn]);
+  const bestOneWayId = useMemo(
+    () => findBestFlightId(displayedFlights.filter((f) => !f.isRoundTripBundle)),
+    [displayedFlights]
   );
 
   const hasBundles = bundlePackages.length > 0;
@@ -792,29 +800,6 @@ const SearchResultsMain = () => {
             onChange={setFilters}
             resultCount={displayedFlights.length}
             totalCount={searchResults.flights.length}
-            footerSlot={
-              <div>
-                <h4 className="text-sm font-semibold text-[#0a1628] mb-2">
-                  Arama Sonuçlarını Paylaş
-                </h4>
-                <p className="text-xs text-slate-600 mb-3">
-                  Uçuş seçeneklerini e-posta ile kendinize gönderebilirsiniz.
-                </p>
-                <EmailSearchResultsButton
-                  flights={mapToEmailFlights(displayedFlights)}
-                  searchCriteria={{
-                    origin: searchParams?.origin ?? '',
-                    destination: searchParams?.destination ?? '',
-                    departureDate: searchParams?.departureDate ?? '',
-                    passengerCount:
-                      (searchParams?.adultCount ?? 1) +
-                      (searchParams?.childCount ?? 0) +
-                      (searchParams?.infantCount ?? 0),
-                  }}
-                  variant="sidebar"
-                />
-              </div>
-            }
           />
           <div className="bb-mobile-filter-drawer__footer">
             <button className="bb-mobile-filter-drawer__reset" onClick={() => setFilters(INITIAL_FILTERS)}>
@@ -866,29 +851,6 @@ const SearchResultsMain = () => {
               onChange={setFilters}
               resultCount={displayedFlights.length}
               totalCount={searchResults.flights.length}
-              footerSlot={
-                <div>
-                  <h4 className="text-sm font-semibold text-[#0a1628] mb-2">
-                    Arama Sonuçlarını Paylaş
-                  </h4>
-                  <p className="text-xs text-slate-600 mb-3">
-                    Uçuş seçeneklerini e-posta ile kendinize gönderebilirsiniz.
-                  </p>
-                  <EmailSearchResultsButton
-                    flights={mapToEmailFlights(displayedFlights)}
-                    searchCriteria={{
-                      origin: searchParams?.origin ?? '',
-                      destination: searchParams?.destination ?? '',
-                      departureDate: searchParams?.departureDate ?? '',
-                      passengerCount:
-                        (searchParams?.adultCount ?? 1) +
-                        (searchParams?.childCount ?? 0) +
-                        (searchParams?.infantCount ?? 0),
-                    }}
-                    variant="sidebar"
-                  />
-                </div>
-              }
             />
           </div>
 
@@ -984,6 +946,7 @@ const SearchResultsMain = () => {
                           key={flight.productId}
                           flight={flight}
                           onSelect={(fareItemId) => handleSelectOutbound(flight, fareItemId)}
+                          isBest={flight.productId === bestOutboundId}
                         />
                       ))
                     )}
@@ -1015,6 +978,7 @@ const SearchResultsMain = () => {
                               key={flight.productId}
                               flight={flight}
                               onSelect={(fareItemId) => handleSelectReturn(flight, fareItemId)}
+                              isBest={flight.productId === bestReturnId}
                             />
                           ))
                         )}
@@ -1176,6 +1140,7 @@ const SearchResultsMain = () => {
                     flight={flight}
                     onSelect={(fareItemId) => handleSelectFlight(flight, fareItemId)}
                     allocateLoading={allocateLoading && selectedFlight?.productId === flight.productId}
+                    isBest={flight.productId === bestOneWayId}
                   />
                 ))}
               </div>

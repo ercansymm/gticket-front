@@ -114,20 +114,6 @@ const FilterSidebar = ({ options, filters, onChange, resultCount, totalCount, fo
         </div>
       )}
 
-      {/* İade */}
-      {options.hasRefundableFlights && (
-        <div className="bb-filter-section">
-          <label className="bb-filter-checkbox">
-            <input
-              type="checkbox"
-              checked={filters.refundableOnly}
-              onChange={() => toggle('refundableOnly')}
-            />
-            <span>Sadece İade Edilebilir</span>
-          </label>
-        </div>
-      )}
-
       {/* Havayolları */}
       {options.airlines.length > 0 && (
         <div className="bb-filter-section">
