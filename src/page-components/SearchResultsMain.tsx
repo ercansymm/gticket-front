@@ -19,6 +19,7 @@ import { airports as staticAirports } from '../data/AirportData';
 import BannerFormOne from '../components/common/banner-form/BannerFormOne';
 import type { RootState, AppDispatch } from '../redux/store';
 import type { FlightResult, FlightFilters, FlightSortBy, AllocateResponse, FarePackage } from '@/types';
+import { findBestFlightId } from '../utils/flightScoring';
 
 interface BundlePackage {
   bundleProductId: string;
@@ -246,6 +247,15 @@ const SearchResultsMain = () => {
   const regularReturn = useMemo(
     () => returnFlights.filter(f => !f.isRoundTripBundle),
     [returnFlights]
+  );
+
+  // "En Uygun Uçuş" — filtrelenmiş (regular, non-bundle) listeler üzerinden hesaplanır.
+  // Sıralama değişse bile aynı uçuş vurgulu kalır.
+  const bestOutboundId = useMemo(() => findBestFlightId(regularOutbound), [regularOutbound]);
+  const bestReturnId = useMemo(() => findBestFlightId(regularReturn), [regularReturn]);
+  const bestOneWayId = useMemo(
+    () => findBestFlightId(displayedFlights.filter((f) => !f.isRoundTripBundle)),
+    [displayedFlights]
   );
 
   const hasBundles = bundlePackages.length > 0;
@@ -936,6 +946,7 @@ const SearchResultsMain = () => {
                           key={flight.productId}
                           flight={flight}
                           onSelect={(fareItemId) => handleSelectOutbound(flight, fareItemId)}
+                          isBest={flight.productId === bestOutboundId}
                         />
                       ))
                     )}
@@ -967,6 +978,7 @@ const SearchResultsMain = () => {
                               key={flight.productId}
                               flight={flight}
                               onSelect={(fareItemId) => handleSelectReturn(flight, fareItemId)}
+                              isBest={flight.productId === bestReturnId}
                             />
                           ))
                         )}
@@ -1128,6 +1140,7 @@ const SearchResultsMain = () => {
                     flight={flight}
                     onSelect={(fareItemId) => handleSelectFlight(flight, fareItemId)}
                     allocateLoading={allocateLoading && selectedFlight?.productId === flight.productId}
+                    isBest={flight.productId === bestOneWayId}
                   />
                 ))}
               </div>

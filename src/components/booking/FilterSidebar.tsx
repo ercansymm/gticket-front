@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useState, useEffect, type ReactNode } from 'react';
 import type { FilterOptions, FlightFilters } from '@/types';
 import { INITIAL_FILTERS } from '@/utils/flightFilters';
 
@@ -8,9 +8,10 @@ interface FilterSidebarProps {
   onChange: (filters: FlightFilters) => void;
   resultCount: number;
   totalCount: number;
+  footerSlot?: ReactNode;
 }
 
-const FilterSidebar = ({ options, filters, onChange, resultCount, totalCount }: FilterSidebarProps) => {
+const FilterSidebar = ({ options, filters, onChange, resultCount, totalCount, footerSlot }: FilterSidebarProps) => {
   const [priceRange, setPriceRange] = useState<[number, number]>([
     options?.minPrice ?? 0,
     options?.maxPrice ?? 10000,
@@ -113,20 +114,6 @@ const FilterSidebar = ({ options, filters, onChange, resultCount, totalCount }: 
         </div>
       )}
 
-      {/* İade */}
-      {options.hasRefundableFlights && (
-        <div className="bb-filter-section">
-          <label className="bb-filter-checkbox">
-            <input
-              type="checkbox"
-              checked={filters.refundableOnly}
-              onChange={() => toggle('refundableOnly')}
-            />
-            <span>Sadece İade Edilebilir</span>
-          </label>
-        </div>
-      )}
-
       {/* Havayolları */}
       {options.airlines.length > 0 && (
         <div className="bb-filter-section">
@@ -181,6 +168,10 @@ const FilterSidebar = ({ options, filters, onChange, resultCount, totalCount }: 
             />
           </div>
         </div>
+      )}
+
+      {footerSlot && (
+        <div className="bb-filter-section">{footerSlot}</div>
       )}
     </aside>
   );
