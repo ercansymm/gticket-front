@@ -220,8 +220,18 @@ export default function CheckoutClient() {
   const isPaymentSuccessful = paymentResult && paymentResult.hasError === false &&
     paymentResult.isPaymentSuccessful === true && !paymentResult.is3DSecureRequired;
 
+  /* ── Backend auto-finalized: skip separate finalize call ── */
   useEffect(() => {
-    if (isPaymentSuccessful && searchId && !hasFinalized.current && !finalizeResult && !finalizeError) {
+    if (isPaymentSuccessful && paymentResult?.autoFinalized) {
+      hasFinalized.current = true;
+      setIsProcessing(false);
+      dispatch(setStep('confirmation'));
+      router.push('/checkout/success');
+    }
+  }, [isPaymentSuccessful, paymentResult?.autoFinalized, dispatch, router]);
+
+  useEffect(() => {
+    if (isPaymentSuccessful && !paymentResult?.autoFinalized && searchId && !hasFinalized.current && !finalizeResult && !finalizeError) {
       hasFinalized.current = true;
       if (finalizeTimeoutRef.current) clearTimeout(finalizeTimeoutRef.current);
       finalizeTimeoutRef.current = setTimeout(() => {
@@ -232,7 +242,7 @@ export default function CheckoutClient() {
       }, 1500);
       return () => clearTimeout(timer);
     }
-  }, [isPaymentSuccessful, searchId, dispatch, finalizeResult, finalizeError]);
+  }, [isPaymentSuccessful, paymentResult?.autoFinalized, searchId, dispatch, finalizeResult, finalizeError]);
 
   useEffect(() => {
     return () => { if (finalizeTimeoutRef.current) clearTimeout(finalizeTimeoutRef.current); };

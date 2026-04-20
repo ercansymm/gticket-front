@@ -560,6 +560,14 @@ export interface MakePaymentResponse {
   pnr: string | null;
   grandTotal: number;
   remainingSum: number;
+  /** Backend auto-finalize yapildiysa true */
+  autoFinalized?: boolean;
+  /** Auto-finalize sonrasi biletleme durumu */
+  finalizeStatus?: string | null;
+  /** Auto-finalize sonrasi internal PNR */
+  internalPnr?: string | null;
+  /** Auto-finalize sonrasi bilet numaralari */
+  tickets?: TicketInfo[];
 }
 
 // ========== FINALIZE SHOPPING ==========

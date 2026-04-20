@@ -294,6 +294,21 @@ const paymentSlice = createSlice({
       state.is3DSecureRequired = action.payload.is3DSecureRequired;
       state.threeDSecureUrl = action.payload.threeDSecureUrl;
       state.threeDSecureHtml = action.payload.threeDSecureHtml;
+
+      // Backend auto-finalize yaptiysa finalizeResult'i da doldur
+      // Boylece success sayfasi Redux verisini bulabilir
+      if (action.payload.autoFinalized) {
+        state.finalizeResult = {
+          hasError: false,
+          errorMessage: null,
+          isFinalized: true,
+          status: action.payload.finalizeStatus ?? 'Ticketed',
+          tickets: action.payload.tickets ?? [],
+          bookingCode: action.payload.pnr ?? null,
+          pnr: action.payload.pnr ?? null,
+          internalPnr: action.payload.internalPnr ?? null,
+        };
+      }
     });
     builder.addCase(makePaymentThunk.rejected, (state, action) => {
       state.paymentLoading = false;
