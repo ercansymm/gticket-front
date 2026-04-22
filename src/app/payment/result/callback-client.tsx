@@ -48,9 +48,22 @@ export default function PaymentCallbackClient() {
     } else if (callbackStatus === 'failed' || callbackStatus === 'error') {
       setStatus('failed');
       setErrorMessage(callbackError || '3D Secure doğrulaması başarısız oldu. Ödeme gerçekleşmedi.');
+
+      // Dedike basarisiz odeme sayfasina yonlendir (header/footer'li tam sayfa)
+      const params = new URLSearchParams();
+      if (callbackError) params.set('error', callbackError);
+      if (callbackBookingId) params.set('bookingId', callbackBookingId);
+      const query = params.toString();
+
+      setTimeout(() => {
+        router.push(`/checkout/failed${query ? `?${query}` : ''}`);
+      }, 1500);
     } else {
       setStatus('failed');
       setErrorMessage('Ödeme durumu belirlenemedi. Lütfen bilet sorgulama sayfasından kontrol ediniz.');
+      setTimeout(() => {
+        router.push('/checkout/failed?error=' + encodeURIComponent('Ödeme durumu belirlenemedi.'));
+      }, 1500);
     }
   }, [searchParams, router]);
 

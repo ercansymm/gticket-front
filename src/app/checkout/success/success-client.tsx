@@ -110,6 +110,8 @@ export default function SuccessClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [bookingDetail, setBookingDetail] = useState<any | null>(null);
+  const [recovering, setRecovering] = useState(false);
   const { formatPrice } = useCurrency();
 
   const { searchId, allocateResult, selectedFlight, selectedReturnFlight, searchParams: flightSearchParams } = useSelector((state: RootState) => state.flight);
@@ -118,6 +120,8 @@ export default function SuccessClient() {
 
   const hasReadFile = useRef(false);
   const hasLoggedOut = useRef(false);
+  const hasFetchedDetail = useRef(false);
+  const hasRecovered = useRef(false);
 
   // URL params (from 3D callback redirect — Redux state is lost after full-page redirect)
   const urlPnr = searchParams.get('pnr');
@@ -134,6 +138,49 @@ export default function SuccessClient() {
       router.push('/');
     }
   }, [hasReduxData, hasUrlData, router]);
+
+  // 3D callback sonrasi redirect ile geldiyse Redux temizlenmis olur. BookingId varsa
+  // backend'den booking detayini cek (passengers, segments, prices, contact dahil).
+  // Eger isFinalized=false geldiyse otomatik recover-booking dene (FinalizeShopping retry).
+  useEffect(() => {
+    if (hasReduxData) return;
+    if (!urlBookingId) return;
+    if (hasFetchedDetail.current) return;
+    hasFetchedDetail.current = true;
+
+    (async () => {
+      try {
+        const res = await fetch(`/api/flight/booking/${encodeURIComponent(urlBookingId)}`);
+        if (!res.ok) return;
+        let detail = await res.json();
+        setBookingDetail(detail);
+
+        // Otomatik recover: odeme alinmis (Paid) ama biletlenmemis ise FinalizeShopping'i tekrar dene.
+        if (detail && detail.status === 'Paid' && detail.isFinalized === false && !hasRecovered.current) {
+          hasRecovered.current = true;
+          setRecovering(true);
+          try {
+            const rec = await fetch('/api/flight/recover-booking', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ bookingId: urlBookingId }),
+            });
+            if (rec.ok) {
+              const refreshed = await fetch(`/api/flight/booking/${encodeURIComponent(urlBookingId)}`);
+              if (refreshed.ok) detail = await refreshed.json();
+              setBookingDetail(detail);
+            }
+          } catch (recErr) {
+            console.warn('recover-booking failed:', recErr);
+          } finally {
+            setRecovering(false);
+          }
+        }
+      } catch (err) {
+        console.error('booking detail fetch failed:', err);
+      }
+    })();
+  }, [hasReduxData, urlBookingId]);
 
   // Auto read shopping file after finalize (only when Redux flow)
   useEffect(() => {
@@ -159,9 +206,9 @@ export default function SuccessClient() {
   };
 
   const shoppingFileId = allocateResult?.shoppingFileId;
-  const pnr = finalizeResult?.internalPnr ?? urlPnr ?? '—';
+  const pnr = finalizeResult?.internalPnr ?? urlPnr ?? bookingDetail?.pnr ?? '—';
   const tickets = finalizeResult?.tickets ?? [];
-  const isFinalized = finalizeResult?.isFinalized ?? urlFinalized;
+  const isFinalized = finalizeResult?.isFinalized ?? bookingDetail?.isFinalized ?? urlFinalized;
 
   const handleDownloadPdf = useCallback(async (sequenceNo: number, passengerName: string) => {
     if (!shoppingFileId || pdfLoading) return;
@@ -191,16 +238,37 @@ export default function SuccessClient() {
 
   // First passenger info for summary card
   const firstTicket = tickets[0];
+  const detailPaxList: any[] = bookingDetail?.passengers ?? [];
+  const firstDetailPax = detailPaxList[0];
   const firstPassengerName = firstTicket
     ? `${firstTicket.firstName ?? ''} ${firstTicket.lastName ?? firstTicket.passengerName ?? ''}`.trim()
-    : (passengers[0] ? `${passengers[0].firstName} ${passengers[0].lastName}` : '—');
-  const firstTicketNumber = firstTicket?.ticketNumber ?? '—';
+    : (passengers[0]
+        ? `${passengers[0].firstName} ${passengers[0].lastName}`
+        : (firstDetailPax
+            ? `${firstDetailPax.firstName ?? ''} ${firstDetailPax.lastName ?? ''}`.trim()
+            : '—'));
+  const firstTicketNumber = firstTicket?.ticketNumber ?? firstDetailPax?.ticketNumber ?? '—';
 
   // Determine flight type (one-way vs round-trip)
   // After 3DS redirect Redux state is lost, so also detect from segments
   // BiletBank puts ALL segments (outbound AND return) in ONE AirBooking for RT
   const allAllocateSegments = allocateResult?.airBookings?.[0]?.segments ?? [];
-  const segments = readResult?.segments ?? allAllocateSegments;
+  // Backend booking endpoint'inden gelen segment'leri AllocateSegment shape'ine donustur
+  const detailSegments: AllocateSegment[] = (bookingDetail?.segments ?? []).map((s: any, i: number) => ({
+    segmentId: `detail-${i}`,
+    marketingAirline: s.marketingAirline ?? null,
+    flightNumber: s.flightNumber ?? null,
+    originCode: s.originCode ?? null,
+    destinationCode: s.destinationCode ?? null,
+    departureDay: s.departureDate ? String(s.departureDate).slice(0, 10) : null,
+    departureTime: s.departureTime ?? null,
+    arrivalDay: s.arrivalDate ? String(s.arrivalDate).slice(0, 10) : null,
+    arrivalTime: s.arrivalTime ?? null,
+    bookingClass: s.bookingClass ?? null,
+    duration: null,
+  }) as unknown as AllocateSegment);
+  const segments = readResult?.segments?.length ? readResult.segments
+    : (allAllocateSegments.length ? allAllocateSegments : detailSegments);
   const hasRoundTripFromRedux = !!flightSearchParams?.returnDate || !!selectedReturnFlight;
   const flightType = allocateResult?.airBookings?.[0]?.flightType; // "RT" or "OW"
 
@@ -270,8 +338,8 @@ export default function SuccessClient() {
   const readPayment = readResult?.payments?.[0];
   const baseFare = readResult?.baseFare || priceSummary?.totalBaseFare || airBooking?.baseFare || 0;
   const taxes = readResult?.taxes || priceSummary?.totalTaxes || airBooking?.taxes || 0;
-  const totalFare = readResult?.grandTotal || readResult?.totalFare || readPayment?.amount || priceSummary?.grandTotal || airBooking?.totalFare || 0;
-  const currency = readResult?.currency ?? readPayment?.currency ?? priceSummary?.currency ?? airBooking?.currency ?? 'TRY';
+  const totalFare = readResult?.grandTotal || readResult?.totalFare || readPayment?.amount || priceSummary?.grandTotal || airBooking?.totalFare || bookingDetail?.grandTotal || 0;
+  const currency = readResult?.currency ?? readPayment?.currency ?? priceSummary?.currency ?? airBooking?.currency ?? bookingDetail?.currency ?? 'TRY';
 
   // Baggage info from allocateResult
   const baggageAllowances = airBooking?.baggageAllowances ?? [];
@@ -387,10 +455,10 @@ export default function SuccessClient() {
           </div>
 
           {/* ── Loading state ── */}
-          {readLoading && (
+          {(readLoading || recovering) && (
             <div className="tc-loading">
               <div className="tc-loading__spinner" />
-              <p className="tc-loading__text">Uçuş detayları yükleniyor...</p>
+              <p className="tc-loading__text">{recovering ? 'Biletleme tamamlanıyor...' : 'Uçuş detayları yükleniyor...'}</p>
             </div>
           )}
 
@@ -450,7 +518,7 @@ export default function SuccessClient() {
           </div>
 
           {/* ── Section 4: Passenger Info ── */}
-          {(readResult?.passengers ?? passengers)?.length > 0 && (
+          {((readResult?.passengers ?? passengers)?.length > 0 || detailPaxList.length > 0) && (
             <div className="tc-card">
               <h3 className="tc-card__header">Yolcu Bilgileri</h3>
               <div className="tc-pax-table">
@@ -498,7 +566,8 @@ export default function SuccessClient() {
                         </div>
                       );
                     })
-                  : passengers.map((pax, idx) => {
+                  : passengers.length > 0
+                  ? passengers.map((pax, idx) => {
                       const seqNo = pax.sequenceNo ?? (idx + 1);
                       const fullName = `${pax.firstName} ${pax.lastName}`;
                       return (
@@ -527,6 +596,22 @@ export default function SuccessClient() {
                         </div>
                       );
                     })
+                  : detailPaxList.map((pax, idx) => {
+                      const seqNo = pax.sequenceNo ?? (idx + 1);
+                      const fullName = `${pax.firstName ?? ''} ${pax.lastName ?? ''}`.trim();
+                      return (
+                        <div key={idx} className="tc-pax-table__row">
+                          <span className="tc-pax-table__name">{fullName || '—'}</span>
+                          <span>{pax.citizenNo ?? pax.passportNo ?? '—'}</span>
+                          <span>{pax.birthDate ? formatDateTurkish(String(pax.birthDate).slice(0, 10)) : '—'}</span>
+                          <span>{formatGender(pax.gender ?? null)}</span>
+                          <span>{formatPaxType(pax.type ?? null)}</span>
+                          <span>
+                            {pax.ticketNumber ?? '—'}
+                          </span>
+                        </div>
+                      );
+                    })
                 }
               </div>
             </div>
@@ -536,23 +621,32 @@ export default function SuccessClient() {
           <div className="tc-bottom">
             <div className="tc-contact">
               <h4 className="tc-contact__title">İletişim Bilgileri</h4>
-              {contactInfo && (
-                <>
-                  <div className="tc-contact__row">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="2" y="4" width="20" height="16" rx="2" />
-                      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-                    </svg>
-                    <span>{contactInfo.email}</span>
-                  </div>
-                  <div className="tc-contact__row">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
-                    </svg>
-                    <span>{contactInfo.phone}</span>
-                  </div>
-                </>
-              )}
+              {(() => {
+                const email = contactInfo?.email ?? firstDetailPax?.email ?? null;
+                const phone = contactInfo?.phone ?? firstDetailPax?.phone ?? null;
+                if (!email && !phone) return null;
+                return (
+                  <>
+                    {email && (
+                      <div className="tc-contact__row">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="2" y="4" width="20" height="16" rx="2" />
+                          <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                        </svg>
+                        <span>{email}</span>
+                      </div>
+                    )}
+                    {phone && (
+                      <div className="tc-contact__row">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
+                        </svg>
+                        <span>{phone}</span>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </div>
 
             <div className="tc-actions">
