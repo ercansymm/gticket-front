@@ -431,7 +431,7 @@ export default function SuccessClient() {
             </svg>
           </div>
           <h1 className="tc-banner__title">
-            {isFinalized ? 'Biletiniz Başarıyla Kesildi!' : 'Ödeme Başarılı!'}
+            {isFinalized ? 'Seyahatiniz Oluşturuldu !' : 'Ödeme Başarılı!'}
           </h1>
           <p className="tc-banner__subtitle">
             Rezervasyon kodunuz aşağıda belirtilmiştir.
