@@ -206,7 +206,14 @@ export default function SuccessClient() {
   };
 
   const shoppingFileId = allocateResult?.shoppingFileId;
-  const pnr = finalizeResult?.internalPnr ?? urlPnr ?? bookingDetail?.pnr ?? '—';
+  // PNR oncelik sirasi: Redux finalizeResult.internalPnr (canli akis) -> bookingDetail.internalPnr
+  // (3DS sonrasi backend'den cekilen) -> URL'den gelen pnr (callback'in koydugu) -> bookingDetail.pnr
+  // (BB PNR, son care). InternalPnr 'ATA PNR' olarak gosteriliyor; BB PNR'i degildir.
+  const pnr = finalizeResult?.internalPnr
+    ?? bookingDetail?.internalPnr
+    ?? urlPnr
+    ?? bookingDetail?.pnr
+    ?? '—';
   const tickets = finalizeResult?.tickets ?? [];
   const isFinalized = finalizeResult?.isFinalized ?? bookingDetail?.isFinalized ?? urlFinalized;
 
