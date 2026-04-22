@@ -93,9 +93,9 @@ export async function POST(request: NextRequest) {
         backendBody.installmentOptionId = installmentOptionId;
       }
 
-      // 3D Secure callback URL — backend banka dönüşünü buraya yönlendirir
-      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-      backendBody.continueUrl = `${siteUrl}/payment/result`;
+      // 3D Secure callback URL'i frontend belirlemez — backend kendi /api/Flight/3d-callback endpoint'ini
+      // kullanir, oradan Complete3DPayment cagirip frontend'e ?status=...&pnr=... ile redirect eder.
+      // Burada continueUrl set ETMEYIN, aksi halde Lidio direkt frontend'e doner ve Complete3D atlanir.
     }
     // Non-card payments: creditCard alanı gönderilmez
 
