@@ -126,6 +126,7 @@ export default function SuccessClient() {
   // URL params (from 3D callback redirect — Redux state is lost after full-page redirect)
   const urlPnr = searchParams.get('pnr');
   const urlBookingId = searchParams.get('bookingId');
+  const urlShoppingFileId = searchParams.get('shoppingFileId');
   const urlFinalized = searchParams.get('finalized') === 'True' || searchParams.get('finalized') === 'true';
 
   // Determine data source: Redux state OR URL params
@@ -205,7 +206,7 @@ export default function SuccessClient() {
     window.location.href = '/';
   };
 
-  const shoppingFileId = allocateResult?.shoppingFileId;
+  const shoppingFileId = allocateResult?.shoppingFileId ?? urlShoppingFileId ?? undefined;
   // PNR oncelik sirasi: Redux finalizeResult.internalPnr (canli akis) -> bookingDetail.internalPnr
   // (3DS sonrasi backend'den cekilen) -> URL'den gelen pnr (callback'in koydugu) -> bookingDetail.pnr
   // (BB PNR, son care). InternalPnr 'ATA PNR' olarak gosteriliyor; BB PNR'i degildir.
@@ -614,7 +615,22 @@ export default function SuccessClient() {
                           <span>{formatGender(pax.gender ?? null)}</span>
                           <span>{formatPaxType(pax.type ?? null)}</span>
                           <span>
-                            {pax.ticketNumber ?? '—'}
+                            {shoppingFileId ? (
+                              <button
+                                className="tc-btn-pdf"
+                                onClick={() => handleDownloadPdf(seqNo, fullName)}
+                                disabled={pdfLoading}
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                  <polyline points="7 10 12 15 17 10" />
+                                  <line x1="12" y1="15" x2="12" y2="3" />
+                                </svg>
+                                {pdfLoading ? '...' : 'PDF İndir'}
+                              </button>
+                            ) : (
+                              <span>{pax.ticketNumber ?? '—'}</span>
+                            )}
                           </span>
                         </div>
                       );
