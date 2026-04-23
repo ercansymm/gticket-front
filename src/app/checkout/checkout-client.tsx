@@ -39,6 +39,27 @@ const IconPlane = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
+const IconClose = ({ size = 14 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M18 6 6 18" />
+    <path d="m6 6 12 12" />
+  </svg>
+);
+
+const IconShield = ({ size = 14 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    <path d="m9 12 2 2 4-4" />
+  </svg>
+);
+
+const IconLock = ({ size = 14 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="11" width="18" height="11" rx="2" />
+    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+  </svg>
+);
+
 /* Tarih: "2026-05-15" veya "15 May 2026" → "15.05.2026" */
 function formatDateDDMMYYYY(input?: string | null): string {
   if (!input) return '';
@@ -492,12 +513,16 @@ export default function CheckoutClient() {
             <div className="chk-session-warn">
               <IconAlert size={14} />
               <span style={{ flex: 1 }}>Oturumunuz sona ermek üzere. Lütfen işleminizi tamamlayın.</span>
-              <button type="button" onClick={dismissSessionWarning} aria-label="Kapat">✕</button>
+              <button type="button" onClick={dismissSessionWarning} aria-label="Kapat">
+                <IconClose size={14} />
+              </button>
             </div>
           )}
 
-          {/* Alerts */}
-          {hasAnyError || isPriceChanged ? (
+          <div className="chk-grid">
+            <div className="chk-main">
+              {/* Alerts */}
+              {hasAnyError || isPriceChanged ? (
             <div className="chk-alerts">
               {isPriceChanged && (
                 <div className="chk-alert chk-alert--warn">
@@ -720,6 +745,103 @@ export default function CheckoutClient() {
               </div>
             </div>
           </div>
+            </div>
+            {/* /chk-main */}
+
+            {/* Summary sidebar (desktop only — mobile uses sticky bottom bar) */}
+            <aside className="chk-summary" aria-label="Sipariş özeti">
+              <div className="chk-summary__head">
+                <h3 className="chk-summary__title">Sipariş Özeti</h3>
+                <span className="chk-summary__sub">{tripTypeLabel}{paxSummaryText ? ` · ${paxSummaryText}` : ''}</span>
+              </div>
+              <div className="chk-summary__body">
+                {/* Flight legs */}
+                {isMultiCity && legFlightsList.length > 0 ? (
+                  legFlightsList.map((legFlight, idx) => legFlight ? (
+                    <div key={idx} className="chk-summary__leg">
+                      <span className="chk-summary__leg-label">{idx + 1}.</span>
+                      <span className="chk-summary__leg-route">
+                        {legFlight.originCode} → {legFlight.destinationCode}
+                      </span>
+                      <span className="chk-summary__leg-date">{formatDateDDMMYYYY(legFlight.departureDate)}</span>
+                    </div>
+                  ) : null)
+                ) : (
+                  <>
+                    <div className="chk-summary__leg">
+                      <span className="chk-summary__leg-label">{selectedReturnFlight ? 'GİD' : 'TY'}</span>
+                      <span className="chk-summary__leg-route">
+                        {selectedFlight.originCode} → {selectedFlight.destinationCode}
+                      </span>
+                      <span className="chk-summary__leg-date">{formatDateDDMMYYYY(selectedFlight.departureDate)}</span>
+                    </div>
+                    {selectedReturnFlight && (
+                      <div className="chk-summary__leg">
+                        <span className="chk-summary__leg-label">DÖN</span>
+                        <span className="chk-summary__leg-route">
+                          {selectedReturnFlight.originCode} → {selectedReturnFlight.destinationCode}
+                        </span>
+                        <span className="chk-summary__leg-date">{formatDateDDMMYYYY(selectedReturnFlight.departureDate)}</span>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                <div className="chk-summary__divider" />
+
+                {/* Price breakdown */}
+                {priceSummary.totalBaseFare > 0 && (
+                  <div className="chk-summary__row">
+                    <span>Esas ücret</span>
+                    <span>{formatPrice(priceSummary.totalBaseFare)}</span>
+                  </div>
+                )}
+                {priceSummary.totalTaxes > 0 && (
+                  <div className="chk-summary__row">
+                    <span>Vergi ve ücretler</span>
+                    <span>{formatPrice(priceSummary.totalTaxes)}</span>
+                  </div>
+                )}
+                {priceSummary.totalServiceFee > 0 && (
+                  <div className="chk-summary__row">
+                    <span>Hizmet bedeli</span>
+                    <span>{formatPrice(priceSummary.totalServiceFee)}</span>
+                  </div>
+                )}
+
+                <div className="chk-summary__total">
+                  <div>
+                    <div className="chk-summary__total-label">Toplam</div>
+                    {displayCurrency !== 'TRY' && (
+                      <span className="chk-summary__fx" style={{ textAlign: 'left', marginTop: 2 }}>
+                        {priceSummary.grandTotal.toFixed(2)} TRY tahsil edilecek
+                      </span>
+                    )}
+                  </div>
+                  <div className="chk-summary__total-amount">{formatPrice(priceSummary.grandTotal)}</div>
+                </div>
+
+                <button type="button" className="chk-summary__pay-btn"
+                  disabled={payDisabled}
+                  onClick={triggerPassengerSubmit}>
+                  {isProcessing ? (
+                    'İşleniyor...'
+                  ) : (
+                    <>
+                      <IconLock size={16} />
+                      <span>Ödemeyi Tamamla</span>
+                    </>
+                  )}
+                </button>
+
+                <div className="chk-summary__secure">
+                  <IconShield size={14} />
+                  <span>3D Secure ile güvenli ödeme</span>
+                </div>
+              </div>
+            </aside>
+          </div>
+          {/* /chk-grid */}
         </div>
 
         {/* Sticky bottom bar — navy, full width */}
