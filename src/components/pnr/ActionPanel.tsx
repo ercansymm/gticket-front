@@ -7,6 +7,9 @@ interface ActionPanelProps {
   onCancel: () => void;
   onChange: () => void;
   onOpenTicket: () => void;
+
+
+  
 }
 
 export default function ActionPanel({
