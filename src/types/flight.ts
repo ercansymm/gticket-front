@@ -505,22 +505,18 @@ export interface RemoveProductResponse {
 
 // ========== MAKE PAYMENT ==========
 
-// İstemciden gelen — RunningAccount, CreditCard (3D Secure) veya CreditCardDirect (test)
-export type MakePaymentClientRequest =
-  | {
-      paymentType: 'RunningAccount';
-      searchId: string;
-    }
-  | {
-      paymentType: 'CreditCard' | 'CreditCardDirect';
-      searchId: string;
-      cardHolderName: string;
-      cardNumber: string;
-      expiryMonth: string;
-      expiryYear: string;
-      cvv: string;
-      installmentOptionId?: string;
-    };
+
+// İstemciden gelen — CreditCard (3D Secure) veya CreditCardDirect (test)
+export type MakePaymentClientRequest = {
+  paymentType: 'CreditCard' | 'CreditCardDirect';
+  searchId: string;
+  cardHolderName: string;
+  cardNumber: string;
+  expiryMonth: string;
+  expiryYear: string;
+  cvv: string;
+  installmentOptionId?: string;
+};
 
 // Server-side'da backend'e gönderilen tam request
 export interface MakePaymentBackendRequest {
@@ -530,7 +526,7 @@ export interface MakePaymentBackendRequest {
   productId: string;
   amount: number;
   currency: string;
-  paymentType: 'RunningAccount' | 'CreditCard' | 'CreditCardDirect';
+  paymentType: 'CreditCard' | 'CreditCardDirect';
   creditCard: CreditCardInfo | null;
   installmentOptionId?: string;
   bookingId?: string | null;

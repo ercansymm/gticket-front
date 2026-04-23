@@ -52,7 +52,7 @@ export default function ActionPanel({
         >
           <RefreshCw size={16} /> Değişiklik Yap
         </button>
-
+        {/* Talep Oluştur butonu kaldırıldı */}
       </div>
     </div>
   );

@@ -63,12 +63,8 @@ export const removeProductClientSchema = z.object({
 });
 
 // İstemciden gelen make-payment request
-// paymentType: 'RunningAccount' → kart bilgisi gerekmez, 'CreditCard' → kart bilgisi zorunlu
+// paymentType: 'CreditCard' → kart bilgisi zorunlu
 export const makePaymentClientSchema = z.discriminatedUnion('paymentType', [
-  z.object({
-    paymentType: z.literal('RunningAccount'),
-    searchId: z.string().min(1).max(100),
-  }),
   z.object({
     paymentType: z.literal('CreditCard'),
     searchId: z.string().min(1).max(100),
