@@ -1,59 +1,73 @@
 "use client";
 
-import { XCircle, RefreshCw, Ticket, AlertCircle } from "lucide-react";
+import { useState } from "react";
+import { useSession } from "next-auth/react";
+import TicketRequestForm, { TicketRequestPayload } from "./TicketRequestForm";
 
 interface ActionPanelProps {
   isCancelled: boolean;
-  onCancel: () => void;
-  onChange: () => void;
-  onOpenTicket: () => void;
+  onSubmitRequest?: (data: TicketRequestPayload) => Promise<void> | void;
 }
 
 export default function ActionPanel({
   isCancelled,
-  onCancel,
-  onChange,
-  onOpenTicket,
+  onSubmitRequest,
 }: ActionPanelProps) {
-  if (isCancelled) {
-    return (
-      <div className="pnr-card pnr-actions">
-        <div className="pnr-cancelled-banner">
-          <AlertCircle size={18} />
-          <span>Bu bilet iptal edilmiştir.</span>
-        </div>
-        <div className="pnr-actions__list">
-          <button type="button" disabled className="pnr-actions__btn pnr-actions__btn--cancel">
-            <XCircle size={16} /> Bileti İptal Et
-          </button>
-          <button type="button" disabled className="pnr-actions__btn pnr-actions__btn--primary">
-            <RefreshCw size={16} /> Değişiklik Yap
-          </button>
-        </div>
-      </div>
-    );
-  }
+  const { status } = useSession();
+  const isAuthenticated = status === "authenticated";
+  const [showRequestModal, setShowRequestModal] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Giriş yapılmamışsa panel hiç render edilmesin
+  if (!isAuthenticated) return null;
+
+  const openRequest = () => setShowRequestModal(true);
+  const closeRequest = () => {
+    if (!submitting) setShowRequestModal(false);
+  };
+
+  const handleSubmitRequest = async (data: TicketRequestPayload) => {
+    try {
+      setSubmitting(true);
+      if (onSubmitRequest) {
+        await onSubmitRequest(data);
+      }
+      setShowRequestModal(false);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="pnr-card pnr-actions">
       <h3 className="pnr-actions__title">İşlemler</h3>
+      {isCancelled && (
+        <p
+          style={{
+            margin: "0 0 12px",
+            fontSize: 12,
+            color: "var(--bb-gray-600, #6b7280)",
+          }}
+        >
+          Bu bilet iptal edilmiştir. İade veya bilgi talebinizi aşağıdaki form üzerinden iletebilirsiniz.
+        </p>
+      )}
       <div className="pnr-actions__list">
         <button
           type="button"
-          onClick={onCancel}
+          onClick={openRequest}
           className="pnr-actions__btn pnr-actions__btn--cancel"
         >
-          <XCircle size={16} /> Bileti İptal Et
+          Talep Oluştur
         </button>
-        <button
-          type="button"
-          onClick={onChange}
-          className="pnr-actions__btn pnr-actions__btn--primary"
-        >
-          <RefreshCw size={16} /> Değişiklik Yap
-        </button>
-        {/* Talep Oluştur butonu kaldırıldı */}
       </div>
+      {showRequestModal && (
+        <TicketRequestForm
+          onSubmit={handleSubmitRequest}
+          onClose={closeRequest}
+          submitting={submitting}
+        />
+      )}
     </div>
   );
 }

@@ -2,6 +2,8 @@ import HeaderOne from "../layouts/headers/HeaderOne"
 import TrustBar from "../components/homes/home-one/TrustBar"
 import FooterOne from "../layouts/footers/FooterOne"
 import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
 import { useTranslation } from "../context/LanguageContext"
 import { useDispatch, useSelector } from "react-redux"
 import { getBookingByPnrThunk, clearBookingDetail } from "../redux/features/paymentSlice"
@@ -13,6 +15,27 @@ import PassengerListCard from "../components/pnr/PassengerListCard"
 import PriceBreakdownCard from "../components/pnr/PriceBreakdownCard"
 import ActionPanel from "../components/pnr/ActionPanel"
 import RulesAccordion from "../components/pnr/RulesAccordion"
+import TicketRequestForm, { TicketRequestPayload, TicketRequestType } from "../components/pnr/TicketRequestForm"
+
+// Frontend talep tipi -> backend SupportTicketType enum
+// (Refund=1, Change=2, Complaint=3, Technical=4)
+const REQUEST_TYPE_TO_BACKEND: Record<TicketRequestType, number> = {
+   iptal: 1,
+   degisiklik: 2,
+   tekerlekli_sandalye: 3,
+   ozel_yemek: 3,
+   bagaj: 3,
+   diger: 3,
+};
+
+const REQUEST_TYPE_LABEL: Record<TicketRequestType, string> = {
+   iptal: "İptal Talebi",
+   degisiklik: "Değişiklik Talebi",
+   tekerlekli_sandalye: "Tekerlekli Sandalye Talebi",
+   ozel_yemek: "Özel Yemek Talebi",
+   bagaj: "Ek Bagaj Talebi",
+   diger: "Genel Talep",
+};
 
 const turkishToEnglishUpper = (value: string): string => {
    const charMap: Record<string, string> = {
@@ -36,6 +59,9 @@ const turkishToEnglishUpper = (value: string): string => {
 
 const BookingCheckMain = () => {
    const { t } = useTranslation();
+   const router = useRouter();
+   const { status: authStatus } = useSession();
+   const isAuthenticated = authStatus === "authenticated";
    const dispatch = useDispatch<AppDispatch>();
    const { bookingDetail, bookingDetailLoading, bookingDetailError } = useSelector(
       (state: RootState) => state.payment
@@ -43,6 +69,8 @@ const BookingCheckMain = () => {
    const [pnr, setPnr] = useState("");
    const [surname, setSurname] = useState("");
    const [errors, setErrors] = useState<Record<string, string>>({});
+   const [showMobileRequestModal, setShowMobileRequestModal] = useState(false);
+   const [mobileSubmitting, setMobileSubmitting] = useState(false);
 
    const handlePnrChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       let value = turkishToEnglishUpper(e.target.value);
@@ -99,14 +127,54 @@ const BookingCheckMain = () => {
    const handlePrint = () => {
       window.print();
    };
-   const handleCancel = () => {
-      // TODO: integrate with cancel endpoint
-   };
-   const handleChange = () => {
-      // TODO: integrate with change flow
-   };
-   const handleOpenTicket = () => {
-      // TODO: integrate with open ticket flow
+
+   const handleSubmitRequest = async (data: TicketRequestPayload) => {
+      const pnrCode = bookingDetail?.pnr ?? "";
+      const typeLabel = REQUEST_TYPE_LABEL[data.type] ?? "Talep";
+      const backendType = REQUEST_TYPE_TO_BACKEND[data.type] ?? 3;
+
+      const subject = pnrCode
+         ? `${typeLabel} - PNR ${pnrCode}`
+         : typeLabel;
+
+      const message = [
+         `Talep tipi: ${typeLabel}`,
+         pnrCode ? `PNR: ${pnrCode}` : null,
+         "",
+         data.description,
+      ]
+         .filter(Boolean)
+         .join("\n");
+
+      // Not: BookingId backend'de "kullanıcıya ait olmalı" kontrolü yapıyor.
+      // PNR sorgulama akışında kullanıcı kendine ait olmayan bir bilet için de
+      // talep açabildiğinden bookingId göndermiyoruz; PNR konu ve mesajda yer alıyor,
+      // admin paneli üzerinden eşleştirilebilir. Backend'de Refund/Change tipleri
+      // bookingId zorunlu kılındığı için bu tipleri Complaint(3) olarak gönderiyoruz.
+      const safeBackendType = (backendType === 1 || backendType === 2) ? 3 : backendType;
+
+      const payload: Record<string, unknown> = {
+         type: safeBackendType,
+         subject,
+         message,
+      };
+
+      const res = await fetch("/api/support/tickets", {
+         method: "POST",
+         headers: { "Content-Type": "application/json" },
+         body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+         const err = await res.json().catch(() => ({}));
+         throw new Error(err?.error || "Talep gönderilirken bir hata oluştu.");
+      }
+
+      const created = await res.json().catch(() => null);
+      const newId = (created && (created as { id?: string }).id) || null;
+
+      alert("Talebiniz alınmıştır. Destek ekibimiz en kısa sürede sizinle iletişime geçecektir.");
+      router.push(newId ? `/destek-taleplerim/${newId}` : "/destek-taleplerim");
    };
 
    return (
@@ -287,52 +355,47 @@ const BookingCheckMain = () => {
                         <RulesAccordion />
                      </div>
 
-                     {/* Sidebar — Action Panel (desktop only, hidden on mobile via CSS) */}
+                     {/* Sidebar — Action Panel (sadece giriş yapan kullanıcı için) */}
                      <div>
                         <ActionPanel
                            isCancelled={isCancelled}
-                           onCancel={handleCancel}
-                           onChange={handleChange}
-                           onOpenTicket={handleOpenTicket}
+                           onSubmitRequest={handleSubmitRequest}
                         />
                      </div>
                   </div>
 
                   {/* Mobile sticky bottom action bar */}
-                  <div className="pnr-mobile-bar">
-                     <div className="pnr-mobile-bar__inner">
-                        {isCancelled ? (
-                           <div className="pnr-mobile-bar__cancelled">
-                              <AlertTriangle size={16} />
-                              Bu bilet iptal edilmiştir
-                           </div>
-                        ) : (
-                           <>
-                              <button
-                                 type="button"
-                                 onClick={handleCancel}
-                                 className="pnr-mobile-bar__btn pnr-mobile-bar__btn--cancel"
-                              >
-                                 İptal Et
-                              </button>
-                              <button
-                                 type="button"
-                                 onClick={handleChange}
-                                 className="pnr-mobile-bar__btn pnr-mobile-bar__btn--primary"
-                              >
-                                 Değişiklik
-                              </button>
-                              <button
-                                 type="button"
-                                 onClick={handleOpenTicket}
-                                 className="pnr-mobile-bar__btn pnr-mobile-bar__btn--secondary"
-                              >
-                                 Açık Bilet
-                              </button>
-                           </>
-                        )}
+                  {isAuthenticated && (
+                     <div className="pnr-mobile-bar">
+                        <div className="pnr-mobile-bar__inner">
+                           <button
+                              type="button"
+                              onClick={() => setShowMobileRequestModal(true)}
+                              className="pnr-mobile-bar__btn pnr-mobile-bar__btn--cancel"
+                              style={{ width: "100%" }}
+                           >
+                              Talep Oluştur
+                           </button>
+                        </div>
                      </div>
-                  </div>
+                  )}
+                  {isAuthenticated && showMobileRequestModal && (
+                     <TicketRequestForm
+                        submitting={mobileSubmitting}
+                        onClose={() => {
+                           if (!mobileSubmitting) setShowMobileRequestModal(false);
+                        }}
+                        onSubmit={async (data) => {
+                           try {
+                              setMobileSubmitting(true);
+                              await handleSubmitRequest(data);
+                              setShowMobileRequestModal(false);
+                           } finally {
+                              setMobileSubmitting(false);
+                           }
+                        }}
+                     />
+                  )}
                </div>
             )}
          </main>

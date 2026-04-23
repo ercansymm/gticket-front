@@ -39,10 +39,12 @@ const HeaderOne = () => {
                         <i className="fa-solid fa-ticket"></i> {t.bookingCheck}
                      </Link>
 
-                     {/* Destek Talebi */}
-                     <Link href="/destek-talebi" className="bb-header-btn d-none d-md-inline-flex">
-                        <i className="fa-solid fa-headset"></i> Destek Talebi
-                     </Link>
+                     {/* Destek Taleplerim - sadece giriş yapanlara */}
+                     {status === "authenticated" && (
+                        <Link href="/destek-taleplerim" className="bb-header-btn d-none d-md-inline-flex">
+                           <i className="fa-solid fa-headset"></i> Taleplerim
+                        </Link>
+                     )}
                      <span className="bb-divider d-none d-md-block"></span>
 
                      {/* Language Selector */}

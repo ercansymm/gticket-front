@@ -32,10 +32,14 @@ export async function GET(
         "X-Transaction-Id": crypto.randomUUID(),
       },
       signal,
+      cache: "no-store",
     });
     clear();
     const data = await res.json().catch(() => ({}));
-    return NextResponse.json(data, { status: res.status });
+    return NextResponse.json(data, {
+      status: res.status,
+      headers: { "Cache-Control": "no-store, no-cache, must-revalidate" },
+    });
   } catch {
     return NextResponse.json({ error: "Sunucuya ulaşılamadı." }, { status: 503 });
   }

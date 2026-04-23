@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { makePreBookingClientSchema, validateBody, parseBody } from '@/lib/validations';
 import { filterSensitiveFields, normalizeToCamelCase, withTimeout, checkRateLimit } from '@/lib/api-helpers';
 import { logger } from '@/lib/logger';
@@ -17,6 +19,11 @@ export async function POST(request: NextRequest) {
     if (!validation.success) return validation.response;
 
     const { searchId, productId, brandedFareItemId, passengers, contact } = validation.data;
+
+    // Giriş yapmış kullanıcının id'sini NextAuth'dan al — booking buna bağlanır
+    const session = await getServerSession(authOptions);
+    const sessionUserId =
+      (session?.user as { id?: string } | undefined)?.id ?? null;
 
     // 1. Server-side'da session bilgisini al
     const sessionRes = await fetch(`${API_BASE}/api/flight/session/${encodeURIComponent(searchId)}`, {
@@ -46,7 +53,7 @@ export async function POST(request: NextRequest) {
       productId,
       brandedFareItemId: brandedFareItemId || '',
       shoppingFileId: sessionData.shoppingFileId,
-      userId: null,
+      userId: sessionUserId,
       passengers,
       contact,
     };

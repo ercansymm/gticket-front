@@ -124,7 +124,9 @@ export default function SuccessClient() {
   const hasRecovered = useRef(false);
 
   // URL params (from 3D callback redirect — Redux state is lost after full-page redirect)
+  // pnr = BiletBank/havayolu PNR (BB PNR), internalPnr = bizim urettigimiz ATA PNR
   const urlPnr = searchParams.get('pnr');
+  const urlInternalPnr = searchParams.get('internalPnr');
   const urlBookingId = searchParams.get('bookingId');
   const urlShoppingFileId = searchParams.get('shoppingFileId');
   const urlFinalized = searchParams.get('finalized') === 'True' || searchParams.get('finalized') === 'true';
@@ -207,11 +209,15 @@ export default function SuccessClient() {
   };
 
   const shoppingFileId = allocateResult?.shoppingFileId ?? urlShoppingFileId ?? undefined;
-  // PNR oncelik sirasi: Redux finalizeResult.internalPnr (canli akis) -> bookingDetail.internalPnr
-  // (3DS sonrasi backend'den cekilen) -> URL'den gelen pnr (callback'in koydugu) -> bookingDetail.pnr
-  // (BB PNR, son care). InternalPnr 'ATA PNR' olarak gosteriliyor; BB PNR'i degildir.
+  // PNR oncelik sirasi (ATA PNR gosterilir):
+  // 1) Redux finalizeResult.internalPnr (canli akista)
+  // 2) bookingDetail.internalPnr (3DS sonrasi backend'den cekilen / self-heal ile uretilen)
+  // 3) URL'den gelen internalPnr (3D callback redirect ATA PNR'i ayri parametre olarak gonderiyor)
+  // 4) Son care fallback: URL'den gelen pnr veya bookingDetail.pnr (BB PNR — ATA hala
+  //    olusturulamamissa kullanici en azindan bir referans gorur)
   const pnr = finalizeResult?.internalPnr
     ?? bookingDetail?.internalPnr
+    ?? urlInternalPnr
     ?? urlPnr
     ?? bookingDetail?.pnr
     ?? '—';
