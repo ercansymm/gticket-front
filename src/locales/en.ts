@@ -91,6 +91,21 @@ export const en = {
   flexibleDates: "Flexible Dates (±3 days)",
   baggageIncluded: "Baggage Included",
 
+  // Payment Retry / Reservation Time Limit
+  payment3DFailed: "Payment could not be completed",
+  payment3DFailedDesc: "3D Secure payment step failed. You can retry while your reservation is still valid.",
+  retryPayment: "Retry Payment",
+  paymentTimeExpired: "Reservation expired",
+  paymentTimeExpiredDesc: "Unfortunately your reservation has expired and the seat is back on sale. Please make a new search and try again.",
+  reservationValidUntil: "Your reservation is valid until {time}",
+  reservationRemainingMinutes: "Time remaining: {minutes} minutes",
+  reservationRemainingHours: "Time remaining: {hours}h {minutes}m",
+  reservationAlreadyPaid: "This reservation has already been paid",
+  reservationCancelled: "This reservation has been cancelled",
+  newSearchBtn: "New Search",
+  bookingNotFound: "Reservation not found",
+  ticketTimeLimit: "Ticketing Deadline",
+
   // Popular Routes
   popularRoutes: "Popular Flight Routes",
   pricesFrom: "Prices from",

@@ -6,6 +6,22 @@ import Link from 'next/link';
 import HeaderOne from '@/layouts/headers/HeaderOne';
 import FooterOne from '@/layouts/footers/FooterOne';
 
+interface PaymentStatusInfo {
+  bookingId: string;
+  pnr: string | null;
+  status: string | null;
+  grandTotal: number | null;
+  currency: string | null;
+  origin: string | null;
+  destination: string | null;
+  ticketTimeLimit: string | null;
+  isExpired: boolean;
+  remainingMinutes: number | null;
+  isAlreadyPaid: boolean;
+  isCancelled: boolean;
+  canRetry: boolean;
+}
+
 /* ── Banka/BiletBank teknik hata mesajlarini kullaniciya nazik Turkce mesajlara cevir ── */
 function humanizeError(raw: string | null): { title: string; detail: string } {
   if (!raw) {
@@ -58,6 +74,30 @@ function humanizeError(raw: string | null): { title: string; detail: string } {
   };
 }
 
+function formatRemaining(minutes: number | null): string {
+  if (minutes === null || minutes <= 0) return '';
+  if (minutes < 60) return `${minutes} dakika`;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return m > 0 ? `${h} saat ${m} dakika` : `${h} saat`;
+}
+
+function formatTimeLimit(iso: string | null): string {
+  if (!iso) return '';
+  try {
+    const d = new Date(iso);
+    return d.toLocaleString('tr-TR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch {
+    return iso;
+  }
+}
+
 export default function FailedClient() {
   const searchParams = useSearchParams();
   const [errorInfo, setErrorInfo] = useState<{ title: string; detail: string }>({
@@ -65,11 +105,15 @@ export default function FailedClient() {
     detail: '',
   });
   const [bookingId, setBookingId] = useState<string | null>(null);
+  const [statusInfo, setStatusInfo] = useState<PaymentStatusInfo | null>(null);
+  const [statusLoading, setStatusLoading] = useState<boolean>(false);
+  const [remainingMinutes, setRemainingMinutes] = useState<number | null>(null);
 
   useEffect(() => {
     const rawError = searchParams.get('error');
     setErrorInfo(humanizeError(rawError));
-    setBookingId(searchParams.get('bookingId'));
+    const bid = searchParams.get('bookingId');
+    setBookingId(bid);
 
     // Olasi 3DS oturum izlerini temizle
     try {
@@ -77,7 +121,37 @@ export default function FailedClient() {
     } catch {
       // sessionStorage erisilemiyorsa sessizce gec
     }
+
+    // Rezervasyonun hala gecerli olup olmadigini ve kalan sureyi backend'den cek
+    if (bid) {
+      setStatusLoading(true);
+      fetch(`/api/flight/booking/${encodeURIComponent(bid)}/payment-status`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data: PaymentStatusInfo | null) => {
+          if (data && data.bookingId) {
+            setStatusInfo(data);
+            setRemainingMinutes(data.remainingMinutes);
+          }
+        })
+        .catch(() => {
+          // Sessizce gec — eski davranisa fallback
+        })
+        .finally(() => setStatusLoading(false));
+    }
   }, [searchParams]);
+
+  // Geri sayim — her dakika remainingMinutes'i azalt
+  useEffect(() => {
+    if (remainingMinutes === null || remainingMinutes <= 0) return;
+    const id = setInterval(() => {
+      setRemainingMinutes((prev) => (prev === null ? null : Math.max(0, prev - 1)));
+    }, 60_000);
+    return () => clearInterval(id);
+  }, [remainingMinutes]);
+
+  const isExpired = statusInfo?.isExpired === true || (remainingMinutes !== null && remainingMinutes <= 0);
+  const canRetry = statusInfo?.canRetry === true && !isExpired;
+  const showCountdown = statusInfo?.ticketTimeLimit && !isExpired && !statusInfo.isAlreadyPaid && !statusInfo.isCancelled;
 
   return (
     <main className="min-h-screen flex flex-col bg-slate-50">
@@ -94,7 +168,7 @@ export default function FailedClient() {
             </div>
             <div>
               <h1 className="text-xl sm:text-2xl font-semibold text-slate-900">{errorInfo.title}</h1>
-              <p className="text-sm text-slate-500 mt-0.5">Biletiniz oluşturulmadı, kartınızdan ücret tahsil edilmedi.</p>
+              <p className="text-sm text-slate-500 mt-0.5">Biletiniz oluşturulmadı, kartınızdan ücret çekilmedi.</p>
             </div>
           </div>
 
@@ -107,27 +181,101 @@ export default function FailedClient() {
             {bookingId && (
               <div className="text-xs text-slate-400">
                 İşlem referansı: <span className="font-mono text-slate-500">{bookingId}</span>
+                {statusInfo?.pnr && (
+                  <>
+                    {' · '}PNR: <span className="font-mono text-slate-500">{statusInfo.pnr}</span>
+                  </>
+                )}
               </div>
             )}
 
-            <div className="rounded-xl border border-amber-100 bg-amber-50 px-5 py-4">
-              <h3 className="text-sm font-semibold text-amber-900 mb-1">Ne yapabilirsiniz?</h3>
-              <ul className="text-sm text-amber-900/90 list-disc list-inside space-y-1">
-                <li>Kart bilgilerinizi kontrol edip tekrar deneyebilirsiniz.</li>
-                <li>Farklı bir banka kartı ile ödeme yapabilirsiniz.</li>
-                <li>Sorun devam ederse bankanızla iletişime geçiniz.</li>
-              </ul>
-            </div>
+            {/* Rezervasyon süresi durumu */}
+            {statusLoading && (
+              <div className="rounded-xl border border-slate-100 bg-slate-50 px-5 py-4 text-sm text-slate-500">
+                Rezervasyon durumu kontrol ediliyor…
+              </div>
+            )}
+
+            {!statusLoading && showCountdown && (
+              <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-5 py-4">
+                <div className="flex items-start gap-3">
+                  <svg className="w-5 h-5 text-emerald-700 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div className="flex-1">
+                    <h3 className="text-sm font-semibold text-emerald-900">Rezervasyonunuz hâlâ geçerli</h3>
+                    <p className="text-sm text-emerald-900/90 mt-1">
+                      {remainingMinutes !== null && remainingMinutes > 0 ? (
+                        <>
+                          Kalan süre: <span className="font-semibold">{formatRemaining(remainingMinutes)}</span>
+                        </>
+                      ) : (
+                        <>Son tarihe kadar geçerli: <span className="font-semibold">{formatTimeLimit(statusInfo!.ticketTimeLimit)}</span></>
+                      )}
+                    </p>
+                    <p className="text-xs text-emerald-900/70 mt-1">
+                      Bu süre içinde aynı rezervasyon üzerinden tekrar ödeme yapabilirsiniz. Süre dolarsa koltuk yeniden satışa açılır ve yeni arama yapmanız gerekir.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {!statusLoading && isExpired && (
+              <div className="rounded-xl border border-red-100 bg-red-50 px-5 py-4">
+                <h3 className="text-sm font-semibold text-red-900 mb-1">Rezervasyon süresi doldu</h3>
+                <p className="text-sm text-red-900/90">
+                  Maalesef rezervasyonunuzun ödeme süresi doldu ve koltuk yeniden satışa açıldı. Lütfen yeni bir arama yaparak tekrar deneyin.
+                </p>
+              </div>
+            )}
+
+            {!statusLoading && statusInfo?.isAlreadyPaid && (
+              <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-5 py-4">
+                <h3 className="text-sm font-semibold text-emerald-900 mb-1">Bu rezervasyonun ödemesi zaten yapılmış</h3>
+                <p className="text-sm text-emerald-900/90">
+                  Biletiniz oluşturuldu. &quot;Biletlerim&quot; sayfasından detayları görüntüleyebilirsiniz.
+                </p>
+              </div>
+            )}
+
+            {!isExpired && !statusInfo?.isAlreadyPaid && (
+              <div className="rounded-xl border border-amber-100 bg-amber-50 px-5 py-4">
+                <h3 className="text-sm font-semibold text-amber-900 mb-1">Ne yapabilirsiniz?</h3>
+                <ul className="text-sm text-amber-900/90 list-disc list-inside space-y-1">
+                  <li>Kart bilgilerinizi kontrol edip tekrar deneyebilirsiniz.</li>
+                  <li>Farklı bir banka kartı ile ödeme yapabilirsiniz.</li>
+                  <li>Sorun devam ederse bankanızla iletişime geçiniz.</li>
+                </ul>
+              </div>
+            )}
           </div>
 
           {/* Aksiyonlar */}
           <div className="px-8 py-6 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row gap-3">
-            <Link
-              href="/checkout/payment"
-              className="flex-1 text-center py-3 px-5 rounded-lg bg-emerald-700 text-white font-medium hover:bg-emerald-800 transition-colors"
-            >
-              Ödemeyi Tekrar Dene
-            </Link>
+            {canRetry ? (
+              <Link
+                href={bookingId ? `/checkout/payment?bookingId=${encodeURIComponent(bookingId)}` : '/checkout/payment'}
+                className="flex-1 text-center py-3 px-5 rounded-lg bg-emerald-700 text-white font-medium hover:bg-emerald-800 transition-colors"
+              >
+                Ödemeyi Tekrar Dene
+              </Link>
+            ) : isExpired ? (
+              <Link
+                href="/"
+                className="flex-1 text-center py-3 px-5 rounded-lg bg-emerald-700 text-white font-medium hover:bg-emerald-800 transition-colors"
+              >
+                Yeni Arama Yap
+              </Link>
+            ) : (
+              // Status henuz cekilmediyse eski davranis
+              <Link
+                href="/checkout/payment"
+                className="flex-1 text-center py-3 px-5 rounded-lg bg-emerald-700 text-white font-medium hover:bg-emerald-800 transition-colors"
+              >
+                Ödemeyi Tekrar Dene
+              </Link>
+            )}
             <Link
               href="/"
               className="flex-1 text-center py-3 px-5 rounded-lg border border-slate-300 text-slate-700 font-medium hover:bg-white transition-colors"

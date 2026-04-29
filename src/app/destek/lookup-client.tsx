@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import HeaderOne from "@/layouts/headers/HeaderOne";
 import FooterOne from "@/layouts/footers/FooterOne";
@@ -10,16 +11,25 @@ import { saveGuestSession, getGuestSession } from "@/lib/guest-support";
 
 export default function LookupClient() {
   const router = useRouter();
+  const { status } = useSession();
   const [pnr, setPnr] = useState("");
   const [surname, setSurname] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Zaten geçerli oturum varsa doğrudan listeye gönder
+  // Üye olarak giriş yapılmışsa üye destek listesine yönlendir
   useEffect(() => {
+    if (status === "authenticated") {
+      router.replace("/destek-taleplerim");
+    }
+  }, [status, router]);
+
+  // Misafir oturumu varsa doğrudan listeye gönder
+  useEffect(() => {
+    if (status === "authenticated") return;
     const sess = getGuestSession();
     if (sess) router.replace("/destek/talepler");
-  }, [router]);
+  }, [router, status]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,6 +83,19 @@ export default function LookupClient() {
       setSubmitting(false);
     }
   };
+
+  // Üye girişi varken misafir formunu render etme (yönlendirme yapılırken kısa boş ekran)
+  if (status === "loading" || status === "authenticated") {
+    return (
+      <>
+        <HeaderOne />
+        <main className="pnr-page">
+          <div className="pnr-page__wide" style={{ maxWidth: 540, minHeight: 300 }} />
+        </main>
+        <FooterOne />
+      </>
+    );
+  }
 
   return (
     <>

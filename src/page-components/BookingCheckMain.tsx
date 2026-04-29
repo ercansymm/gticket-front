@@ -1,7 +1,7 @@
 import HeaderOne from "../layouts/headers/HeaderOne"
 import TrustBar from "../components/homes/home-one/TrustBar"
 import FooterOne from "../layouts/footers/FooterOne"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { useTranslation } from "../context/LanguageContext"
@@ -16,6 +16,12 @@ import PriceBreakdownCard from "../components/pnr/PriceBreakdownCard"
 import ActionPanel from "../components/pnr/ActionPanel"
 import RulesAccordion from "../components/pnr/RulesAccordion"
 import TicketRequestForm, { TicketRequestPayload, TicketRequestType } from "../components/pnr/TicketRequestForm"
+import {
+   saveGuestSession,
+   getGuestSession,
+   clearGuestSession,
+   guestFetch,
+} from "../lib/guest-support"
 
 // Frontend talep tipi -> backend SupportTicketType enum
 // (Refund=1, Change=2, Complaint=3, Technical=4)
@@ -71,6 +77,7 @@ const BookingCheckMain = () => {
    const [errors, setErrors] = useState<Record<string, string>>({});
    const [showMobileRequestModal, setShowMobileRequestModal] = useState(false);
    const [mobileSubmitting, setMobileSubmitting] = useState(false);
+   const [guestSessionReady, setGuestSessionReady] = useState(false);
 
    const handlePnrChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       let value = turkishToEnglishUpper(e.target.value);
@@ -104,10 +111,65 @@ const BookingCheckMain = () => {
       setPnr("");
       setSurname("");
       setErrors({});
+      // Misafir oturumu da temizle ki başka PNR sorgulamasında karışmasın
+      if (!isAuthenticated) {
+         clearGuestSession();
+         setGuestSessionReady(false);
+      }
    };
 
    const isCancelled = bookingDetail?.status === "Cancelled";
    const hasResult = bookingDetail && !bookingDetail.hasError;
+
+   // Misafir kullan\u0131c\u0131 PNR + soyad ile ba\u015far\u0131l\u0131 sorgu yapt\u0131\u011f\u0131nda
+   // arka planda misafir destek token'\u0131 al\u0131p sessionStorage'a yaz\u0131yoruz.
+   // B\u00f6ylece "\u0130\u015flemler" panelinden talep olu\u015fturabilirler.
+   useEffect(() => {
+      if (isAuthenticated) return;
+      if (!hasResult) return;
+      if (guestSessionReady) return;
+
+      const existing = getGuestSession();
+      if (existing && existing.pnr === bookingDetail?.pnr) {
+         setGuestSessionReady(true);
+         return;
+      }
+
+      const pnrCode = (bookingDetail?.pnr || pnr).trim().toUpperCase();
+      const surnameValue = surname.trim();
+      if (!pnrCode || !surnameValue) return;
+
+      let cancelled = false;
+      (async () => {
+         try {
+            const res = await fetch("/api/support/guest/lookup", {
+               method: "POST",
+               headers: { "Content-Type": "application/json" },
+               body: JSON.stringify({ pnr: pnrCode, surname: surnameValue }),
+               cache: "no-store",
+            });
+            if (!res.ok) return;
+            const data = await res.json().catch(() => null);
+            if (cancelled || !data?.token) return;
+            saveGuestSession({
+               token: data.token,
+               expiresAt: data.expiresAt,
+               pnr: data.pnr,
+               passengerDisplayName: data.passengerDisplayName,
+               bookingId: data.bookingId,
+            });
+            setGuestSessionReady(true);
+         } catch {
+            // Sessizce yutulur; panel yine giri\u015f yapan kullan\u0131c\u0131 deneyimini bozmaz.
+         }
+      })();
+
+      return () => {
+         cancelled = true;
+      };
+   }, [isAuthenticated, hasResult, bookingDetail, pnr, surname, guestSessionReady]);
+
+   const canCreateRequest = isAuthenticated || guestSessionReady;
 
    // Segment labels for round-trip detection
    const getSegmentLabel = (idx: number, total: number): string | undefined => {
@@ -159,11 +221,19 @@ const BookingCheckMain = () => {
          message,
       };
 
-      const res = await fetch("/api/support/tickets", {
-         method: "POST",
-         headers: { "Content-Type": "application/json" },
-         body: JSON.stringify(payload),
-      });
+      // Giriş yapmış kullanıcı -> normal endpoint
+      // Misafir (token sahibi) -> guest endpoint
+      const useGuest = !isAuthenticated && guestSessionReady;
+      const res = useGuest
+         ? await guestFetch("/api/support/guest/tickets", {
+              method: "POST",
+              body: JSON.stringify(payload),
+           })
+         : await fetch("/api/support/tickets", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+           });
 
       if (!res.ok) {
          const err = await res.json().catch(() => ({}));
@@ -174,7 +244,11 @@ const BookingCheckMain = () => {
       const newId = (created && (created as { id?: string }).id) || null;
 
       alert("Talebiniz alınmıştır. Destek ekibimiz en kısa sürede sizinle iletişime geçecektir.");
-      router.push(newId ? `/destek-taleplerim/${newId}` : "/destek-taleplerim");
+      if (useGuest) {
+         router.push(newId ? `/destek/talepler/${newId}` : "/destek/talepler");
+      } else {
+         router.push(newId ? `/destek-taleplerim/${newId}` : "/destek-taleplerim");
+      }
    };
 
    return (
@@ -355,17 +429,18 @@ const BookingCheckMain = () => {
                         <RulesAccordion />
                      </div>
 
-                     {/* Sidebar — Action Panel (sadece giriş yapan kullanıcı için) */}
+                     {/* Sidebar — Action Panel (giriş yapan kullanıcı veya misafir token sahibi) */}
                      <div>
                         <ActionPanel
                            isCancelled={isCancelled}
                            onSubmitRequest={handleSubmitRequest}
+                           allowGuest={guestSessionReady}
                         />
                      </div>
                   </div>
 
                   {/* Mobile sticky bottom action bar */}
-                  {isAuthenticated && (
+                  {canCreateRequest && (
                      <div className="pnr-mobile-bar">
                         <div className="pnr-mobile-bar__inner">
                            <button
@@ -379,7 +454,7 @@ const BookingCheckMain = () => {
                         </div>
                      </div>
                   )}
-                  {isAuthenticated && showMobileRequestModal && (
+                  {canCreateRequest && showMobileRequestModal && (
                      <TicketRequestForm
                         submitting={mobileSubmitting}
                         onClose={() => {

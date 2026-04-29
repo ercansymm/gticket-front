@@ -7,19 +7,22 @@ import TicketRequestForm, { TicketRequestPayload } from "./TicketRequestForm";
 interface ActionPanelProps {
   isCancelled: boolean;
   onSubmitRequest?: (data: TicketRequestPayload) => Promise<void> | void;
+  // Misafir (giriş yapmamış) kullanıcılar için de panel görünsün
+  allowGuest?: boolean;
 }
 
 export default function ActionPanel({
   isCancelled,
   onSubmitRequest,
+  allowGuest = false,
 }: ActionPanelProps) {
   const { status } = useSession();
   const isAuthenticated = status === "authenticated";
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Giriş yapılmamışsa panel hiç render edilmesin
-  if (!isAuthenticated) return null;
+  // Giriş yapılmamışsa ve misafir akışı da aktif değilse panel render edilmesin
+  if (!isAuthenticated && !allowGuest) return null;
 
   const openRequest = () => setShowRequestModal(true);
   const closeRequest = () => {

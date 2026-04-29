@@ -1,150 +1,321 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
+/* Phone format per country dial code — checkout (PassengerForm) ile aynı */
+interface PhoneFormat { groups: number[]; max: number; placeholder: string; isValid: (d: string) => boolean; }
+const PHONE_FORMATS: Record<string, PhoneFormat> = {
+  "+90": { groups: [3, 3, 2, 2],   max: 10, placeholder: "5XX XXX XX XX",   isValid: (d) => d.length === 10 && d.startsWith("5") },
+  "+1":  { groups: [3, 3, 4],      max: 10, placeholder: "XXX XXX XXXX",    isValid: (d) => d.length === 10 },
+  "+44": { groups: [4, 3, 4],      max: 11, placeholder: "XXXX XXX XXXX",   isValid: (d) => d.length >= 10 && d.length <= 11 },
+  "+49": { groups: [3, 4, 4],      max: 11, placeholder: "XXX XXXX XXXX",   isValid: (d) => d.length >= 10 && d.length <= 11 },
+  "+33": { groups: [1, 2, 2, 2, 2], max: 9,  placeholder: "X XX XX XX XX",   isValid: (d) => d.length === 9 },
+};
+function getPhoneFormat(code: string): PhoneFormat {
+  return PHONE_FORMATS[code] ?? { groups: [15], max: 15, placeholder: "Telefon numarası", isValid: (d) => d.length >= 7 };
+}
+function formatPhone(digits: string, code: string): string {
+  const fmt = getPhoneFormat(code);
+  const limited = digits.slice(0, fmt.max);
+  const parts: string[] = [];
+  let pos = 0;
+  for (const g of fmt.groups) {
+    if (pos >= limited.length) break;
+    parts.push(limited.slice(pos, pos + g));
+    pos += g;
+  }
+  return parts.join(" ");
+}
+
 const RegisterForm = () => {
-   const router = useRouter();
+  const router = useRouter();
 
-   const [fullName, setFullName] = useState("");
-   const [email, setEmail] = useState("");
-   const [phone, setPhone] = useState("");
-   const [password, setPassword] = useState("");
-   const [confirm, setConfirm] = useState("");
-   const [loading, setLoading] = useState(false);
-   const [error, setError] = useState<string | null>(null);
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [phoneCode, setPhoneCode] = useState("+90");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [terms, setTerms] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-   const handleSubmit = async (e: React.FormEvent) => {
-      e.preventDefault();
-      setError(null);
+  // Simple password strength meter (length + variety)
+  const strength = useMemo(() => {
+    if (!password) return { score: 0, label: "", color: "#e2e8f0" };
+    let score = 0;
+    if (password.length >= 6) score++;
+    if (password.length >= 10) score++;
+    if (/[A-Z]/.test(password) && /[a-z]/.test(password)) score++;
+    if (/\d/.test(password) && /[^A-Za-z0-9]/.test(password)) score++;
+    const labels = ["Çok zayıf", "Zayıf", "Orta", "Güçlü", "Çok güçlü"];
+    const colors = ["#ef4444", "#f97316", "#eab308", "#10b981", "#059669"];
+    return { score, label: labels[score], color: colors[score] };
+  }, [password]);
 
-      if (password !== confirm) {
-         setError("Şifreler eşleşmiyor.");
-         return;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    if (!terms) {
+      setError("Devam etmek için kullanım şartlarını kabul etmelisiniz.");
+      return;
+    }
+    const phoneDigits = phone.replace(/\D/g, "");
+    if (!phoneDigits) {
+      setError("Telefon numarası zorunludur.");
+      return;
+    }
+    if (!getPhoneFormat(phoneCode).isValid(phoneDigits)) {
+      setError("Geçerli bir telefon numarası giriniz.");
+      return;
+    }
+    if (password.length < 6) {
+      setError("Şifre en az 6 karakter olmalıdır.");
+      return;
+    }
+    if (password !== confirm) {
+      setError("Şifreler eşleşmiyor.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fullName: fullName.trim(),
+          email: email.trim().toLowerCase(),
+          password,
+          phone: (phoneCode + phoneDigits).trim(),
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        // Backend already returns "Bu e-posta zaten kayıtlı." for duplicates.
+        setError(data?.error || "Kayıt başarısız.");
+        setLoading(false);
+        return;
       }
-      if (password.length < 6) {
-         setError("Şifre en az 6 karakter olmalıdır.");
-         return;
+
+      // Auto-login
+      const signInRes = await signIn("credentials", {
+        email: email.trim().toLowerCase(),
+        password,
+        redirect: false,
+      });
+
+      setLoading(false);
+
+      if (signInRes?.error) {
+        router.push("/login");
+        return;
       }
+      router.push("/");
+      router.refresh();
+    } catch {
+      setError("Sunucuya ulaşılamadı.");
+      setLoading(false);
+    }
+  };
 
-      setLoading(true);
-      try {
-         const res = await fetch("/api/auth/register", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ fullName, email, password, phone }),
-         });
-         const data = await res.json().catch(() => ({}));
+  return (
+    <form className="ab-auth__form" onSubmit={handleSubmit} noValidate>
+      <div className="ab-auth__field">
+        <label className="ab-auth__label" htmlFor="reg-name">Ad Soyad</label>
+        <div className="ab-auth__input-wrap">
+          <i className="fa-regular fa-user ab-auth__leading" />
+          <input
+            id="reg-name"
+            className="ab-auth__input"
+            type="text"
+            placeholder="Ad ve soyadınız"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            required
+            autoComplete="name"
+            autoFocus
+          />
+        </div>
+      </div>
 
-         if (!res.ok) {
-            setError(data?.error || "Kayıt başarısız.");
-            setLoading(false);
-            return;
-         }
+      <div className="ab-auth__field">
+        <label className="ab-auth__label" htmlFor="reg-email">E-posta</label>
+        <div className="ab-auth__input-wrap">
+          <i className="fa-regular fa-envelope ab-auth__leading" />
+          <input
+            id="reg-email"
+            className="ab-auth__input"
+            type="email"
+            inputMode="email"
+            placeholder="ornek@mail.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            autoComplete="email"
+          />
+        </div>
+      </div>
 
-         // Auto-login
-         const signInRes = await signIn("credentials", {
-            email,
-            password,
-            redirect: false,
-         });
+      <div className="ab-auth__field">
+        <label className="ab-auth__label" htmlFor="reg-phone">Cep Telefonu</label>
+        <div className="ab-auth__phone">
+          <select
+            className="ab-auth__phone-code"
+            value={phoneCode}
+            onChange={(e) => {
+              const newCode = e.target.value;
+              const newMax = getPhoneFormat(newCode).max;
+              const digits = phone.replace(/\D/g, "").slice(0, newMax);
+              setPhoneCode(newCode);
+              setPhone(formatPhone(digits, newCode));
+            }}
+            aria-label="Ülke kodu"
+          >
+            <option value="+90">TR (+90)</option>
+            <option value="+1">US (+1)</option>
+            <option value="+44">GB (+44)</option>
+            <option value="+49">DE (+49)</option>
+            <option value="+33">FR (+33)</option>
+          </select>
+          <input
+            id="reg-phone"
+            className="ab-auth__input ab-auth__phone-input"
+            type="tel"
+            inputMode="tel"
+            placeholder={getPhoneFormat(phoneCode).placeholder}
+            value={phone}
+            onChange={(e) => {
+              const max = getPhoneFormat(phoneCode).max;
+              const digits = e.target.value.replace(/\D/g, "").slice(0, max);
+              setPhone(formatPhone(digits, phoneCode));
+            }}
+            required
+            autoComplete="tel-national"
+          />
+        </div>
+      </div>
 
-         setLoading(false);
+      <div className="ab-auth__field">
+        <label className="ab-auth__label" htmlFor="reg-password">Şifre</label>
+        <div className="ab-auth__input-wrap">
+          <i className="fa-solid fa-lock ab-auth__leading" />
+          <input
+            id="reg-password"
+            className="ab-auth__input ab-auth__input--has-trailing"
+            type={showPassword ? "text" : "password"}
+            placeholder="En az 6 karakter"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            autoComplete="new-password"
+            minLength={6}
+          />
+          <button
+            type="button"
+            className="ab-auth__toggle"
+            onClick={() => setShowPassword((s) => !s)}
+            aria-label={showPassword ? "Şifreyi gizle" : "Şifreyi göster"}
+            tabIndex={-1}
+          >
+            <i className={`fa-regular ${showPassword ? "fa-eye-slash" : "fa-eye"}`} />
+          </button>
+        </div>
+        {password && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
+            <div
+              style={{
+                flex: 1,
+                height: 4,
+                borderRadius: 4,
+                background: "#e2e8f0",
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  width: `${(strength.score / 4) * 100}%`,
+                  height: "100%",
+                  background: strength.color,
+                  transition: "width 0.2s, background 0.2s",
+                }}
+              />
+            </div>
+            <span style={{ fontSize: 11.5, color: strength.color, fontWeight: 600, minWidth: 70, textAlign: "right" }}>
+              {strength.label}
+            </span>
+          </div>
+        )}
+      </div>
 
-         if (signInRes?.error) {
-            // Registered but auto-login failed — send to login page
-            router.push("/login");
-            return;
-         }
-         router.push("/");
-         router.refresh();
-      } catch {
-         setError("Sunucuya ulaşılamadı.");
-         setLoading(false);
-      }
-   };
+      <div className="ab-auth__field">
+        <label className="ab-auth__label" htmlFor="reg-confirm">Şifre Tekrar</label>
+        <div className="ab-auth__input-wrap">
+          <i className="fa-solid fa-lock ab-auth__leading" />
+          <input
+            id="reg-confirm"
+            className="ab-auth__input"
+            type={showPassword ? "text" : "password"}
+            placeholder="Şifrenizi tekrar girin"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            required
+            autoComplete="new-password"
+            minLength={6}
+          />
+        </div>
+        {confirm && password !== confirm && (
+          <span className="ab-auth__hint" style={{ color: "#dc2626" }}>
+            Şifreler eşleşmiyor.
+          </span>
+        )}
+      </div>
 
-   return (
-      <form onSubmit={handleSubmit}>
-         <div className="row">
-            <div className="col-lg-12 mb-25">
-               <input
-                  className="input"
-                  type="text"
-                  placeholder="Ad Soyad"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  required
-                  autoComplete="name"
-               />
-            </div>
-            <div className="col-lg-12 mb-25">
-               <input
-                  className="input"
-                  type="email"
-                  placeholder="E-posta adresinizi girin"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  autoComplete="email"
-               />
-            </div>
-            <div className="col-lg-12 mb-25">
-               <input
-                  className="input"
-                  type="tel"
-                  placeholder="Telefon (opsiyonel)"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  autoComplete="tel"
-               />
-            </div>
-            <div className="col-lg-12 mb-25">
-               <input
-                  className="input"
-                  type="password"
-                  placeholder="Şifre (en az 6 karakter)"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  autoComplete="new-password"
-               />
-            </div>
-            <div className="col-lg-12 mb-25">
-               <input
-                  className="input"
-                  type="password"
-                  placeholder="Şifre Tekrar"
-                  value={confirm}
-                  onChange={(e) => setConfirm(e.target.value)}
-                  required
-                  autoComplete="new-password"
-               />
-            </div>
-            {error && (
-               <div className="col-lg-12 mb-15">
-                  <div style={{ color: "#dc2626", fontSize: 14 }}>{error}</div>
-               </div>
-            )}
-            <div className="col-lg-12">
-               <div className="d-flex align-items-center justify-content-between">
-                  <div className="review-checkbox d-flex align-items-center mb-25">
-                     <input className="tg-checkbox" type="checkbox" id="terms" />
-                     <label htmlFor="terms" className="tg-label">Şartları kabul ediyorum</label>
-                  </div>
-                  <div className="tg-login-navigate mb-25">
-                     <Link href="/login">Giriş Yap</Link>
-                  </div>
-               </div>
-               <button type="submit" className="tg-btn w-100" disabled={loading}>
-                  {loading ? "Kayıt yapılıyor..." : "Kayıt Ol"}
-               </button>
-            </div>
-         </div>
-      </form>
-   );
+      {error && (
+        <div className="ab-auth__alert ab-auth__alert--error" role="alert">
+          <i className="fa-solid fa-circle-exclamation" />
+          <span>{error}</span>
+        </div>
+      )}
+
+      <label className="ab-auth__check" style={{ marginTop: 4 }}>
+        <input
+          type="checkbox"
+          checked={terms}
+          onChange={(e) => setTerms(e.target.checked)}
+        />
+        <span>
+          <Link href="/kullanim-sartlari" className="ab-auth__link">Kullanım şartlarını</Link>
+          {" "}ve{" "}
+          <Link href="/gizlilik" className="ab-auth__link">gizlilik politikasını</Link>
+          {" "}kabul ediyorum.
+        </span>
+      </label>
+
+      <button type="submit" className="ab-auth__submit" disabled={loading}>
+        {loading ? (
+          <>
+            <i className="fa-solid fa-spinner fa-spin" /> Hesap oluşturuluyor...
+          </>
+        ) : (
+          <>
+            <i className="fa-solid fa-user-plus" /> Hesap Oluştur
+          </>
+        )}
+      </button>
+
+      <p className="ab-auth__footer">
+        Zaten bir hesabınız var mı?
+        <Link href="/login">Giriş yapın</Link>
+      </p>
+    </form>
+  );
 };
 
 export default RegisterForm;

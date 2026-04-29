@@ -8,22 +8,44 @@ import Logo from "../../components/common/Logo";
 import { useTranslation } from "../../context/LanguageContext";
 import CurrencySelector from "../../components/common/CurrencySelector";
 
-/** AtaBilet — Header. Logo, navigasyon, destek hattı, bilet sorgula, dil seçici ve giriş butonu. */
+/** AtaBilet — Header. Logo, navigasyon, dil seçici, döviz seçici ve müşteri hesabı menüsü. */
 const HeaderOne = () => {
 
    const { t, lang, setLang } = useTranslation();
    const { data: session, status } = useSession();
    const [mobileMenu, setMobileMenu] = useState(false);
    const [langOpen, setLangOpen] = useState(false);
+   const [accountOpen, setAccountOpen] = useState(false);
    const langRef = useRef<HTMLDivElement>(null);
+   const accountRef = useRef<HTMLDivElement>(null);
 
    useEffect(() => {
       const handler = (e: MouseEvent) => {
          if (langRef.current && !langRef.current.contains(e.target as Node)) setLangOpen(false);
+         if (accountRef.current && !accountRef.current.contains(e.target as Node)) setAccountOpen(false);
+      };
+      const escHandler = (e: KeyboardEvent) => {
+         if (e.key === "Escape") {
+            setLangOpen(false);
+            setAccountOpen(false);
+         }
       };
       document.addEventListener("mousedown", handler);
-      return () => document.removeEventListener("mousedown", handler);
+      document.addEventListener("keydown", escHandler);
+      return () => {
+         document.removeEventListener("mousedown", handler);
+         document.removeEventListener("keydown", escHandler);
+      };
    }, []);
+
+   const user = session?.user;
+   const displayName = user?.name || user?.email || "";
+   const initials = (() => {
+      if (!displayName) return "U";
+      const parts = displayName.split(/[\s@]+/).filter(Boolean);
+      if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+      return displayName.slice(0, 2).toUpperCase();
+   })();
 
    return (
       <>
@@ -39,12 +61,6 @@ const HeaderOne = () => {
                         <i className="fa-solid fa-ticket"></i> {t.bookingCheck}
                      </Link>
 
-                     {/* Destek Taleplerim - sadece giriş yapanlara */}
-                     {status === "authenticated" && (
-                        <Link href="/destek-taleplerim" className="bb-header-btn d-none d-md-inline-flex">
-                           <i className="fa-solid fa-headset"></i> Taleplerim
-                        </Link>
-                     )}
                      <span className="bb-divider d-none d-md-block"></span>
 
                      {/* Language Selector */}
@@ -85,21 +101,68 @@ const HeaderOne = () => {
                      {/* Currency Selector — arama sonrası görünür */}
                      <CurrencySelector />
 
-                     {/* Login / Logout */}
-                     {status === "authenticated" && session?.user ? (
-                        <>
-                           <span className="bb-header-btn d-none d-sm-inline-flex" style={{ cursor: "default" }}>
-                              <i className="fa-solid fa-user"></i> {session.user.name || session.user.email}
-                           </span>
+                     {/* Account / Login */}
+                     {status === "authenticated" && user ? (
+                        <div ref={accountRef} className="bb-account d-none d-sm-inline-block">
                            <button
                               type="button"
-                              onClick={() => signOut({ callbackUrl: "/" })}
-                              className="bb-header-btn bb-header-btn--login d-none d-sm-inline-flex"
-                              style={{ background: "none", border: "none" }}
+                              className={`bb-account__toggle${accountOpen ? " bb-account__toggle--open" : ""}`}
+                              onClick={() => setAccountOpen((p) => !p)}
+                              aria-haspopup="menu"
+                              aria-expanded={accountOpen}
+                              aria-label="Müşteri hesabı menüsü"
                            >
-                              <i className="fa-solid fa-right-from-bracket"></i> Çıkış Yap
+                              <span className="bb-account__avatar">{initials}</span>
+                              <span>Müşteri Hesabı</span>
+                              <i className="fa-solid fa-chevron-down bb-account__chevron" />
                            </button>
-                        </>
+                           {accountOpen && (
+                              <div className="bb-account__menu" role="menu">
+                                 <div className="bb-account__menu-header">
+                                    <span className="bb-account__avatar">{initials}</span>
+                                    <div style={{ minWidth: 0 }}>
+                                       <p className="bb-account__menu-name">{user.name || "Müşteri"}</p>
+                                       {user.email && (
+                                          <p className="bb-account__menu-email">{user.email}</p>
+                                       )}
+                                    </div>
+                                 </div>
+                                 <div className="bb-account__menu-list">
+                                    <Link
+                                       href="/destek-taleplerim"
+                                       className="bb-account__menu-item"
+                                       role="menuitem"
+                                       onClick={() => setAccountOpen(false)}
+                                    >
+                                       <i className="fa-solid fa-headset" />
+                                       Destek Taleplerim
+                                    </Link>
+                                    <Link
+                                       href="/bilet-sorgula"
+                                       className="bb-account__menu-item"
+                                       role="menuitem"
+                                       onClick={() => setAccountOpen(false)}
+                                    >
+                                       <i className="fa-solid fa-ticket" />
+                                       Biletlerim
+                                    </Link>
+                                    <div className="bb-account__menu-divider" />
+                                    <button
+                                       type="button"
+                                       className="bb-account__menu-item bb-account__menu-item--danger"
+                                       role="menuitem"
+                                       onClick={() => {
+                                          setAccountOpen(false);
+                                          signOut({ callbackUrl: "/" });
+                                       }}
+                                    >
+                                       <i className="fa-solid fa-right-from-bracket" />
+                                       Çıkış Yap
+                                    </button>
+                                 </div>
+                              </div>
+                           )}
+                        </div>
                      ) : (
                         <Link href="/login" className="bb-header-btn bb-header-btn--login d-none d-sm-inline-flex">
                            <i className="fa-solid fa-user"></i> {t.login}

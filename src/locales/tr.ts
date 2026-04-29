@@ -71,7 +71,7 @@ export const tr = {
   pnrCode: "PNR Kodu",
   lastName: "Soyadı",
   query: "Sorgula",
-  pnrPlaceholder: "Örn: ABC123",
+  pnrPlaceholder: "Örn: ATA123",
   lastNamePlaceholder: "Yolcu soyadı",
   bookingCheckTitle: "Bilet Sorgula",
 
@@ -204,6 +204,21 @@ export const tr = {
   homeBtn: "Ana Sayfa",
   allocateError: "Tahsis Hatası",
   selectOther: "Başka Uçuş Seç",
+
+  // Payment Retry / Reservation Time Limit
+  payment3DFailed: "Ödeme işleminiz tamamlanamadı",
+  payment3DFailedDesc: "3D Secure ödeme adımı başarısız oldu. Rezervasyonunuz geçerli olduğu sürece tekrar deneyebilirsiniz.",
+  retryPayment: "Ödemeyi Tekrar Dene",
+  paymentTimeExpired: "Rezervasyon süresi doldu",
+  paymentTimeExpiredDesc: "Maalesef rezervasyonunuzun ödeme süresi doldu ve koltuk yeniden satışa açıldı. Lütfen yeni bir arama yaparak tekrar deneyin.",
+  reservationValidUntil: "Rezervasyonunuz {time} tarihine kadar geçerli",
+  reservationRemainingMinutes: "Kalan süre: {minutes} dakika",
+  reservationRemainingHours: "Kalan süre: {hours} saat {minutes} dakika",
+  reservationAlreadyPaid: "Bu rezervasyonun ödemesi zaten yapılmış",
+  reservationCancelled: "Bu rezervasyon iptal edilmiş",
+  newSearchBtn: "Yeni Arama Yap",
+  bookingNotFound: "Rezervasyon bulunamadı",
+  ticketTimeLimit: "Biletleme Son Tarihi",
 
   // Misc
   menuOpen: "Menüyü aç",
