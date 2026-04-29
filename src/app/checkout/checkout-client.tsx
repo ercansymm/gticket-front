@@ -7,8 +7,7 @@ import { useSession } from 'next-auth/react';
 import HeaderOne from '@/layouts/headers/HeaderOne';
 import FooterOne from '@/layouts/footers/FooterOne';
 import PassengerForm from '@/components/booking/PassengerForm';
-import { updatePassengersThunk, makePreBookingThunk } from '@/redux/features/bookingSlice';
-import { setStep, setPassengers, setContactInfo, resetBooking } from '@/redux/features/bookingSlice';
+import { prepareBookingThunk, setStep, setPassengers, setContactInfo, resetBooking } from '@/redux/features/bookingSlice';
 import { makePaymentThunk, finalizeShoppingThunk, clearFinalizeError } from '@/redux/features/paymentSlice';
 import type { RootState, AppDispatch } from '@/redux/store';
 import type { PassengerItem, ContactInfo, MakePreBookingResponse } from '@/types/booking';
@@ -146,9 +145,11 @@ export default function CheckoutClient() {
   const [agreed, setAgreed] = useState(false);
   const [agreementError, setAgreementError] = useState(false);
   const [kvkkAgreed, setKvkkAgreed] = useState(false);
+  const [kvkkError, setKvkkError] = useState(false);
   const [showKvkkModal, setShowKvkkModal] = useState(false);
   const [showSalesModal, setShowSalesModal] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [loadingStep, setLoadingStep] = useState('Rezervasyon oluşturuluyor...');
   const [cvvFocused, setCvvFocused] = useState(false);
   const [cardForm, setCardForm] = useState({
     cardHolderName: '', cardNumber: '', expiryMonth: '', expiryYear: '', cvv: '',
@@ -269,7 +270,7 @@ export default function CheckoutClient() {
       };
       sessionStorage.setItem('payment_3ds_session', JSON.stringify(paymentSession));
       if (threeDSecureUrl) {
-        const timer = setTimeout(() => { window.location.href = threeDSecureUrl; }, 1500);
+        const timer = setTimeout(() => { window.location.href = threeDSecureUrl; }, 300);
         return () => clearTimeout(timer);
       } else if (threeDSecureHtml) {
         const win = window.open('', '_blank', 'width=500,height=700,scrollbars=yes');
@@ -292,11 +293,12 @@ export default function CheckoutClient() {
   useEffect(() => {
     if (isPaymentSuccessful && !paymentResult?.autoFinalized && searchId && !hasFinalized.current && !finalizeResult && !finalizeError) {
       hasFinalized.current = true;
+      setLoadingStep('Biletiniz oluşturuluyor...');
       if (finalizeTimeoutRef.current) clearTimeout(finalizeTimeoutRef.current);
       finalizeTimeoutRef.current = setTimeout(() => {
         if (!finalizeResultRef.current) dispatch({ type: 'payment/finalizeTimeout' });
       }, 60_000);
-      const timer = setTimeout(() => { dispatch(finalizeShoppingThunk({ searchId })); }, 1500);
+      const timer = setTimeout(() => { dispatch(finalizeShoppingThunk({ searchId })); }, 300);
       return () => clearTimeout(timer);
     }
   }, [isPaymentSuccessful, paymentResult?.autoFinalized, searchId, dispatch, finalizeResult, finalizeError]);
@@ -331,17 +333,24 @@ export default function CheckoutClient() {
   const submitRef = useRef(false);
   const handlePassengerSubmit = useCallback(
     async (passengerItems: PassengerItem[], contact: ContactInfo) => {
-      if (submitRef.current) return;
-      if (!searchId || !productId || !productItemId) return;
-      if (!agreed) {
-        setAgreementError(true);
+      console.log('[Checkout] handlePassengerSubmit invoked', {
+        passengersCount: passengerItems.length, hasContact: !!contact, agreed,
+        searchId, productId, productItemId,
+      });
+      if (submitRef.current) { console.warn('[Checkout] Already submitting, ignored'); return; }
+      if (!searchId || !productId || !productItemId) { console.warn('[Checkout] Missing IDs', { searchId, productId, productItemId }); return; }
+      if (!agreed || !kvkkAgreed) {
+        console.warn('[Checkout] Agreements not accepted', { agreed, kvkkAgreed });
+        if (!agreed) setAgreementError(true);
+        if (!kvkkAgreed) setKvkkError(true);
         setTimeout(() => {
-          const el = document.querySelector('.chk-agree');
+          const el = document.querySelector('.chk-agree--error');
           if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }, 100);
         return;
       }
       if (!validateCard()) {
+        console.warn('[Checkout] Card validation failed');
         setTimeout(() => {
           const el = document.querySelector('.chk-input--error');
           if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -350,18 +359,17 @@ export default function CheckoutClient() {
       }
       submitRef.current = true;
       setIsProcessing(true);
+      setLoadingStep('Rezervasyon oluşturuluyor...');
       dispatch(setPassengers(passengerItems));
       dispatch(setContactInfo(contact));
       try {
-        await dispatch(updatePassengersThunk({
-          searchId, productId, productItemId, passengers: passengerItems, contact,
-        })).unwrap();
-        const prebookingResult = await dispatch(makePreBookingThunk({
-          searchId, productId, brandedFareItemId, passengers: passengerItems, contact,
+        const prebookingResult = await dispatch(prepareBookingThunk({
+          searchId, productId, productItemId, brandedFareItemId, passengers: passengerItems, contact,
         })).unwrap();
         if (prebookingResult?.isPriceChanged) {
           setIsProcessing(false); setPriceChangedResult(prebookingResult); return;
         }
+        setLoadingStep('Ödeme işleniyor...');
         dispatch(makePaymentThunk({
           searchId, paymentType: 'CreditCard',
           cardHolderName: cardForm.cardHolderName.trim().toUpperCase(),
@@ -373,11 +381,11 @@ export default function CheckoutClient() {
         setIsProcessing(false);
       } finally { submitRef.current = false; }
     },
-    [dispatch, searchId, productId, productItemId, brandedFareItemId, cardForm, agreed, validateCard]
+    [dispatch, searchId, productId, productItemId, brandedFareItemId, cardForm, agreed, kvkkAgreed, validateCard]
   );
 
   const handleAcceptPriceChange = useCallback(() => {
-    setPriceChangedResult(null); setIsProcessing(true);
+    setPriceChangedResult(null); setIsProcessing(true); setLoadingStep('Ödeme işleniyor...');
     dispatch(makePaymentThunk({
       searchId: searchId!, paymentType: 'CreditCard',
       cardHolderName: cardForm.cardHolderName.trim().toUpperCase(),
@@ -399,8 +407,12 @@ export default function CheckoutClient() {
     : [];
 
   const triggerPassengerSubmit = () => {
+    console.log('[Checkout] Pay button clicked', {
+      payDisabled, isProcessing, productId, productItemId, searchId, agreed, kvkkAgreed,
+    });
     const form = document.querySelector('.bb-passenger-form') as HTMLFormElement | null;
-    if (form) form.requestSubmit();
+    if (!form) { console.warn('[Checkout] PassengerForm not found in DOM'); return; }
+    form.requestSubmit();
   };
 
   const tripTypeLabel = searchParams?.flightType === 'RT' ? 'Gidiş-Dönüş'
@@ -450,7 +462,7 @@ export default function CheckoutClient() {
     );
   };
 
-  const payDisabled = isProcessing || !productId || !productItemId || !searchId || !kvkkAgreed;
+  const payDisabled = isProcessing || !productId || !productItemId || !searchId || !agreed || !kvkkAgreed;
   const hasAnyError = updatePassengersError || (preBookingError && !isProcessing) ||
     (paymentError && !isProcessing) || threeDSError ||
     (finalizeError && !isProcessing) || (!productId || !productItemId || !searchId);
@@ -593,15 +605,23 @@ export default function CheckoutClient() {
                       Satış koşullarını ve <button type="button" className="chk-agree__link" onClick={e => { e.preventDefault(); setShowSalesModal(true); }}>mesafeli satış sözleşmesini</button> okudum, kabul ediyorum. Yolcu bilgilerinin doğruluğunu onaylıyorum.
                     </span>
                   </label>
-                  <label htmlFor="kvkkConsent" className="chk-agree">
+                  <label htmlFor="kvkkConsent" className={`chk-agree ${kvkkError && !kvkkAgreed ? 'chk-agree--error' : ''}`}>
                     <input type="checkbox" id="kvkkConsent" checked={kvkkAgreed}
-                      onChange={e => setKvkkAgreed(e.target.checked)} />
+                      onChange={e => { setKvkkAgreed(e.target.checked); if (e.target.checked) setKvkkError(false); }} />
                     <span className="chk-agree__text">
                       <button type="button" className="chk-agree__link" onClick={e => { e.preventDefault(); setShowKvkkModal(true); }}>
                         KVKK Aydınlatma Metni
                       </button>&apos;ni okudum ve kabul ediyorum.
                     </span>
                   </label>
+                  {((agreementError && !agreed) || (kvkkError && !kvkkAgreed)) && (
+                    <div className="chk-agree__error-msg" role="alert" style={{
+                      marginTop: 8, padding: '10px 12px', background: '#fef2f2',
+                      border: '1px solid #fecaca', color: '#991b1b', borderRadius: 6, fontSize: 13,
+                    }}>
+                      Ödemeye devam etmek için {!agreed && 'satış sözleşmesini'}{!agreed && !kvkkAgreed && ' ve '}{!kvkkAgreed && 'KVKK aydınlatma metnini'} onaylamanız gerekmektedir.
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -664,7 +684,7 @@ export default function CheckoutClient() {
               <div className="chk-summary__pay-head">
                 <span>Ödeme Bilgileri</span>
                 <span className="chk-card-brands">
-                  <span>VISA</span><span>MC</span><span>TROY</span>
+                  <span>VISA</span><span>MASTER CARD</span>
                 </span>
               </div>
               <div className="chk-summary__pay-body">
@@ -793,7 +813,7 @@ export default function CheckoutClient() {
           <div className="chk-loading__card">
             <div className="chk-loading__logo"><span className="accent">Ata</span><span className="dark">Bilet</span></div>
             <div className="chk-loading__bar"><div className="chk-loading__bar-fill" /></div>
-            <p className="chk-loading__text">Biletiniz hazırlanıyor, lütfen bekleyiniz<span className="chk-loading__dots" /></p>
+            <p className="chk-loading__text">{loadingStep}<span className="chk-loading__dots" /></p>
           </div>
         </div>
       )}

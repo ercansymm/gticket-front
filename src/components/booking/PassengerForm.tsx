@@ -141,6 +141,7 @@ export default function PassengerForm({ passengers, onSubmit, isInternational = 
   const [contact, setContact] = useState({ email:'', phone:'', phoneCode:'+90' });
   const [errors, setErrors] = useState<FormErrors[]>(() => sorted.map(() => ({})));
   const [contactErrors, setContactErrors] = useState<{email?:string;phone?:string}>({});
+  const [showSummary, setShowSummary] = useState(false);
 
   /* Duplicate passenger name detection (firstName + lastName, case-insensitive) */
   const duplicateIndices = useMemo(() => {
@@ -220,6 +221,7 @@ export default function PassengerForm({ passengers, onSubmit, isInternational = 
   }, [contact]);
 
   const handleSubmit = useCallback(() => {
+    console.log('[PassengerForm] handleSubmit called', { paxCount: sorted.length });
     let hasErr = false;
     const newErr = sorted.map((pax,i) => {
       const e = validatePax(forms[i], normalizePaxType(pax.type));
@@ -235,9 +237,17 @@ export default function PassengerForm({ passengers, onSubmit, isInternational = 
     setContactErrors(cErr);
     if (Object.keys(cErr).length>0) hasErr=true;
     if (hasErr) {
-      setTimeout(() => { const el=document.querySelector('.pf-field--error'); if(el) el.scrollIntoView({behavior:'smooth',block:'center'}); }, 100);
+      console.warn('[PassengerForm] Validation failed', { passengerErrors: newErr, contactErrors: cErr });
+      setShowSummary(true);
+      setTimeout(() => {
+        const banner = document.querySelector('.pf-summary');
+        if (banner) banner.scrollIntoView({behavior:'smooth',block:'center'});
+        else { const el=document.querySelector('.pf-field--error'); if(el) el.scrollIntoView({behavior:'smooth',block:'center'}); }
+      }, 100);
       return;
     }
+    setShowSummary(false);
+    console.log('[PassengerForm] Validation passed → calling onSubmit');
     const items: PassengerItem[] = sorted.map((pax,i) => {
       const form=forms[i]; const paxType=normalizePaxType(pax.type);
       const isTurkishDom = form.isTurkishCitizen && !isInternational;
@@ -278,6 +288,35 @@ export default function PassengerForm({ passengers, onSubmit, isInternational = 
 
   return (
     <form className="bb-passenger-form" onSubmit={e=>{e.preventDefault();handleSubmit();}} noValidate>
+
+      {showSummary && (() => {
+        const issues: string[] = [];
+        errors.forEach((eObj, i) => {
+          Object.entries(eObj).forEach(([field, msg]) => {
+            if (!msg) return;
+            const labels: Record<string,string> = {
+              firstName:'Ad', lastName:'Soyad', gender:'Cinsiyet', birthDate:'Doğum tarihi',
+              citizenNo:'TC Kimlik No', passportNo:'Pasaport No', passportCountry:'Pasaport ülkesi',
+              passportExpiry:'Pasaport geçerlilik',
+            };
+            issues.push(`${i+1}. yolcu — ${labels[field] ?? field}: ${msg}`);
+          });
+        });
+        if (contactErrors.email) issues.push(`İletişim — Email: ${contactErrors.email}`);
+        if (contactErrors.phone) issues.push(`İletişim — Telefon: ${contactErrors.phone}`);
+        if (issues.length === 0) return null;
+        return (
+          <div className="pf-summary" role="alert" style={{
+            background:'#fef2f2', border:'1px solid #fecaca', color:'#991b1b',
+            padding:'12px 16px', borderRadius:8, marginBottom:16, fontSize:14,
+          }}>
+            <div style={{fontWeight:600, marginBottom:6}}>Lütfen aşağıdaki alanları düzeltin:</div>
+            <ul style={{margin:0, paddingLeft:20}}>
+              {issues.map((msg, idx) => <li key={idx}>{msg}</li>)}
+            </ul>
+          </div>
+        );
+      })()}
 
       {/* ── İLETİŞİM BİLGİLERİ ── */}
       <div className="chk-section">

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { makePaymentClientSchema, validateBody, parseBody } from '@/lib/validations';
 import { filterSensitiveFields, normalizeToCamelCase, withTimeout, checkRateLimit } from '@/lib/api-helpers';
+import { getSessionCache, setSessionCache } from '@/lib/session-cache';
 import { logger } from '@/lib/logger';
 
 const API_BASE = process.env.API_BASE_URL;
@@ -20,24 +21,27 @@ export async function POST(request: NextRequest) {
     const { searchId, ...rest } = validation.data;
     const paymentType = rest.paymentType;
 
-    // Server-side'da session bilgisini al
-    const sessionRes = await fetch(`${API_BASE}/api/flight/session/${encodeURIComponent(searchId)}`, {
-      headers: { 'Accept': 'application/json; charset=utf-8' },
-    });
+    // Server-side'da session bilgisini al (önce cache'e bak)
+    let sessionData = getSessionCache(searchId);
+    if (!sessionData) {
+      const sessionRes = await fetch(`${API_BASE}/api/flight/session/${encodeURIComponent(searchId)}`, {
+        headers: { 'Accept': 'application/json; charset=utf-8' },
+      });
 
-    if (!sessionRes.ok) {
-      return NextResponse.json(
-        { error: 'Arama oturumu süresi dolmuş. Lütfen yeni arama yapın.' },
-        { status: 400 },
-      );
+      if (!sessionRes.ok) {
+        return NextResponse.json(
+          { error: 'Arama oturumu süresi dolmuş. Lütfen yeni arama yapın.' },
+          { status: 400 },
+        );
+      }
+
+      const sessionDataRaw = await sessionRes.json();
+      sessionData = normalizeToCamelCase(sessionDataRaw) as Record<string, unknown>;
+      setSessionCache(searchId, sessionData);
     }
-
-    const sessionDataRaw = await sessionRes.json();
-    const sessionData = normalizeToCamelCase(sessionDataRaw) as Record<string, unknown>;
 
     // Debug: session endpoint'inden dönen tüm alanları logla
     logger.info('Session data keys and values', 'api/flight/make-payment', {
-      rawKeys: Object.keys(sessionDataRaw).join(','),
       normalizedKeys: Object.keys(sessionData).join(','),
       grandTotal: sessionData.grandTotal,
       totalFare: sessionData.totalFare,

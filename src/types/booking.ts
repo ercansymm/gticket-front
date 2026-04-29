@@ -46,6 +46,17 @@ export interface UpdatePassengersResponse {
   errorMessage: string | null;
 }
 
+// ========== PREPARE BOOKING (UpdatePassengers + MakePreBooking combined) ==========
+
+export interface PrepareBookingClientRequest {
+  searchId: string;
+  productId: string;
+  productItemId: string;
+  brandedFareItemId: string;
+  passengers: PassengerItem[];
+  contact: ContactInfo;
+}
+
 // ========== MAKE PRE-BOOKING ==========
 
 // İstemciden gelen — session bilgisi YOK

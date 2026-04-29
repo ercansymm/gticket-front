@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { makePreBookingClientSchema, validateBody, parseBody } from '@/lib/validations';
 import { filterSensitiveFields, normalizeToCamelCase, withTimeout, checkRateLimit } from '@/lib/api-helpers';
+import { getSessionCache, setSessionCache } from '@/lib/session-cache';
 import { logger } from '@/lib/logger';
 
 const API_BASE = process.env.API_BASE_URL;
@@ -20,25 +21,32 @@ export async function POST(request: NextRequest) {
 
     const { searchId, productId, brandedFareItemId, passengers, contact } = validation.data;
 
-    // Giriş yapmış kullanıcının id'sini NextAuth'dan al — booking buna bağlanır
-    const session = await getServerSession(authOptions);
-    const sessionUserId =
-      (session?.user as { id?: string } | undefined)?.id ?? null;
+    // NextAuth session + flight session paralel al
+    const [authSession, flightSessionData] = await Promise.all([
+      getServerSession(authOptions),
+      (async () => {
+        const cached = getSessionCache(searchId);
+        if (cached) return cached;
+        const res = await fetch(`${API_BASE}/api/flight/session/${encodeURIComponent(searchId)}`, {
+          headers: { 'Accept': 'application/json; charset=utf-8' },
+        });
+        if (!res.ok) return null;
+        const raw = await res.json();
+        const data = normalizeToCamelCase(raw) as Record<string, unknown>;
+        setSessionCache(searchId, data);
+        return data;
+      })(),
+    ]);
 
-    // 1. Server-side'da session bilgisini al
-    const sessionRes = await fetch(`${API_BASE}/api/flight/session/${encodeURIComponent(searchId)}`, {
-      headers: { 'Accept': 'application/json; charset=utf-8' },
-    });
+    const sessionUserId = (authSession?.user as { id?: string } | undefined)?.id ?? null;
+    const sessionData = flightSessionData;
 
-    if (!sessionRes.ok) {
+    if (!sessionData) {
       return NextResponse.json(
         { error: 'Arama oturumu süresi dolmuş. Lütfen yeni arama yapın.' },
         { status: 400 },
       );
     }
-
-    const sessionDataRaw = await sessionRes.json();
-    const sessionData = normalizeToCamelCase(sessionDataRaw) as Record<string, unknown>;
 
     if (!sessionData.sessionId || !sessionData.sessionToken || !sessionData.shoppingFileId) {
       return NextResponse.json(

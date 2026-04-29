@@ -88,13 +88,14 @@ img, video, iframe, table {
    0. LOGO
    ══════════════════════════════════════════════════════ */
 .bb-logo {
-  font-size: 28px;
+  font-size: clamp(24px, 2.5vw, 36px);
   font-weight: 900;
   letter-spacing: -0.5px;
   text-decoration: none;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   display: inline-block;
   line-height: 1;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.35), 0 1px 2px rgba(0,0,0,0.2);
 }
 
 .bb-logo:hover {
@@ -239,6 +240,7 @@ img, video, iframe, table {
   display: flex;
   align-items: center;
   gap: 24px;
+  margin-left: clamp(-16px, -1.2vw, 0px);
 }
 
 .bb-header-left .bb-nav-links {
@@ -7662,36 +7664,81 @@ footer,
 
 /* ── Success Banner ── */
 .tc-banner {
-  background: linear-gradient(135deg, var(--ab-primary) 0%, #083550 100%);
-  padding: 48px 24px 60px;
+  background: linear-gradient(135deg, #0a2a42 0%, #0A3D5C 50%, #083550 100%);
+  padding: 52px 24px 68px;
   text-align: center;
-  border-radius: 0 0 24px 24px;
+  border-radius: 0 0 28px 28px;
+  position: relative;
+  overflow: hidden;
+}
+
+.tc-banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.06) 0%, transparent 70%);
+  pointer-events: none;
 }
 
 .tc-banner__icon {
-  width: 64px;
-  height: 64px;
+  width: 72px;
+  height: 72px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
-  border: 3px solid #fff;
+  background: rgba(255, 255, 255, 0.15);
+  border: 3px solid rgba(255, 255, 255, 0.9);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 16px;
+  margin: 0 auto 20px;
   color: #fff;
+  position: relative;
+  animation: tc-icon-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.tc-banner__icon::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  animation: tc-ring-pulse 2s ease-out 0.4s infinite;
+}
+
+@keyframes tc-icon-pop {
+  from { transform: scale(0.5); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
+@keyframes tc-ring-pulse {
+  0%   { transform: scale(1);    opacity: 0.6; }
+  100% { transform: scale(1.5);  opacity: 0; }
 }
 
 .tc-banner__title {
-  font-size: 24px;
-  font-weight: 700;
+  font-size: 26px;
+  font-weight: 800;
   color: #fff;
-  margin: 0 0 8px;
+  margin: 0 0 10px;
+  letter-spacing: -0.3px;
 }
 
 .tc-banner__subtitle {
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.75);
   margin: 0;
+}
+
+.tc-banner__email-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 100px;
+  padding: 6px 14px;
+  font-size: 13px;
+  color: rgba(255,255,255,0.9);
 }
 
 /* ── Centered content area ── */
@@ -7707,13 +7754,14 @@ footer,
   grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr;
   align-items: center;
   background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-radius: 14px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   padding: 24px 28px;
-  margin-top: -30px;
+  margin-top: -36px;
   position: relative;
   z-index: 2;
   gap: 0;
+  border-top: 4px solid var(--ab-primary);
 }
 
 .tc-summary-card__col {
@@ -7750,8 +7798,36 @@ footer,
   font-size: 22px;
   font-weight: 800;
   color: var(--ab-primary);
-  letter-spacing: 2px;
+  letter-spacing: 3px;
   font-family: 'Courier New', Courier, monospace;
+}
+
+.tc-pnr-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  padding: 3px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 100px;
+  background: #f8fafc;
+  font-size: 11px;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.tc-pnr-copy:hover {
+  border-color: var(--ab-primary);
+  color: var(--ab-primary);
+  background: #f0f6ff;
+}
+
+.tc-pnr-copy--copied {
+  border-color: #16a34a;
+  color: #16a34a;
+  background: #f0fdf4;
 }
 
 /* ── Loading state ── */
@@ -7796,18 +7872,19 @@ footer,
 
 .tc-flight-card {
   background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.07);
   overflow: hidden;
 }
 
 .tc-flight-card__header {
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 700;
   color: #1f2937;
   margin: 0;
   padding: 16px 20px;
   border-bottom: 1px solid #f0f0f0;
+  background: #fafbfc;
 }
 
 .tc-flight-card--outbound .tc-flight-card__header {
@@ -7950,19 +8027,21 @@ footer,
 /* ── Generic Card ── */
 .tc-card {
   background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.07);
   margin-top: 16px;
   overflow: hidden;
 }
 
 .tc-card__header {
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 700;
   color: #1f2937;
   margin: 0;
   padding: 16px 20px;
   border-bottom: 1px solid #f0f0f0;
+  border-left: 4px solid var(--ab-primary);
+  background: #fafbfc;
 }
 
 /* ── Section 3: Price Summary ── */
@@ -8146,9 +8225,14 @@ footer,
 }
 
 .tc-btn--green {
-  background: #fff;
-  color: var(--ab-primary);
-  border: 2px solid var(--ab-primary);
+  background: #047857;
+  color: #fff;
+  border: 2px solid #047857;
+}
+
+.tc-btn--green:hover {
+  background: #036148;
+  border-color: #036148;
 }
 
 .tc-btn--green:hover {
@@ -8159,6 +8243,16 @@ footer,
 .tc-btn--green:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.tc-btn--outline {
+  background: #fff;
+  color: var(--ab-primary);
+  border: 2px solid var(--ab-primary);
+}
+
+.tc-btn--outline:hover {
+  background: #f0f6ff;
 }
 
 .tc-btn--gray {

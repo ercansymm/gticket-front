@@ -1,11 +1,12 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
-import { updatePassengers, makePreBooking } from '../../api/flight';
+import { updatePassengers, makePreBooking, prepareBooking } from '../../api/flight';
 import { searchFlightsThunk } from './flightSlice';
 import type {
   PassengerItem, ContactInfo,
   UpdatePassengersClientRequest, UpdatePassengersResponse,
   MakePreBookingClientRequest, MakePreBookingResponse,
+  PrepareBookingClientRequest,
 } from '@/types/booking';
 
 /** Field-level Zod hata detaylarını Türkçe kullanıcı mesajına çevirir */
@@ -74,6 +75,50 @@ function mapProviderError(rawMsg: string | null | undefined, fallback: string): 
     return 'Oturum süresi dolmuş. Lütfen yeni arama yapın.';
   return rawMsg;
 }
+
+/** updatePassengers + makePreBooking tek BFF çağrısında yapar — 1 round-trip azaltır */
+export const prepareBookingThunk = createAsyncThunk(
+  'booking/prepareBooking',
+  async (params: PrepareBookingClientRequest, { rejectWithValue }) => {
+    const attempt = async () => {
+      try {
+        const result = await prepareBooking(params);
+        if (!result) return { ok: false as const, step: 'makePreBooking', msg: 'Sunucudan yanıt alınamadı' };
+        if (result.hasError) return { ok: false as const, step: 'makePreBooking', msg: result.errorMessage ?? '' };
+        return { ok: true as const, data: result };
+      } catch (error: any) {
+        const step = error.response?.data?.errorStep ?? 'makePreBooking';
+        const msg = extractErrorMessage(error, 'Rezervasyon oluşturulamadı');
+        return { ok: false as const, step: step as string, msg };
+      }
+    };
+
+    const first = await attempt();
+    if (first.ok) return first.data;
+
+    // Geçici provider hatalarında (sadece prebooking adımında) bir kez otomatik retry
+    const lower = (first.msg ?? '').toLowerCase();
+    const isTransient = first.step !== 'updatePassengers' &&
+      (lower.includes('provider') || lower.includes('nullable object') ||
+        lower.includes('check flight number') || lower.includes('not enough seat'));
+
+    if (isTransient) {
+      console.info('[PrepareBooking] Transient error, retrying once...');
+      await new Promise(r => setTimeout(r, 500));
+      const retry = await attempt();
+      if (retry.ok) return retry.data;
+      const msg = retry.step === 'updatePassengers'
+        ? mapProviderError(retry.msg, 'Yolcu bilgileri güncellenemedi')
+        : mapProviderError(retry.msg, 'Rezervasyon oluşturulamadı');
+      return rejectWithValue({ step: retry.step, message: msg });
+    }
+
+    const errMsg = first.step === 'updatePassengers'
+      ? mapProviderError(first.msg, 'Yolcu bilgileri güncellenemedi')
+      : mapProviderError(first.msg, 'Rezervasyon oluşturulamadı');
+    return rejectWithValue({ step: first.step, message: errMsg });
+  }
+);
 
 type BookingStep = 'search' | 'select' | 'passenger' | 'summary' | 'payment' | 'confirmation';
 
@@ -204,6 +249,29 @@ const bookingSlice = createSlice({
     builder.addCase(makePreBookingThunk.rejected, (state, action) => {
       state.preBookingLoading = false;
       state.preBookingError = action.payload as string;
+    });
+
+    builder.addCase(prepareBookingThunk.pending, (state) => {
+      state.updatePassengersLoading = true;
+      state.updatePassengersError = null;
+      state.preBookingLoading = true;
+      state.preBookingError = null;
+    });
+    builder.addCase(prepareBookingThunk.fulfilled, (state, action) => {
+      state.updatePassengersLoading = false;
+      state.updatePassengersDone = true;
+      state.preBookingLoading = false;
+      state.preBookingResult = action.payload;
+    });
+    builder.addCase(prepareBookingThunk.rejected, (state, action) => {
+      const payload = action.payload as { step: string; message: string } | undefined;
+      state.updatePassengersLoading = false;
+      state.preBookingLoading = false;
+      if (payload?.step === 'updatePassengers') {
+        state.updatePassengersError = payload.message;
+      } else {
+        state.preBookingError = payload?.message ?? 'Rezervasyon oluşturulamadı';
+      }
     });
 
     // Auto-reset when a new search starts — prevents stale booking data leaking into new searches

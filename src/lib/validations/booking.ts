@@ -43,5 +43,16 @@ export const makePreBookingClientSchema = z.object({
   contact: contactSchema,
 });
 
+// Tek seferde updatePassengers + makePreBooking yapan combined endpoint için
+export const prepareBookingClientSchema = z.object({
+  searchId: z.string().min(1).max(100),
+  productId: z.string().min(1).max(200),
+  productItemId: z.string().min(1).max(200),
+  brandedFareItemId: z.string().max(200).optional().default(''),
+  passengers: z.array(passengerItemSchema).min(1).max(9),
+  contact: contactSchema,
+});
+
 export type UpdatePassengersClientInput = z.infer<typeof updatePassengersClientSchema>;
 export type MakePreBookingClientInput = z.infer<typeof makePreBookingClientSchema>;
+export type PrepareBookingClientInput = z.infer<typeof prepareBookingClientSchema>;

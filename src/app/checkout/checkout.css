@@ -26,9 +26,9 @@
   --chk-danger:      #b91c1c;
   --chk-danger-bg:   #fef2f2;
   --chk-danger-bd:   #fecaca;
-  --chk-warn:        #92400e;
-  --chk-warn-bg:     #fffbeb;
-  --chk-warn-bd:     #fde68a;
+  --chk-warn:        #334155;
+  --chk-warn-bg:     #f1f5f9;
+  --chk-warn-bd:     #cbd5e1;
 
   --chk-shadow-sm:    0 1px 2px rgba(15,23,42,0.04);
   --chk-shadow-md:    0 2px 8px rgba(15,23,42,0.05);
@@ -674,17 +674,17 @@
   z-index: 9999;
 }
 .chk-loading__card {
-  background: var(--chk-surface); border-radius: var(--chk-radius-lg);
+  background: var(--chk-navy); border-radius: var(--chk-radius-lg);
   padding: 36px 40px; width: min(360px, calc(100vw - 32px));
-  text-align: center; box-shadow: var(--chk-shadow-card);
+  text-align: center; box-shadow: 0 12px 40px rgba(0,0,0,0.4);
 }
 .chk-loading__logo { font-size: 22px; font-weight: 800; margin-bottom: 18px; letter-spacing: -0.02em; }
-.chk-loading__logo .accent { color: var(--chk-emerald); }
-.chk-loading__logo .dark { color: var(--chk-navy); }
-.chk-loading__bar { height: 5px; background: var(--chk-bg); border-radius: 999px; overflow: hidden; margin: 0 0 16px; }
+.chk-loading__logo .accent { color: #db2525; }
+.chk-loading__logo .dark { color: #ffffff; }
+.chk-loading__bar { height: 5px; background: rgba(255,255,255,0.12); border-radius: 999px; overflow: hidden; margin: 0 0 16px; }
 .chk-loading__bar-fill {
   height: 100%; width: 30%;
-  background: linear-gradient(90deg, var(--chk-emerald) 0%, #10b981 50%, var(--chk-emerald) 100%);
+  background: linear-gradient(90deg, #db2525 0%, #ef4444 50%, #db2525 100%);
   border-radius: 999px;
   animation: chk-load 1.5s ease-in-out infinite;
 }
@@ -693,7 +693,7 @@
   50%  { width: 50%; }
   100% { transform: translateX(380%); width: 30%; }
 }
-.chk-loading__text { color: var(--chk-text-sec); font-size: 14px; margin: 0; font-weight: 500; }
+.chk-loading__text { color: rgba(255,255,255,0.75); font-size: 14px; margin: 0; font-weight: 500; }
 .chk-loading__dots::after { content: ''; animation: chk-dots 1.4s steps(4, end) infinite; }
 @keyframes chk-dots {
   0%   { content: ''; } 25% { content: '.'; }

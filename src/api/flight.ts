@@ -16,6 +16,7 @@ import type {
 import type {
   UpdatePassengersClientRequest, UpdatePassengersResponse,
   MakePreBookingClientRequest, MakePreBookingResponse,
+  PrepareBookingClientRequest,
 } from '@/types/booking';
 
 export const healthCheck = async (): Promise<string> => {
@@ -35,6 +36,12 @@ export const allocateFlight = async (params: AllocateClientRequest): Promise<All
 
 export const updatePassengers = async (params: UpdatePassengersClientRequest): Promise<UpdatePassengersResponse> => {
   const response = await apiClient.post<UpdatePassengersResponse>('/flight/update-passengers', params);
+  return response.data;
+};
+
+// UpdatePassengers + MakePreBooking tek round-trip'te yapar
+export const prepareBooking = async (params: PrepareBookingClientRequest): Promise<MakePreBookingResponse> => {
+  const response = await apiClient.post<MakePreBookingResponse>('/flight/prepare-booking', params);
   return response.data;
 };
 
