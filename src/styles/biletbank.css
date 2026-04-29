@@ -230,7 +230,7 @@ img, video, iframe, table {
   transition: background 0.25s ease, box-shadow 0.25s ease;
 }
 
-/* Anasayfada header sayfanın en üstündeyken şeffaf — fotoğrafın üstünde durur */
+/* Anasayfada header şeffaf — fotoğraf hero'dan arkaya taşar */
 body.bb-home .bb-header-wrap {
   background: transparent;
   box-shadow: none;
@@ -240,23 +240,9 @@ body.bb-home .bb-header-wrap.bb-header-wrap--scrolled {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
-/* Anasayfa: Hero görselini header dahil tüm üst alanın arkasına sabit yerleştirir */
+/* bb-home-fixed-bg artık kullanılmıyor — hero kendi background'unu taşıyor */
 .bb-home-fixed-bg {
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background:
-    linear-gradient(rgba(10, 22, 40, 0.35), rgba(10, 22, 40, 0.35)),
-    url('/assets/img/hero/backend/pexels-osman-i-cli-2155801003-34048686.jpg') center / cover no-repeat;
-}
-
-/* Anasayfada hero'nun kendi arka planı kapalı — fotoğraf body seviyesinden geliyor */
-body.bb-home .bb-search-hero {
-  background: transparent;
-}
-body.bb-home .bb-search-hero__overlay {
-  background: transparent;
+  display: none;
 }
 
 .bb-header-inner {
@@ -612,14 +598,14 @@ body.bb-home .bb-search-hero__overlay {
   position: relative;
   min-height: auto;
   height: auto;
-  padding-top: 48px;
+  margin-top: -66px;
+  padding-top: calc(66px + 36px);
   padding-bottom: 48px;
   display: flex;
   align-items: center;
   background:
-    linear-gradient(rgba(10, 22, 40, 0.35), rgba(10, 22, 40, 0.35)),
+    linear-gradient(rgba(10, 22, 40, 0.45), rgba(10, 22, 40, 0.45)),
     url('/assets/img/hero/backend/pexels-osman-i-cli-2155801003-34048686.jpg') center / cover no-repeat;
-  /* overflow: visible — dropdowns must escape hero bounds */
 }
 
 @keyframes bb-hero-gradient {
@@ -3040,8 +3026,9 @@ select.bb-flight-form__input {
   }
 
   .bb-search-hero {
-    padding-top: 10px;
-    padding-bottom: 20px;
+    margin-top: -66px;
+    padding-top: calc(66px + 20px);
+    padding-bottom: 28px;
   }
 
   .bb-search-tabs__content {
@@ -3163,10 +3150,12 @@ select.bb-flight-form__input {
     gap: 10px;
   }
 
-  /* Hero */
+  /* Hero — mobilde negatif margin kaldır, header yüksekliği 52px */
   .bb-search-hero {
     min-height: auto;
-    padding: 8px 0 16px;
+    margin-top: -52px;
+    padding-top: calc(52px + 12px);
+    padding-bottom: 20px;
   }
 
   .bb-hero-title {
@@ -11609,7 +11598,7 @@ footer,
 
 .syt-leg__row {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: 1fr 1fr;
   align-items: center;
   gap: 10px;
 }

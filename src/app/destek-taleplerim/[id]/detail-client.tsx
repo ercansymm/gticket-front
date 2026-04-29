@@ -228,7 +228,7 @@ export default function SupportTicketDetailClient({ ticketId }: Props) {
                   </span>
                   {ticket.bookingPnr && (
                     <span style={{ fontSize: 12, color: "#6B7280" }}>
-                      • PNR {ticket.bookingPnr}
+                      • ATA PNR: {ticket.bookingPnr}
                     </span>
                   )}
                 </div>

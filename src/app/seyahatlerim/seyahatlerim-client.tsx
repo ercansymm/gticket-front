@@ -168,7 +168,6 @@ export default function SeyahatlerimClient() {
                         {segs.length === 0 && (
                           <div className="syt-leg syt-leg--empty">
                             <span>{b.origin ?? "—"}</span>
-                            <span className="syt-leg__sep">→</span>
                             <span>{b.destination ?? "—"}</span>
                           </div>
                         )}
@@ -183,8 +182,6 @@ export default function SeyahatlerimClient() {
                                   <span className="syt-leg__iata">{s.originCode ?? "—"}</span>
                                   <span className="syt-leg__time">{formatTime(s.departureTime)}</span>
                                 </div>
-
-                                <div className="syt-leg__arrow">→</div>
 
                                 <div className="syt-leg__city syt-leg__city--right">
                                   <span className="syt-leg__iata">{s.destinationCode ?? "—"}</span>
@@ -241,26 +238,25 @@ export default function SeyahatlerimClient() {
                             Talep Oluştur
                           </Link>
                         )}
-                        {b.biletBankFileId && (
-                          <button
-                            type="button"
-                            className="syt-action-btn syt-action-btn--primary"
-                            onClick={() => handleDownloadPdf(b)}
-                            disabled={pdfLoadingId === b.id}
-                          >
-                            {pdfLoadingId === b.id ? (
-                              <>
-                                <Loader2 size={15} className="syt-spin" />
-                                İndiriliyor...
-                              </>
-                            ) : (
-                              <>
-                                <Download size={15} />
-                                E-Bilet İndir
-                              </>
-                            )}
-                          </button>
-                        )}
+                        <button
+                          type="button"
+                          className="syt-action-btn syt-action-btn--primary"
+                          onClick={() => handleDownloadPdf(b)}
+                          disabled={pdfLoadingId === b.id || !b.biletBankFileId}
+                          title={!b.biletBankFileId ? "E-bilet hazırlanıyor" : undefined}
+                        >
+                          {pdfLoadingId === b.id ? (
+                            <>
+                              <Loader2 size={15} className="syt-spin" />
+                              İndiriliyor...
+                            </>
+                          ) : (
+                            <>
+                              <Download size={15} />
+                              E-Bilet İndir
+                            </>
+                          )}
+                        </button>
                       </div>
                     </div>
                   </div>

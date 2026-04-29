@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import HeaderOne from "@/layouts/headers/HeaderOne";
 import FooterOne from "@/layouts/footers/FooterOne";
-import { Loader2, ArrowLeft, Plane } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 
 // Frontend talep tipi -> backend SupportTicketType
 // (Refund=1, Change=2, Complaint=3, Technical=4)
@@ -35,10 +35,7 @@ const REQUEST_TYPES: {
 
 interface BookingSummary {
   id: string;
-  // Backend C# JsonNamingPolicy.CamelCase sadece ilk karakteri küçültür:
-  // PNR → pNR, GrandTotal → grandTotal. Bu yüzden iki olası anahtar da olabilir.
-  pnr?: string | null;
-  pNR?: string | null;
+  internalPnr: string | null;
   status: string | null;
   origin: string | null;
   destination: string | null;
@@ -56,9 +53,6 @@ interface BookingSummary {
   }[];
 }
 
-const getPnr = (b: BookingSummary): string | null =>
-  b.pnr ?? b.pNR ?? null;
-
 export default function NewSupportTicketClient() {
   const { data: session, status: authStatus } = useSession();
   const router = useRouter();
@@ -68,7 +62,6 @@ export default function NewSupportTicketClient() {
 
   const [type, setType] = useState<RequestType>("iptal");
   const [bookings, setBookings] = useState<BookingSummary[]>([]);
-  const [bookingTab, setBookingTab] = useState<"active" | "all">("active");
   const [loadingBookings, setLoadingBookings] = useState(false);
   const [bookingsError, setBookingsError] = useState<string | null>(null);
   const [selectedBookingId, setSelectedBookingId] = useState<string>("");
@@ -103,7 +96,14 @@ export default function NewSupportTicketClient() {
           );
         }
         const list = Array.isArray(data) ? (data as BookingSummary[]) : [];
-        setBookings(list.filter((b) => !b.cancelledAt));
+        setBookings(
+          list.filter(
+            (b) =>
+              (b.status === "Ticketed" || b.isFinalized === true) &&
+              !b.cancelledAt &&
+              !!b.internalPnr,
+          ),
+        );
       } catch (e) {
         setBookingsError(
           e instanceof Error ? e.message : "Rezervasyonlar yüklenemedi.",
@@ -126,40 +126,9 @@ export default function NewSupportTicketClient() {
     if (!needsBooking) return;
     if (!bookings.some((b) => b.id === preselectBookingId)) return;
     setSelectedBookingId(preselectBookingId);
-    // Secili rezervasyon "active" sekmesinde gorunmuyorsa "all" sekmesine gec.
-    const isActive = bookings.some(
-      (b) => b.id === preselectBookingId && !b.cancelledAt,
-    );
-    if (!isActive) setBookingTab("all");
   }, [preselectBookingId, bookings, needsBooking]);
 
   const selectedBooking = bookings.find((b) => b.id === selectedBookingId);
-
-  // Bugün başlangıcı (00:00) — bugün kalkacak uçuş henüz aktif sayılır
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
-
-  const isUpcoming = (b: BookingSummary): boolean => {
-    const dateStr = b.segments?.[0]?.departureDate;
-    if (!dateStr) return false;
-    const d = new Date(dateStr);
-    if (Number.isNaN(d.getTime())) return false;
-    return d.getTime() >= todayStart.getTime();
-  };
-
-  const visibleBookings =
-    bookingTab === "active" ? bookings.filter(isUpcoming) : bookings;
-
-  // Sekme değişince seçili uçuş görünür listede yoksa sıfırla
-  useEffect(() => {
-    if (
-      selectedBookingId &&
-      !visibleBookings.some((b) => b.id === selectedBookingId)
-    ) {
-      setSelectedBookingId("");
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bookingTab, bookings]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -174,14 +143,14 @@ export default function NewSupportTicketClient() {
     setError(null);
 
     const typeLabel = selectedTypeMeta.label;
-    const selectedPnr = selectedBooking ? getPnr(selectedBooking) : null;
+    const selectedPnr = selectedBooking?.internalPnr ?? null;
     const subject = selectedPnr
-      ? `${typeLabel} - PNR ${selectedPnr}`
+      ? `${typeLabel} - ATA PNR ${selectedPnr}`
       : typeLabel;
 
     const message = [
       `Talep tipi: ${typeLabel}`,
-      selectedPnr ? `PNR: ${selectedPnr}` : null,
+      selectedPnr ? `ATA PNR: ${selectedPnr}` : null,
       selectedBooking
         ? `Güzergah: ${selectedBooking.origin} → ${selectedBooking.destination}`
         : null,
@@ -337,80 +306,10 @@ export default function NewSupportTicketClient() {
                 )}
 
                 {!loadingBookings && !bookingsError && bookings.length > 0 && (
-                  <>
-                    {/* Sekmeler */}
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: 4,
-                        padding: 4,
-                        background: "#F3F4F6",
-                        borderRadius: 8,
-                        marginBottom: 12,
-                        width: "fit-content",
-                      }}
-                    >
-                      {(
-                        [
-                          { key: "active", label: "Aktif Uçuşlarım" },
-                          { key: "all", label: "Tüm Uçuşlarım" },
-                        ] as const
-                      ).map((tab) => {
-                        const count =
-                          tab.key === "active"
-                            ? bookings.filter(isUpcoming).length
-                            : bookings.length;
-                        const isActive = bookingTab === tab.key;
-                        return (
-                          <button
-                            key={tab.key}
-                            type="button"
-                            onClick={() => setBookingTab(tab.key)}
-                            style={{
-                              padding: "6px 14px",
-                              fontSize: 13,
-                              fontWeight: 600,
-                              border: "none",
-                              borderRadius: 6,
-                              cursor: "pointer",
-                              background: isActive ? "#fff" : "transparent",
-                              color: isActive ? "#0a1628" : "#6B7280",
-                              boxShadow: isActive
-                                ? "0 1px 2px rgba(0,0,0,0.06)"
-                                : "none",
-                              transition: "all .15s",
-                            }}
-                          >
-                            {tab.label} ({count})
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    {visibleBookings.length === 0 ? (
-                      <div
-                        style={{
-                          padding: 16,
-                          background: "#F9FAFB",
-                          borderRadius: 8,
-                          fontSize: 13,
-                          color: "#6B7280",
-                        }}
-                      >
-                        Bu sekmede gösterilecek uçuş bulunmuyor.
-                      </div>
-                    ) : (
-                      <div
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: 8,
-                        }}
-                      >
-                        {visibleBookings.map((b) => {
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {bookings.map((b) => {
                       const seg = b.segments?.[0];
                       const isSelected = selectedBookingId === b.id;
-                      const pnr = getPnr(b);
                       return (
                         <label
                           key={b.id}
@@ -444,11 +343,10 @@ export default function NewSupportTicketClient() {
                                 flexWrap: "wrap",
                               }}
                             >
-                              <Plane size={14} style={{ color: "#0a1628" }} />
                               <strong style={{ fontSize: 14 }}>
                                 {b.origin} → {b.destination}
                               </strong>
-                              {pnr && (
+                              {b.internalPnr && (
                                 <span
                                   style={{
                                     fontSize: 11,
@@ -459,23 +357,12 @@ export default function NewSupportTicketClient() {
                                     color: "#374151",
                                   }}
                                 >
-                                  PNR: {pnr}
-                                </span>
-                              )}
-                              {b.status && (
-                                <span style={{ fontSize: 11, color: "#6B7280" }}>
-                                  • {b.status}
+                                  ATA PNR: {b.internalPnr}
                                 </span>
                               )}
                             </div>
                             {seg && (
-                              <p
-                                style={{
-                                  margin: 0,
-                                  fontSize: 12,
-                                  color: "#6B7280",
-                                }}
-                              >
+                              <p style={{ margin: 0, fontSize: 12, color: "#6B7280" }}>
                                 {seg.marketingAirline} {seg.flightNumber}
                                 {seg.departureDate
                                   ? ` • ${new Date(seg.departureDate).toLocaleDateString("tr-TR")}`
@@ -487,9 +374,7 @@ export default function NewSupportTicketClient() {
                         </label>
                       );
                     })}
-                      </div>
-                    )}
-                  </>
+                  </div>
                 )}
               </div>
             )}

@@ -201,7 +201,7 @@ export default function SupportTicketsListClient() {
                           </span>
                           {t.bookingPnr && (
                             <span style={{ fontSize: 12, color: "#6B7280" }}>
-                              • PNR {t.bookingPnr}
+                              • ATA PNR: {t.bookingPnr}
                             </span>
                           )}
                           {hasUnreadAdmin && (
