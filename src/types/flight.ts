@@ -776,6 +776,8 @@ export type MyBookingsResponse = MyBookingSummary[];
 export interface MyBookingSummary {
   id: string | null;
   pnr: string | null;
+  internalPnr: string | null;
+  biletBankFileId: string | null;
   status: string | null;
   grandTotal: number;
   currency: string | null;

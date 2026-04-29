@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import HeaderOne from "@/layouts/headers/HeaderOne";
 import FooterOne from "@/layouts/footers/FooterOne";
@@ -62,6 +62,8 @@ const getPnr = (b: BookingSummary): string | null =>
 export default function NewSupportTicketClient() {
   const { data: session, status: authStatus } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const preselectBookingId = searchParams.get("bookingId");
   const userId = (session?.user as { id?: string } | undefined)?.id;
 
   const [type, setType] = useState<RequestType>("iptal");
@@ -117,6 +119,19 @@ export default function NewSupportTicketClient() {
   useEffect(() => {
     if (!needsBooking) setSelectedBookingId("");
   }, [needsBooking]);
+
+  // Query string ile gelen bookingId varsa, rezervasyonlar yuklendiginde otomatik sec.
+  useEffect(() => {
+    if (!preselectBookingId) return;
+    if (!needsBooking) return;
+    if (!bookings.some((b) => b.id === preselectBookingId)) return;
+    setSelectedBookingId(preselectBookingId);
+    // Secili rezervasyon "active" sekmesinde gorunmuyorsa "all" sekmesine gec.
+    const isActive = bookings.some(
+      (b) => b.id === preselectBookingId && !b.cancelledAt,
+    );
+    if (!isActive) setBookingTab("all");
+  }, [preselectBookingId, bookings, needsBooking]);
 
   const selectedBooking = bookings.find((b) => b.id === selectedBookingId);
 

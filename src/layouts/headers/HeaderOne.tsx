@@ -16,8 +16,16 @@ const HeaderOne = () => {
    const [mobileMenu, setMobileMenu] = useState(false);
    const [langOpen, setLangOpen] = useState(false);
    const [accountOpen, setAccountOpen] = useState(false);
+   const [scrolled, setScrolled] = useState(false);
    const langRef = useRef<HTMLDivElement>(null);
    const accountRef = useRef<HTMLDivElement>(null);
+
+   useEffect(() => {
+      const onScroll = () => setScrolled(window.scrollY > 80);
+      onScroll();
+      window.addEventListener("scroll", onScroll, { passive: true });
+      return () => window.removeEventListener("scroll", onScroll);
+   }, []);
 
    useEffect(() => {
       const handler = (e: MouseEvent) => {
@@ -49,7 +57,7 @@ const HeaderOne = () => {
 
    return (
       <>
-         <header className="bb-header-wrap">
+         <header className={`bb-header-wrap${scrolled ? " bb-header-wrap--scrolled" : ""}`}>
             <div className="container">
                <div className="bb-header-inner">
                   <div className="bb-header-left">
@@ -112,8 +120,8 @@ const HeaderOne = () => {
                               aria-expanded={accountOpen}
                               aria-label="Müşteri hesabı menüsü"
                            >
-                              <span className="bb-account__avatar">{initials}</span>
-                              <span>Müşteri Hesabı</span>
+                              <i className="fa-solid fa-circle-user bb-account__toggle-icon" />
+                              <span>Hesabınız</span>
                               <i className="fa-solid fa-chevron-down bb-account__chevron" />
                            </button>
                            {accountOpen && (
@@ -138,13 +146,13 @@ const HeaderOne = () => {
                                        Destek Taleplerim
                                     </Link>
                                     <Link
-                                       href="/bilet-sorgula"
+                                       href="/seyahatlerim"
                                        className="bb-account__menu-item"
                                        role="menuitem"
                                        onClick={() => setAccountOpen(false)}
                                     >
-                                       <i className="fa-solid fa-ticket" />
-                                       Biletlerim
+                                       <i className="fa-solid fa-plane-departure" />
+                                       Seyahatlerim
                                     </Link>
                                     <div className="bb-account__menu-divider" />
                                     <button

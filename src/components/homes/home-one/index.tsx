@@ -1,4 +1,5 @@
-import { lazy, Suspense } from "react"
+"use client"
+import { lazy, Suspense, useEffect } from "react"
 import Banner from "./Banner"
 import Campaigns from "./Campaigns"
 import HeaderOne from "../../../layouts/headers/HeaderOne"
@@ -11,8 +12,13 @@ const Blog = lazy(() => import("./Blog"))
 
 /** AtaBilet — Ana sayfa. Arama odaklı, sade layout. */
 const HomeOne = () => {
+   useEffect(() => {
+      document.body.classList.add("bb-home")
+      return () => document.body.classList.remove("bb-home")
+   }, [])
    return (
       <>
+         <div className="bb-home-fixed-bg" aria-hidden="true" />
          <HeaderOne />
          <main>
             <Banner />

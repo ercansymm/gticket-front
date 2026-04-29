@@ -1,4 +1,3 @@
-import Image from "next/image";
 import type { JSX } from "react";
 import Choose6 from "../../../svg/home-one/Choose6";
 import Choose7 from "../../../svg/home-one/Choose7";
@@ -35,7 +34,6 @@ const choose_data: DataType[] = [
 const Choose = () => {
    return (
       <div className="tg-chose-area tg-grey-bg pt-140 pb-70 p-relative z-index-1">
-         <Image className="tg-chose-6-shape d-none d-md-block" src="/assets/img/banner/banner-2/shape.png" alt="" width={200} height={200} />
          <div className="container">
             <div className="row justify-content-center">
                <div className="col-xl-6 col-lg-7 col-md-9">

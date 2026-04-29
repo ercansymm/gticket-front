@@ -315,7 +315,7 @@ export default function FailedClient() {
                       Ödeme zaten tamamlanmış
                     </p>
                     <p style={{ fontSize: 13, color: "#166534", margin: 0, lineHeight: 1.5 }}>
-                      Biletiniz oluşturuldu. &ldquo;Biletlerim&rdquo; sayfasından detayları görüntüleyebilirsiniz.
+                      Biletiniz oluşturuldu. &ldquo;Seyahatlerim&rdquo; sayfasından detayları görüntüleyebilirsiniz.
                     </p>
                   </div>
                 </div>
@@ -401,8 +401,9 @@ export default function FailedClient() {
                     </div>
                     <p style={{ fontSize: 13, color: "#475569", margin: 0, lineHeight: 1.6, paddingTop: 4 }}>
                       Sorun devam ederse{" "}
-                      <a href="mailto:destek@atabilet.com" style={{ color: "#047857", fontWeight: 600, textDecoration: "none" }}>destek@atabilet.com</a>
-                      {" "}adresinden destek alabilirsiniz.
+                      <Link href="/destek-taleplerim/yeni" style={{ color: "#047857", fontWeight: 600, textDecoration: "none" }}>
+                        destek talebi oluşturabilirsiniz
+                      </Link>.
                     </p>
                   </div>
                 </div>
@@ -412,7 +413,7 @@ export default function FailedClient() {
             {/* ── Aksiyon Butonları ── */}
             <div style={{ padding: "24px 28px 28px", display: "flex", flexDirection: "column", gap: 10 }}>
               {isAlreadyPaid ? (
-                <Link href="/my-tickets" style={{
+                <Link href="/seyahatlerim" style={{
                   display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
                   padding: "14px 20px", borderRadius: 12,
                   background: "linear-gradient(135deg,#047857,#065f46)",
@@ -420,7 +421,7 @@ export default function FailedClient() {
                   boxShadow: "0 4px 14px rgba(4,120,87,0.35)",
                   transition: "opacity 0.2s",
                 }}>
-                  <IconTicket /> Biletlerimi Gör
+                  <IconTicket /> Seyahatlerimi Gör
                 </Link>
               ) : canRetry && bookingId ? (
                 <Link href={`/checkout/retry-payment?bookingId=${encodeURIComponent(bookingId)}`} style={{
@@ -459,15 +460,21 @@ export default function FailedClient() {
           <div style={{
             marginTop: 20, padding: "14px 20px", borderRadius: 12,
             background: "#fff", border: "1px solid #e2e8f0",
-            display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+            flexWrap: "wrap",
           }}>
             <span style={{ color: "#94a3b8" }}><IconSupport /></span>
             <span style={{ fontSize: 13, color: "#64748b" }}>
-              7/24 destek:{" "}
-              <a href="mailto:destek@atabilet.com" style={{ color: "#047857", fontWeight: 600, textDecoration: "none" }}>
-                destek@atabilet.com
-              </a>
+              İletişim için destek talebi oluşturabilirsiniz.
             </span>
+            <Link href="/destek-taleplerim/yeni" style={{
+              display: "inline-flex", alignItems: "center", gap: 6,
+              fontSize: 13, fontWeight: 700, color: "#fff",
+              background: "#047857", padding: "6px 14px", borderRadius: 8,
+              textDecoration: "none",
+            }}>
+              <IconSupport /> Talep Oluştur
+            </Link>
           </div>
 
         </div>

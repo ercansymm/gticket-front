@@ -1,55 +1,88 @@
-import Image from "next/image";
 import Link from "next/link";
 
-const AboutArea = () => {
-   return (
-      <div className="tg-about-area p-relative z-index-1 pt-140 pb-105">
-         <Image className="tg-about-details-shape p-absolute d-none d-lg-block" src="/assets/img/about/details/shape.png" alt="shape" width={200} height={200} />
-         <div className="container">
-            <div className="row align-items-center">
-               <div className="col-lg-6">
-                  <div className="tg-about-details-left p-relative mb-15">
-                     <Image className="tg-about-details-map p-absolute" src="/assets/img/about/details/shape-2.png" alt="map" width={200} height={200} />
-                     <div className="row">
-                        <div className="col-lg-6 col-md-6 col-sm-6">
-                           <div className="tg-about-details-thumb p-relative z-index-9">
-                              <Image className="main-thumb tg-round-15 w-100 mb-20" src="/assets/img/about/details/thumb-1.jpg" alt="thumb" width={600} height={400} />
-                              <Image className="main-thumb tg-round-15 w-100 mb-20" src="/assets/img/about/details/thumb-3.jpg" alt="thumb" width={600} height={400} />
-                           </div>
-                        </div>
-                        <div className="col-lg-6 col-md-6 col-sm-6">
-                           <div className="tg-about-details-thumb-2 p-relative">
-                              <div className="tg-chose-3-rounded p-relative mb-30">
-                                 <Image className="rotate-infinite-2" src="/assets/img/chose/chose-3/circle-text.png" alt="" width={200} height={200} />
-                                 <Image className="tg-chose-3-star" src="/assets/img/chose/chose-3/star.png" alt="" width={200} height={200} />
-                              </div>
-                              <Image className="w-100 tg-round-15" src="/assets/img/about/details/thumb-2.jpg" alt="chose" width={600} height={400} />
-                           </div>
-                        </div>
-                     </div>
-                  </div>
-               </div>
-               <div className="col-lg-6">
-                  <div className="tg-chose-content mb-35 ml-60">
-                     <div className="tg-chose-section-title mb-30">
-                        <h5 className="tg-section-subtitle mb-15 wow fadeInUp" data-wow-delay=".3s" data-wow-duration=".1s">AtaBilet ile Seyahat</h5>
-                        <h2 className="mb-15 text-capitalize wow fadeInUp" data-wow-delay=".4s" data-wow-duration=".9s">Hayalinizdeki seyahati<br /> AtaBilet ile<br /> gerçekleştirin</h2>
-                        <p className="text-capitalize wow fadeInUp mb-35" data-wow-delay=".5s" data-wow-duration=".9s">AtaBilet olarak yurt içi ve yurt dışı uçak biletlerini
-                           en uygun fiyatlarla sunuyoruz. Tüm havayollarını
-                           karşılaştırın, güvenle satın alın.<br />
-                           7/24 müşteri desteği ile yanınızdayız.</p>
-                        <div className="tg-chose-btn wow fadeInUp" data-wow-delay=".8s" data-wow-duration=".9s">
-                           <Link href="/" className="tg-btn tg-btn-switch-animation">
-                              <span>Uçuş Ara</span>
-                           </Link>
-                        </div>
-                     </div>
-                  </div>
-               </div>
-            </div>
-         </div>
-      </div>
-   )
-}
+const STATS = [
+  { value: "50+",   label: "Havayolu" },
+  { value: "500+",  label: "Destinasyon" },
+  { value: "7/24",  label: "Müşteri Desteği" },
+  { value: "2019",  label: "Kuruluş Yılı" },
+];
 
-export default AboutArea
+const AboutArea = () => {
+  return (
+    <section className="ab-section">
+      <div className="container">
+
+        {/* Hero metin */}
+        <div className="ab-hero">
+          <div className="ab-hero__badge">AtaBilet Hakkında</div>
+          <h1 className="ab-hero__title">
+            Hayalinizdeki Seyahati<br />
+            <span className="ab-hero__title--accent">AtaBilet ile Gerçekleştirin</span>
+          </h1>
+          <p className="ab-hero__desc">
+            AtaBilet olarak yurt içi ve yurt dışı uçak biletlerini en uygun fiyatlarla sunuyoruz.
+            Tüm havayollarını tek seferde karşılaştırın, güvenle satın alın.
+            Zlatna Rota Turizm bünyesinde TURSAB 18474 ruhsatıyla hizmet vermekteyiz.
+          </p>
+          <Link href="/" className="ab-hero__cta">
+            Uçuş Ara
+          </Link>
+        </div>
+
+        {/* İstatistikler */}
+        <div className="ab-stats">
+          {STATS.map((s, i) => (
+            <div key={i} className="ab-stat">
+              <span className="ab-stat__value">{s.value}</span>
+              <span className="ab-stat__label">{s.label}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Hakkımızda metni */}
+        <div className="ab-body">
+          <div className="ab-body__col">
+            <h2 className="ab-body__heading">Misyonumuz</h2>
+            <p className="ab-body__text">
+              Seyahat etmek isteyen herkese en uygun fiyatları, en kolay rezervasyon deneyimini
+              ve en güvenilir hizmeti sunmayı hedefliyoruz. BiletBank altyapısı üzerinden gerçek
+              zamanlı uçuş verilerine erişerek anlık fiyatları doğrudan size iletiyoruz.
+            </p>
+            <p className="ab-body__text">
+              Müşterilerimizin memnuniyeti her zaman önceliğimizdir. Satın alma öncesinde,
+              sırasında ve sonrasında 7/24 destek ekibimizle yanınızdayız.
+            </p>
+          </div>
+          <div className="ab-body__col">
+            <h2 className="ab-body__heading">Neden AtaBilet?</h2>
+            <ul className="ab-list">
+              <li className="ab-list__item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#047857" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                Tüm havayollarında anlık fiyat karşılaştırma
+              </li>
+              <li className="ab-list__item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#047857" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                3D Secure güvenceli ödeme altyapısı
+              </li>
+              <li className="ab-list__item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#047857" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                Anlık e-bilet teslimatı
+              </li>
+              <li className="ab-list__item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#047857" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                Esnek iptal ve değişiklik desteği
+              </li>
+              <li className="ab-list__item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#047857" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                TURSAB üyesi güvenilir acente
+              </li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  );
+};
+
+export default AboutArea;
