@@ -37,6 +37,12 @@ const menu_data: MenuItem[] = [
     },
     {
         id: 5,
+        title: "Sıkça Sorulan Sorular",
+        link: "/faq",
+        has_dropdown: false,
+    },
+    {
+        id: 6,
         has_dropdown: false,
         title: "İletişim",
         link: "/contact",

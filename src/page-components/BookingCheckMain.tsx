@@ -8,7 +8,7 @@ import { useTranslation } from "../context/LanguageContext"
 import { useDispatch, useSelector } from "react-redux"
 import { getBookingByPnrThunk, clearBookingDetail } from "../redux/features/paymentSlice"
 import type { RootState, AppDispatch } from "../redux/store"
-import { Search, Loader2, SearchX, AlertTriangle, ArrowLeft } from "lucide-react"
+import { Loader2, SearchX, AlertTriangle, ArrowLeft, Hash, User, ChevronRight, ChevronDown, Home } from "lucide-react"
 import PnrHeaderCard from "../components/pnr/PnrHeaderCard"
 import FlightSegmentCard from "../components/pnr/FlightSegmentCard"
 import PassengerListCard from "../components/pnr/PassengerListCard"
@@ -78,6 +78,25 @@ const BookingCheckMain = () => {
    const [showMobileRequestModal, setShowMobileRequestModal] = useState(false);
    const [mobileSubmitting, setMobileSubmitting] = useState(false);
    const [guestSessionReady, setGuestSessionReady] = useState(false);
+   const [openFaq, setOpenFaq] = useState<number | null>(null);
+
+   const faqs = [
+      {
+         q: "PNR numarası nedir?",
+         a: "PNR (Passenger Name Record) numarası, uçak bileti rezervasyonunuza özel bir koddur. Bu kod ile biletinizi sorgulayabilir, uçuş bilgilerinize ve bilet detaylarınıza ulaşabilirsiniz. PNR numaranızı bilet satın alırken gönderilen e-posta veya SMS'de bulabilirsiniz.",
+      },
+      {
+         q: "PNR numarası ile nasıl işlem yapabilirim?",
+         a: "PNR numaranız ile bilet durumunuzu sorgulayabilir, uçuş detaylarınızı görüntüleyebilir ve gerektiğinde destek talebi oluşturabilirsiniz. Bunun için PNR kodunuzu ve soyadınızı yukarıdaki forma girerek 'PNR Sorgula' butonuna tıklamanız yeterlidir.",
+      },
+   ];
+
+   const topics = [
+      { label: "Online check-in nasıl yapılır?", href: "/faq" },
+      { label: "Uçak yolculuklarında el bagajı limitleri", href: "/faq" },
+      { label: "Uçak yolculuğunda bagaj zarar görürse ne yapılmalıdır?", href: "/faq" },
+      { label: "Havaalanlarındaki lounge hizmetleri", href: "/faq" },
+   ];
 
    const handlePnrChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       let value = turkishToEnglishUpper(e.target.value);
@@ -255,85 +274,92 @@ const BookingCheckMain = () => {
       <>
          <TrustBar />
          <HeaderOne />
-         <main className="pnr-page">
-            {/* ===== SEARCH FORM ===== */}
-            {!hasResult && (
-               <div className="pnr-page__center">
-                  <div className="pnr-card">
-                     <h1 className="pnr-search__title">
-                        {t.bookingCheckTitle}
-                     </h1>
-                     <form onSubmit={handleSubmit}>
-                        <div className="pnr-search__field">
-                           <label className="pnr-search__label">
-                              {t.pnrCode}
-                           </label>
-                           <input
-                              type="text"
-                              className={`pnr-search__input pnr-search__input--pnr ${errors.pnr ? "pnr-search__input--error" : ""}`}
-                              placeholder={t.pnrPlaceholder}
-                              value={pnr}
-                              onChange={handlePnrChange}
-                              maxLength={10}
-                              autoComplete="off"
-                           />
-                           {errors.pnr && (
-                              <span className="pnr-search__error">{errors.pnr}</span>
-                           )}
-                        </div>
-                        <div className="pnr-search__field">
-                           <label className="pnr-search__label">
-                              {t.lastName}
-                           </label>
-                           <input
-                              type="text"
-                              className={`pnr-search__input ${errors.surname ? "pnr-search__input--error" : ""}`}
-                              placeholder={t.lastNamePlaceholder}
-                              value={surname}
-                              onChange={handleSurnameChange}
-                              autoComplete="off"
-                           />
-                           {errors.surname && (
-                              <span className="pnr-search__error">{errors.surname}</span>
-                           )}
-                        </div>
-                        <button
-                           type="submit"
-                           disabled={bookingDetailLoading}
-                           className="pnr-search__btn"
-                        >
-                           {bookingDetailLoading ? (
-                              <>
-                                 <Loader2 size={16} className="pnr-spin" />
-                                 Sorgulanıyor...
-                              </>
-                           ) : (
-                              <>
-                                 <Search size={16} />
-                                 {t.query}
-                              </>
-                           )}
-                        </button>
-                     </form>
-                  </div>
 
+         {/* ===== SEARCH STATE ===== */}
+         {!hasResult && (
+            <>
+               {/* Hero banner */}
+               <section className="pnr-hero">
+                  <div className="pnr-hero__inner">
+                     <h1 className="pnr-hero__title">PNR Sorgulama</h1>
+                     <div className="pnr-hero__form-card">
+                        <form onSubmit={handleSubmit}>
+                           <div className="pnr-hero__form-row">
+                              {/* PNR input */}
+                              <div className="pnr-hero__field">
+                                 <div className={`pnr-hero__input-wrap${errors.pnr ? " pnr-hero__input-wrap--error" : ""}`}>
+                                    <span className="pnr-hero__input-icon">
+                                       <Hash size={16} />
+                                    </span>
+                                    <input
+                                       type="text"
+                                       className="pnr-hero__input pnr-hero__input--mono"
+                                       placeholder="PNR Kodu"
+                                       value={pnr}
+                                       onChange={handlePnrChange}
+                                       maxLength={10}
+                                       autoComplete="off"
+                                    />
+                                 </div>
+                                 {errors.pnr && (
+                                    <span className="pnr-hero__error">{errors.pnr}</span>
+                                 )}
+                              </div>
+
+                              {/* Surname input */}
+                              <div className="pnr-hero__field">
+                                 <div className={`pnr-hero__input-wrap${errors.surname ? " pnr-hero__input-wrap--error" : ""}`}>
+                                    <span className="pnr-hero__input-icon">
+                                       <User size={16} />
+                                    </span>
+                                    <input
+                                       type="text"
+                                       className="pnr-hero__input"
+                                       placeholder="Yolcunun Soyadı"
+                                       value={surname}
+                                       onChange={handleSurnameChange}
+                                       autoComplete="off"
+                                    />
+                                 </div>
+                                 {errors.surname && (
+                                    <span className="pnr-hero__error">{errors.surname}</span>
+                                 )}
+                              </div>
+
+                              {/* Submit button */}
+                              <button
+                                 type="submit"
+                                 disabled={bookingDetailLoading}
+                                 className="pnr-hero__btn"
+                              >
+                                 {bookingDetailLoading ? (
+                                    <>
+                                       <Loader2 size={16} className="pnr-spin" />
+                                       Sorgulanıyor...
+                                    </>
+                                 ) : (
+                                    <>
+                                       PNR Sorgula
+                                       <ChevronRight size={16} />
+                                    </>
+                                 )}
+                              </button>
+                           </div>
+                        </form>
+                     </div>
+                  </div>
+               </section>
+
+               {/* States & content below hero */}
+               <div className="pnr-below-hero">
                   {/* Loading skeleton */}
                   {bookingDetailLoading && (
-                     <div className="pnr-skeleton">
-                        <div className="pnr-card">
-                           <div className="pnr-skeleton__block" style={{ width: 96, height: 16, marginBottom: 12 }} />
-                           <div className="pnr-skeleton__block" style={{ width: 192, height: 32, marginBottom: 16 }} />
-                           <div className="pnr-skeleton__block" style={{ width: 128, height: 12 }} />
-                        </div>
-                        <div className="pnr-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                           <div>
-                              <div className="pnr-skeleton__block" style={{ width: 64, height: 32, marginBottom: 8 }} />
-                              <div className="pnr-skeleton__block" style={{ width: 48, height: 12 }} />
-                           </div>
-                           <div className="pnr-skeleton__block" style={{ width: 80, height: 16 }} />
-                           <div style={{ textAlign: 'right' }}>
-                              <div className="pnr-skeleton__block" style={{ width: 64, height: 32, marginBottom: 8, marginLeft: 'auto' }} />
-                              <div className="pnr-skeleton__block" style={{ width: 48, height: 12, marginLeft: 'auto' }} />
+                     <div className="pnr-state-wrap">
+                        <div className="pnr-skeleton">
+                           <div className="pnr-card">
+                              <div className="pnr-skeleton__block" style={{ width: 96, height: 16, marginBottom: 12 }} />
+                              <div className="pnr-skeleton__block" style={{ width: 192, height: 32, marginBottom: 16 }} />
+                              <div className="pnr-skeleton__block" style={{ width: 128, height: 12 }} />
                            </div>
                         </div>
                      </div>
@@ -341,54 +367,111 @@ const BookingCheckMain = () => {
 
                   {/* Error state */}
                   {bookingDetailError && (
-                     <div className="pnr-card" style={{ marginTop: 24, borderColor: '#FECACA' }}>
-                        <div className="pnr-error">
-                           <div className="pnr-error__icon">
-                              <AlertTriangle size={20} />
+                     <div className="pnr-state-wrap">
+                        <div className="pnr-card" style={{ borderColor: '#FECACA' }}>
+                           <div className="pnr-error">
+                              <div className="pnr-error__icon">
+                                 <AlertTriangle size={20} />
+                              </div>
+                              <div>
+                                 <h3 className="pnr-error__title">Sorgulama Başarısız</h3>
+                                 <p className="pnr-error__text">{bookingDetailError}</p>
+                              </div>
                            </div>
-                           <div>
-                              <h3 className="pnr-error__title">Sorgulama Başarısız</h3>
-                              <p className="pnr-error__text">{bookingDetailError}</p>
-                           </div>
+                           <button
+                              type="button"
+                              onClick={handleNewSearch}
+                              className="pnr-retry-btn"
+                              style={{ width: '100%', marginTop: 16 }}
+                           >
+                              Tekrar Dene
+                           </button>
                         </div>
-                        <button
-                           type="button"
-                           onClick={handleNewSearch}
-                           className="pnr-retry-btn"
-                           style={{ width: '100%', marginTop: 16 }}
-                        >
-                           Tekrar Dene
-                        </button>
                      </div>
                   )}
 
                   {/* Empty state — PNR not found */}
                   {bookingDetail?.hasError && !bookingDetailError && (
-                     <div className="pnr-card" style={{ marginTop: 24 }}>
-                        <div className="pnr-empty">
-                           <div className="pnr-empty__icon">
-                              <SearchX size={28} />
+                     <div className="pnr-state-wrap">
+                        <div className="pnr-card">
+                           <div className="pnr-empty">
+                              <div className="pnr-empty__icon">
+                                 <SearchX size={28} />
+                              </div>
+                              <h3 className="pnr-empty__title">Rezervasyon Bulunamadı</h3>
+                              <p className="pnr-empty__text">
+                                 Girilen PNR kodu ve soyad ile eşleşen bir rezervasyon bulunamadı. Lütfen bilgilerinizi kontrol ederek tekrar deneyin.
+                              </p>
+                              <button
+                                 type="button"
+                                 onClick={handleNewSearch}
+                                 className="pnr-retry-btn"
+                              >
+                                 Yeni Sorgulama
+                              </button>
                            </div>
-                           <h3 className="pnr-empty__title">Rezervasyon Bulunamadı</h3>
-                           <p className="pnr-empty__text">
-                              Girilen PNR kodu ve soyad ile eşleşen bir rezervasyon bulunamadı. Lütfen bilgilerinizi kontrol ederek tekrar deneyin.
-                           </p>
-                           <button
-                              type="button"
-                              onClick={handleNewSearch}
-                              className="pnr-retry-btn"
-                           >
-                              Yeni Sorgulama
-                           </button>
                         </div>
                      </div>
                   )}
-               </div>
-            )}
 
-            {/* ===== RESULT VIEW ===== */}
-            {hasResult && (
-               <div className="pnr-page__wide">
+                  {/* Main content area */}
+                  <div className="pnr-content-wrap">
+                     {/* Breadcrumb */}
+                     <nav className="pnr-breadcrumb" aria-label="breadcrumb">
+                        <a href="/"><Home size={14} /></a>
+                        <ChevronRight size={14} />
+                        <a href="/ucak-bileti">Uçak Bileti</a>
+                        <ChevronRight size={14} />
+                        <span className="pnr-breadcrumb__current">PNR Sorgulama</span>
+                     </nav>
+
+                     {/* FAQ section */}
+                     <section className="pnr-faq-section">
+                        <h2 className="pnr-faq-section__title">Sıkça Sorulan Sorular</h2>
+                        <div className="pnr-faq-list">
+                           {faqs.map((faq, i) => (
+                              <div key={i} className="pnr-faq-item">
+                                 <button
+                                    type="button"
+                                    className="pnr-faq-q"
+                                    onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                                    aria-expanded={openFaq === i}
+                                 >
+                                    <span>{faq.q}</span>
+                                    <ChevronDown
+                                       size={18}
+                                       className={`pnr-faq-chevron${openFaq === i ? " pnr-faq-chevron--open" : ""}`}
+                                    />
+                                 </button>
+                                 {openFaq === i && (
+                                    <p className="pnr-faq-a">{faq.a}</p>
+                                 )}
+                              </div>
+                           ))}
+                        </div>
+                     </section>
+
+                     {/* Topics grid */}
+                     <section className="pnr-topics-section">
+                        <h2 className="pnr-topics-section__title">Uçuşlarda Merak Edilenler</h2>
+                        <div className="pnr-topics-grid">
+                           {topics.map((topic, i) => (
+                              <a key={i} href={topic.href} className="pnr-topics-item">
+                                 <span>{topic.label}</span>
+                                 <ChevronRight size={16} className="pnr-topics-item__arrow" />
+                              </a>
+                           ))}
+                        </div>
+                     </section>
+                  </div>
+               </div>
+            </>
+         )}
+
+         {/* ===== RESULT VIEW ===== */}
+         {hasResult && (
+         <main className="pnr-page">
+            <div className="pnr-page__wide">
                   {/* Back to search */}
                   <button type="button" onClick={handleNewSearch} className="pnr-back">
                      <ArrowLeft size={16} />
@@ -413,6 +496,8 @@ const BookingCheckMain = () => {
                               segment={seg}
                               index={idx}
                               label={getSegmentLabel(idx, bookingDetail.segments?.length ?? 0)}
+                              pnr={bookingDetail.pnr}
+                              passengerLastName={bookingDetail.passengers?.[0]?.lastName}
                            />
                         ))}
 
@@ -471,9 +556,9 @@ const BookingCheckMain = () => {
                         }}
                      />
                   )}
-               </div>
-            )}
+            </div>
          </main>
+         )}
          <FooterOne />
       </>
    )

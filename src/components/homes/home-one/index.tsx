@@ -18,7 +18,6 @@ const HomeOne = () => {
    }, [])
    return (
       <>
-         <div className="bb-home-fixed-bg" aria-hidden="true" />
          <HeaderOne />
          <main>
             <Banner />

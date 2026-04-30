@@ -81,6 +81,12 @@ export default function RootLayout({
   return (
     <html lang="tr" className={inter.variable}>
       <body suppressHydrationWarning>
+        {/* Add bb-home class to body BEFORE header renders to prevent dark blue flash on refresh */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{if(location.pathname==='/'||location.pathname===''){document.body.classList.add('bb-home');}}catch(e){}})();`,
+          }}
+        />
         <Providers>{children}</Providers>
       </body>
     </html>

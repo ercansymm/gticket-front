@@ -1,21 +1,19 @@
-import FaqArea from "./FaqArea"
-import FooterOne from "../../../layouts/footers/FooterOne"
-import HeaderOne from "../../../layouts/headers/HeaderOne"
-import TrustBar from "../../homes/home-one/TrustBar"
-import BreadCrumb from "../../common/BreadCrumb"
+import FaqArea from "./FaqArea";
+import FooterOne from "../../../layouts/footers/FooterOne";
+import HeaderOne from "../../../layouts/headers/HeaderOne";
+import TrustBar from "../../homes/home-one/TrustBar";
 
 const Faq = () => {
-   return (
-      <>
-         <TrustBar />
-         <HeaderOne />
-         <main>
-            <BreadCrumb title="Sıkça Sorulan Sorular" sub_title="SSS" />
-            <FaqArea />
-         </main>
-         <FooterOne />
-      </>
-   )
-}
+  return (
+    <>
+      <TrustBar />
+      <HeaderOne />
+      <main className="faq-page">
+        <FaqArea />
+      </main>
+      <FooterOne />
+    </>
+  );
+};
 
-export default Faq
+export default Faq;

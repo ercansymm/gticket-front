@@ -129,7 +129,7 @@ export default function PaymentCallbackClient() {
                 href="/bilet-sorgula"
                 className="w-full py-3 px-4 rounded-lg border border-slate-300 text-slate-700 font-medium hover:bg-slate-50 transition-colors"
               >
-                Bilet Sorgula
+                PNR Sorgula
               </Link>
               <Link
                 href="/"

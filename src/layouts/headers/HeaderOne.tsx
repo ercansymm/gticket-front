@@ -3,16 +3,26 @@
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
+import { usePathname } from "next/navigation";
 import Offcanvas from "./Menu/Offcanvas";
 import Logo from "../../components/common/Logo";
 import { useTranslation } from "../../context/LanguageContext";
 import CurrencySelector from "../../components/common/CurrencySelector";
+import { Info, BookOpen, HelpCircle, Phone } from "lucide-react";
+
+const NAV_LINKS = [
+   { label: "Hakkımızda", href: "/about",  Icon: Info },
+   { label: "Blog",        href: "/blog",   Icon: BookOpen },
+   { label: "SSS",         href: "/faq",    Icon: HelpCircle },
+   { label: "İletişim",   href: "/contact", Icon: Phone },
+];
 
 /** AtaBilet — Header. Logo, navigasyon, dil seçici, döviz seçici ve müşteri hesabı menüsü. */
 const HeaderOne = () => {
 
    const { t, lang, setLang } = useTranslation();
    const { data: session, status } = useSession();
+   const pathname = usePathname();
    const [mobileMenu, setMobileMenu] = useState(false);
    const [langOpen, setLangOpen] = useState(false);
    const [accountOpen, setAccountOpen] = useState(false);
@@ -21,11 +31,15 @@ const HeaderOne = () => {
    const accountRef = useRef<HTMLDivElement>(null);
 
    useEffect(() => {
-      const onScroll = () => setScrolled(window.scrollY > 80);
+      // On home page header stays transparent over the hero image until user scrolls past it.
+      // Other pages have no hero, so switch to solid as soon as the user scrolls.
+      const isHome = pathname === "/";
+      const threshold = isHome ? 540 : 10;
+      const onScroll = () => setScrolled(window.scrollY > threshold);
       onScroll();
       window.addEventListener("scroll", onScroll, { passive: true });
       return () => window.removeEventListener("scroll", onScroll);
-   }, []);
+   }, [pathname]);
 
    useEffect(() => {
       const handler = (e: MouseEvent) => {
@@ -62,6 +76,21 @@ const HeaderOne = () => {
                <div className="bb-header-inner">
                   <div className="bb-header-left">
                      <Logo variant="white" />
+                     <nav aria-label="Ana menü">
+                        <ul className="bb-nav-links d-none d-lg-flex">
+                           {NAV_LINKS.map(({ label, href, Icon }) => (
+                              <li key={href}>
+                                 <Link
+                                    href={href}
+                                    className={pathname === href ? "bb-nav-link--active" : ""}
+                                 >
+                                    <Icon size={14} strokeWidth={2} />
+                                    {label}
+                                 </Link>
+                              </li>
+                           ))}
+                        </ul>
+                     </nav>
                   </div>
                   <div className="bb-header-right">
                      {/* Bilet Sorgula */}

@@ -807,7 +807,7 @@ const BannerFormOne = () => {
                </div>
                <div className="bb-flight-form__field">
                   <label className="bb-flight-form__label">{t.to}</label>
-                  <input type="text" className={`bb-flight-form__input ${errors.groupTo ? "bb-flight-form__input--error" : ""}`} placeholder={t.cityOrAirport} value={groupTo} onChange={e => setGroupTo(e.target.value)} autoComplete="off" />
+                  <input type="text" className={`bb-flight-form__input ${errors.groupTo ? "bb-flight-form__input--error" : ""}`} placeholder={t.cityOrAirport2} value={groupTo} onChange={e => setGroupTo(e.target.value)} autoComplete="off" />
                   {errors.groupTo && <span className="bb-flight-form__error">{errors.groupTo}</span>}
                </div>
                <div className="bb-flight-form__field bb-calendar-wrapper">
@@ -1043,8 +1043,9 @@ const BannerFormOne = () => {
 
          <div className="bb-flight-form__fields">
             {/* Nereden */}
-            <div ref={fromRef} className="bb-flight-form__field bb-flight-form__field--airport">
+            <div ref={fromRef} className="bb-flight-form__field bb-flight-form__field--airport bb-flight-form__field--with-icon">
                <label className="bb-flight-form__label">{t.from}</label>
+               <i className="fa-solid fa-plane-departure bb-flight-form__input-icon" aria-hidden="true"></i>
                <input
                   type="text"
                   className={`bb-flight-form__input ${errors.from ? "bb-flight-form__input--error" : ""}`}
@@ -1092,12 +1093,13 @@ const BannerFormOne = () => {
             </button>
 
             {/* Nereye */}
-            <div ref={toRef} className="bb-flight-form__field bb-flight-form__field--airport">
+            <div ref={toRef} className="bb-flight-form__field bb-flight-form__field--airport bb-flight-form__field--with-icon">
                <label className="bb-flight-form__label">{t.to}</label>
+               <i className="fa-solid fa-plane-arrival bb-flight-form__input-icon" aria-hidden="true"></i>
                <input
                   type="text"
                   className={`bb-flight-form__input ${errors.to ? "bb-flight-form__input--error" : ""}`}
-                  placeholder={t.cityOrAirport}
+                  placeholder={t.cityOrAirport2}
                   value={toOpen ? toSearch : getAirportLabel(to)}
                   onChange={(e) => {
                      const val = e.target.value;
@@ -1136,8 +1138,9 @@ const BannerFormOne = () => {
             </div>
 
             {/* Gidiş Tarihi */}
-            <div className="bb-flight-form__field bb-calendar-wrapper">
+            <div className="bb-flight-form__field bb-calendar-wrapper bb-flight-form__field--with-icon">
                <label className="bb-flight-form__label">{t.departureDate}</label>
+               <i className="fa-solid fa-calendar-days bb-flight-form__input-icon" aria-hidden="true"></i>
                <input
                   type="text"
                   className="bb-flight-form__input"
@@ -1170,8 +1173,9 @@ const BannerFormOne = () => {
 
             {/* Dönüş Tarihi — sadece roundtrip */}
             {tripType === "roundtrip" && (
-               <div className="bb-flight-form__field bb-calendar-wrapper">
+               <div className="bb-flight-form__field bb-calendar-wrapper bb-flight-form__field--with-icon">
                   <label className="bb-flight-form__label">{t.returnDate}</label>
+                  <i className="fa-solid fa-calendar-days bb-flight-form__input-icon" aria-hidden="true"></i>
                   <input
                      type="text"
                      className={`bb-flight-form__input ${errors.returnDate ? "bb-flight-form__input--error" : ""}`}
@@ -1196,8 +1200,9 @@ const BannerFormOne = () => {
             )}
 
             {/* Yolcu */}
-            <div ref={paxRef} className="bb-flight-form__field bb-flight-form__field--pax">
+            <div ref={paxRef} className="bb-flight-form__field bb-flight-form__field--pax bb-flight-form__field--with-icon">
                <label className="bb-flight-form__label">{t.passenger}</label>
+               <i className="fa-solid fa-user bb-flight-form__input-icon" aria-hidden="true"></i>
                <button type="button" className="bb-flight-form__input bb-flight-form__pax-toggle" onClick={() => setPassengerOpen(p => !p)} aria-expanded={passengerOpen} aria-haspopup="dialog">
                   {paxSummary}
                   <i className="fa-solid fa-chevron-down"></i>
