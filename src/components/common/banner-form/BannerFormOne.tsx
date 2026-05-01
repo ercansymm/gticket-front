@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useMemo, useCallback } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
@@ -116,6 +116,7 @@ const BannerFormOne = () => {
 
    const fromRef = useRef<HTMLDivElement>(null);
    const toRef = useRef<HTMLDivElement>(null);
+   const toInputRef = useRef<HTMLInputElement>(null);
    const paxRef = useRef<HTMLDivElement>(null);
    const multiCityRef = useRef<HTMLDivElement>(null);
    const urlCountryCodeResolvedRef = useRef(false);
@@ -517,7 +518,7 @@ const BannerFormOne = () => {
    };
 
    const addSegment = () => {
-      if (segments.length < 6) {
+      if (segments.length < 4) {
          setSegments(prev => {
             const last = prev[prev.length - 1];
             const newSeg = createSegment();
@@ -956,18 +957,18 @@ const BannerFormOne = () => {
                      )}
                   </div>
                ))}
-               {segments.length < 6 && (
-                  <button type="button" className="bb-multicity-add" onClick={addSegment}>
-                     <i className="fa-solid fa-plus"></i> {t.addFlight}
-                  </button>
-               )}
             </div>
+            {segments.length < 4 && (
+               <button type="button" className="bb-multicity-add" onClick={addSegment}>
+                  <i className="fa-solid fa-plus"></i> {t.addFlight}
+               </button>
+            )}
             <div className="bb-flight-form__fields bb-flight-form__fields--bottom mt-15">
                {/* Yolcu */}
                <div ref={paxRef} className="bb-flight-form__field bb-flight-form__field--pax">
                   <label className="bb-flight-form__label">{t.passenger}</label>
                   <button type="button" className="bb-flight-form__input bb-flight-form__pax-toggle" onClick={() => setPassengerOpen(p => !p)} aria-expanded={passengerOpen} aria-haspopup="dialog">
-                     {paxSummary}
+                     <span className="bb-pax-toggle__text">{paxSummary}</span>
                      <i className="fa-solid fa-chevron-down"></i>
                   </button>
                   {passengerOpen && renderPaxDropdown()}
@@ -984,10 +985,23 @@ const BannerFormOne = () => {
 
    // ── Passenger dropdown renderer ──
    function renderPaxDropdown() {
-      const paxRows: { key: keyof PassengerCounts; label: string; desc: string }[] = [
-         { key: "adult", label: t.adult, desc: t.ageRange12 },
-         { key: "child", label: t.child, desc: t.ageRange2_12 },
-         { key: "infant", label: t.infant, desc: t.ageRange0_2 },
+      const paxRows: { key: keyof PassengerCounts; label: string; desc: string; icon: ReactNode }[] = [
+         { key: "adult", label: t.adult, desc: t.ageRange12, icon: (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+         )},
+         { key: "child", label: t.child, desc: t.ageRange2_12, icon: (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="7" r="3"/><path d="M9 13l-2 8h10l-2-8"/><path d="M9 13h6"/></svg>
+         )},
+         { key: "infant", label: t.infant, desc: t.ageRange0_2, icon: (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="9" r="3"/><path d="M6 20v-1a6 6 0 0 1 12 0v1"/><path d="M8 9H6a2 2 0 0 0-2 2v1"/><path d="M16 9h2a2 2 0 0 1 2 2v1"/></svg>
+         )},
+      ];
+
+      const cabinOptions = [
+         { value: "economy", label: t.economy },
+         { value: "premiumeconomy", label: t.premiumEconomy },
+         { value: "business", label: t.business },
+         { value: "first", label: t.first },
       ];
 
       const closePax = () => setPassengerOpen(false);
@@ -997,29 +1011,51 @@ const BannerFormOne = () => {
             <div className="bb-pax-overlay" onClick={closePax} onTouchEnd={(e) => { e.preventDefault(); closePax(); }} />
             <div className="bb-flight-form__pax-dropdown bb-flight-form__pax-dropdown--portal">
                <div className="bb-pax-drag-handle" />
-               {paxRows.map(({ key, label, desc }) => (
+               <p className="bb-pax-section-title">{t.passenger}</p>
+               {paxRows.map(({ key, label, desc, icon }) => (
                   <div key={key} className="bb-pax-row">
-                     <div>
-                        <span className="bb-pax-label">{label}</span>
-                        <small className="bb-pax-desc">{desc}</small>
+                     <div className="bb-pax-row__info">
+                        <span className="bb-pax-type-icon">{icon}</span>
+                        <div>
+                           <span className="bb-pax-label">{label}</span>
+                           <small className="bb-pax-desc">{desc}</small>
+                        </div>
                      </div>
                      <div className="bb-pax-controls">
-                        <button type="button" onClick={() => updatePassenger(key, -1)} aria-label={`${label} ${t.decrease}`}>−</button>
-                        <span>{passengers[key]}</span>
-                        <button type="button" onClick={() => updatePassenger(key, 1)} aria-label={`${label} ${t.increase}`}>+</button>
+                        <button
+                           type="button"
+                           className="bb-pax-btn bb-pax-btn--minus"
+                           onClick={() => updatePassenger(key, -1)}
+                           aria-label={`${label} ${t.decrease}`}
+                           disabled={passengers[key] <= (key === "adult" ? 1 : 0)}
+                        >
+                           <svg width="12" height="2" viewBox="0 0 12 2"><rect width="12" height="2" rx="1" fill="currentColor"/></svg>
+                        </button>
+                        <span className="bb-pax-count">{passengers[key]}</span>
+                        <button
+                           type="button"
+                           className="bb-pax-btn bb-pax-btn--plus"
+                           onClick={() => updatePassenger(key, 1)}
+                           aria-label={`${label} ${t.increase}`}
+                        >
+                           <svg width="12" height="12" viewBox="0 0 12 12"><rect x="5" y="0" width="2" height="12" rx="1" fill="currentColor"/><rect x="0" y="5" width="12" height="2" rx="1" fill="currentColor"/></svg>
+                        </button>
                      </div>
                   </div>
                ))}
-               <div className="bb-pax-row bb-pax-row--class">
-                  <div>
-                     <span className="bb-pax-label">{t.class}</span>
-                  </div>
-                  <select className="bb-pax-class-select" value={flightClass} onChange={e => setFlightClass(e.target.value)}>
-                     <option value="economy">{t.economy}</option>
-                     <option value="premiumeconomy">{t.premiumEconomy}</option>
-                     <option value="business">{t.business}</option>
-                     <option value="first">{t.first}</option>
-                  </select>
+               <div className="bb-pax-divider" />
+               <p className="bb-pax-section-title">{t.class}</p>
+               <div className="bb-pax-cabin-grid">
+                  {cabinOptions.map(opt => (
+                     <button
+                        key={opt.value}
+                        type="button"
+                        className={`bb-pax-cabin-btn${flightClass === opt.value ? " bb-pax-cabin-btn--active" : ""}`}
+                        onClick={() => setFlightClass(opt.value)}
+                     >
+                        {opt.label}
+                     </button>
+                  ))}
                </div>
                <button type="button" className="bb-pax-apply" onClick={closePax}>{t.apply}</button>
             </div>
@@ -1068,6 +1104,7 @@ const BannerFormOne = () => {
                         setErrors(prev => ({ ...prev, to: t.sameCityError }));
                      } else {
                         setErrors(prev => ({ ...prev, from: '', to: prev.to === t.sameCityError ? '' : prev.to }));
+                        if (!to) setTimeout(() => { setToOpen(true); setToSearch(""); setToHighlight(-1); setToSuggestions(getInitialSuggestions()); toInputRef.current?.focus(); }, 60);
                      }
                   }, setFromOpen)}
                   autoComplete="off"
@@ -1083,6 +1120,7 @@ const BannerFormOne = () => {
                      setErrors(prev => ({ ...prev, to: t.sameCityError }));
                   } else {
                      setErrors(prev => ({ ...prev, from: '', to: prev.to === t.sameCityError ? '' : prev.to }));
+                     if (!to) setTimeout(() => { setToOpen(true); setToSearch(""); setToHighlight(-1); setToSuggestions(getInitialSuggestions()); toInputRef.current?.focus(); }, 60);
                   }
                }, fromHighlight)}
             </div>
@@ -1097,6 +1135,7 @@ const BannerFormOne = () => {
                <label className="bb-flight-form__label">{t.to}</label>
                <i className="fa-solid fa-plane-arrival bb-flight-form__input-icon" aria-hidden="true"></i>
                <input
+                  ref={toInputRef}
                   type="text"
                   className={`bb-flight-form__input ${errors.to ? "bb-flight-form__input--error" : ""}`}
                   placeholder={t.cityOrAirport2}
@@ -1150,24 +1189,18 @@ const BannerFormOne = () => {
                   onClick={() => openCalendar("depart")}
                />
                {calendarOpen && calendarTarget === "depart" && (
-                  tripType === "roundtrip" ? (
-                     <Calendar
-                        isOpen
-                        mode="range"
-                        onClose={closeCalendar}
-                        rangeStart={departDate}
-                        rangeEnd={returnDate}
-                        onSelectRange={handleRangeSelect}
-                     />
-                  ) : (
-                     <Calendar
-                        isOpen
-                        mode="single"
-                        onClose={closeCalendar}
-                        onSelectDate={handleSingleDateSelect}
-                        selectedDate={departDate}
-                     />
-                  )
+                  <Calendar
+                     isOpen
+                     mode="single"
+                     onClose={closeCalendar}
+                     onSelectDate={(date) => {
+                        setDepartDate(date);
+                        if (returnDate && returnDate <= date) setReturnDate(null);
+                        closeCalendar();
+                        if (tripType === "roundtrip") setTimeout(() => openCalendar("return"), 120);
+                     }}
+                     selectedDate={departDate}
+                  />
                )}
             </div>
 
@@ -1188,11 +1221,13 @@ const BannerFormOne = () => {
                   {calendarOpen && calendarTarget === "return" && (
                      <Calendar
                         isOpen
-                        mode="range"
+                        mode="single"
                         onClose={closeCalendar}
-                        rangeStart={departDate}
-                        rangeEnd={returnDate}
-                        onSelectRange={handleRangeSelect}
+                        onSelectDate={(date) => {
+                           setReturnDate(date);
+                           closeCalendar();
+                        }}
+                        selectedDate={returnDate}
                         minDate={departDate || undefined}
                      />
                   )}
@@ -1236,7 +1271,6 @@ function renderTripToggle(
    const types: { value: TripType; label: string; icon?: string; disabled?: boolean; badge?: string }[] = [
       { value: "oneway", label: t.oneWay },
       { value: "roundtrip", label: t.roundTrip },
-      { value: "multicity", label: t.multiCity },
    ];
 
    return (

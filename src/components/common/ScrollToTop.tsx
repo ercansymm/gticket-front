@@ -35,7 +35,7 @@ const ScrollToTop = () => {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            backgroundColor: hovered ? "#db2525" : "#db2525",
+            backgroundColor: hovered ? "#0a4363" : "#0a4363",
             color: "#ffffff",
             boxShadow: "0 4px 14px rgba(0,0,0,0.3)",
             transition: "all 0.3s ease",

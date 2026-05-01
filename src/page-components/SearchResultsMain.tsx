@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import HeaderOne from '../layouts/headers/HeaderOne';
@@ -92,6 +92,15 @@ const SearchResultsMain = () => {
   const [selectedOutbound, setSelectedOutbound] = useState<{ flight: FlightResult; brandedFareItemId: string | null } | null>(null);
   const [selectedReturn, setSelectedReturn] = useState<{ flight: FlightResult; brandedFareItemId: string | null } | null>(null);
   const [rtAllocating, setRtAllocating] = useState(false);
+  const returnSectionRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (selectedOutbound && returnSectionRef.current) {
+      setTimeout(() => {
+        returnSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 80);
+    }
+  }, [selectedOutbound]);
 
   const isRoundTrip = searchParams?.flightType === 'RT';
   const isMultiCity = searchParams?.flightType === 'MP';
@@ -673,7 +682,6 @@ const SearchResultsMain = () => {
           <div className="bb-spinner-overlay">
             <div className="bb-spinner-wrapper">
               <div className="bb-spinner bb-spinner--large"></div>
-              <p className="bb-spinner-text">Uçuş tahsis ediliyor...</p>
             </div>
           </div>
         )}
@@ -954,7 +962,7 @@ const SearchResultsMain = () => {
                     {/* ── Dönüş bölümü (gidiş seçildikten sonra) ── */}
                     {selectedOutbound && (
                       <>
-                        <div className="bb-direction-header bb-direction-header--return">
+                        <div ref={returnSectionRef} className="bb-direction-header bb-direction-header--return">
                           <div className="bb-direction-header__icon">
                             <i className="fa-solid fa-plane-arrival" />
                           </div>

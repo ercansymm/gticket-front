@@ -644,13 +644,13 @@ export default function CheckoutClient() {
                     ) : null)
                   : <>
                       <div className="chk-summary__leg">
-                        <span className="chk-summary__leg-label">{selectedReturnFlight ? 'GİD' : 'TY'}</span>
+                        <span className="chk-summary__leg-label">{selectedReturnFlight ? 'GİDİŞ' : 'TY'}</span>
                         <span className="chk-summary__leg-route">{selectedFlight.originCode} → {selectedFlight.destinationCode}</span>
                         <span className="chk-summary__leg-date">{formatDateDDMMYYYY(selectedFlight.departureDate)}</span>
                       </div>
                       {selectedReturnFlight && (
                         <div className="chk-summary__leg">
-                          <span className="chk-summary__leg-label">DÖN</span>
+                          <span className="chk-summary__leg-label">DÖNÜŞ</span>
                           <span className="chk-summary__leg-route">{selectedReturnFlight.originCode} → {selectedReturnFlight.destinationCode}</span>
                           <span className="chk-summary__leg-date">{formatDateDDMMYYYY(selectedReturnFlight.departureDate)}</span>
                         </div>

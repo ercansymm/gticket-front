@@ -704,6 +704,7 @@ export interface BookingDetailResponse {
   bookingId: string | null;
   bookingCode: string | null;
   pnr: string | null;
+  biletBankPnr?: string | null;
   status: string | null;
   grandTotal: number;
   totalFare: number;

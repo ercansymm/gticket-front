@@ -8,14 +8,41 @@ import type {
 } from '@/types';
 import type { RootState } from '../store';
 
+const BILETBANK_ERRORS: [RegExp, string][] = [
+  [
+    /at least one hour between the arrival.*departure.*return/i,
+    'Gidiş uçuşunun varış saati ile dönüş uçuşunun kalkış saati arasında en az 1 saat olması gerekmektedir. Lütfen farklı bir dönüş uçuşu seçin.',
+  ],
+  [
+    /no seats available|no availability/i,
+    'Seçilen uçuşta müsait koltuk kalmamıştır. Lütfen farklı bir uçuş seçin.',
+  ],
+  [
+    /session.*expired|session.*invalid|invalid session/i,
+    'Oturumunuzun süresi dolmuştur. Lütfen aramayı yenileyin.',
+  ],
+  [
+    /flight.*not found|product.*not found/i,
+    'Seçilen uçuş artık mevcut değil. Lütfen aramayı yenileyin.',
+  ],
+];
+
+function translateBiletBankError(raw: string): string {
+  for (const [pattern, tr] of BILETBANK_ERRORS) {
+    if (pattern.test(raw)) return tr;
+  }
+  return raw;
+}
+
 /** Backend'den gelen 4 farklı hata formatını tek mesaja çevirir */
 function extractErrorMessage(error: any, fallback: string): string {
-  return error.userMessage
+  const raw = error.userMessage
     || error.response?.data?.errorMessage
     || error.response?.data?.error
     || (typeof error.response?.data?.error === 'object' ? error.response?.data?.error?.message : undefined)
     || error.message
     || fallback;
+  return translateBiletBankError(raw);
 }
 
 interface FlightState {

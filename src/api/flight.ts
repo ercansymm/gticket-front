@@ -174,6 +174,7 @@ export const lookupBookingByPnrAndLastName = async (pnr: string, lastName: strin
     bookingId: raw.id ?? null,
     bookingCode: raw.bookingCode ?? null,
     pnr: raw.pnr ?? null,
+    biletBankPnr: raw.biletBankPnr ?? null,
     status: raw.status ?? null,
     grandTotal: raw.grandTotal ?? 0,
     totalFare: fare?.grandTotal ?? raw.grandTotal ?? 0,

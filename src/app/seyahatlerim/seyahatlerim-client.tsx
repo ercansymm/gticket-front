@@ -14,7 +14,22 @@ function formatDate(dateStr: string | null) {
   if (!dateStr) return "—";
   const d = new Date(dateStr);
   if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("tr-TR", { day: "2-digit", month: "short", year: "numeric" });
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  return `${dd}.${mm}.${d.getFullYear()}`;
+}
+
+function isPastTrip(segs: MyBookingSegment[]): boolean {
+  if (segs.length === 0) return false;
+  const first = segs[0];
+  if (!first.departureDate) return false;
+  const d = new Date(first.departureDate);
+  if (Number.isNaN(d.getTime())) return false;
+  if (first.departureTime) {
+    const [hh, mm] = first.departureTime.slice(0, 5).split(":").map(Number);
+    if (!Number.isNaN(hh) && !Number.isNaN(mm)) d.setHours(hh, mm, 0, 0);
+  }
+  return d < new Date();
 }
 
 function formatTime(timeStr: string | null) {
@@ -150,9 +165,10 @@ export default function SeyahatlerimClient() {
                   segs[0].originCode === segs[segs.length - 1].destinationCode;
 
                 const ataPnr = b.internalPnr ?? "—";
+                const isPast = isPastTrip(segs);
 
                 return (
-                  <div key={b.id ?? b.internalPnr ?? b.pnr} className="syt-ticket">
+                  <div key={b.id ?? b.internalPnr ?? b.pnr} className={`syt-ticket${isPast ? " syt-ticket--past" : ""}`}>
                     {/* Airline strip */}
                     <div className="syt-ticket__strip">
                       <span className="syt-ticket__airline">
@@ -185,14 +201,16 @@ export default function SeyahatlerimClient() {
 
                                 <div className="syt-leg__city syt-leg__city--right">
                                   <span className="syt-leg__iata">{s.destinationCode ?? "—"}</span>
-                                  <span className="syt-leg__date">{formatDate(s.departureDate)}</span>
                                 </div>
                               </div>
 
                               {s.flightNumber && (
-                                <span className="syt-leg__flight">
-                                  {s.marketingAirline ?? ""} {s.flightNumber}
-                                </span>
+                                <div className="syt-leg__flight-row">
+                                  <span className="syt-leg__flight">
+                                    {s.marketingAirline ?? ""} {s.flightNumber}
+                                  </span>
+                                  <span className="syt-leg__date">{formatDate(s.departureDate)}</span>
+                                </div>
                               )}
                             </div>
                           );
@@ -225,11 +243,11 @@ export default function SeyahatlerimClient() {
 
                     {/* Footer — Talep Olustur + E-Bilet Indir */}
                     <div className="syt-ticket__footer">
-                      <span className="syt-ticket__status-badge syt-ticket__status-badge--active">
-                        Biletlendi
+                      <span className={`syt-ticket__status-badge${isPast ? " syt-ticket__status-badge--past" : " syt-ticket__status-badge--active"}`}>
+                        {isPast ? "Geçmiş Seyahat" : "Biletlendi"}
                       </span>
                       <div className="syt-ticket__actions">
-                        {b.id && (
+                        {!isPast && b.id && (
                           <Link
                             href={`/destek-taleplerim/yeni?bookingId=${encodeURIComponent(b.id)}`}
                             className="syt-action-btn syt-action-btn--ghost"

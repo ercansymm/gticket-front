@@ -496,7 +496,7 @@ const BookingCheckMain = () => {
                               segment={seg}
                               index={idx}
                               label={getSegmentLabel(idx, bookingDetail.segments?.length ?? 0)}
-                              pnr={bookingDetail.pnr}
+                              pnr={bookingDetail.biletBankPnr ?? bookingDetail.pnr}
                               passengerLastName={bookingDetail.passengers?.[0]?.lastName}
                            />
                         ))}

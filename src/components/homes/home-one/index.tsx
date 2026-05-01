@@ -1,12 +1,14 @@
 "use client"
 import { lazy, Suspense, useEffect } from "react"
 import Banner from "./Banner"
+import ValueProps from "./ValueProps"
 import Campaigns from "./Campaigns"
 import HeaderOne from "../../../layouts/headers/HeaderOne"
 import FooterOne from "../../../layouts/footers/FooterOne"
 import CookieConsent from "../../common/CookieConsent"
 
 const Location = lazy(() => import("./Location"))
+const WhyAtaBilet = lazy(() => import("./WhyAtaBilet"))
 const Process = lazy(() => import("./Process"))
 const Blog = lazy(() => import("./Blog"))
 
@@ -21,9 +23,13 @@ const HomeOne = () => {
          <HeaderOne />
          <main>
             <Banner />
+            <ValueProps />
             <Campaigns />
             <Suspense fallback={<div style={{ minHeight: 200 }} />}>
                <Location />
+            </Suspense>
+            <Suspense fallback={<div style={{ minHeight: 200 }} />}>
+               <WhyAtaBilet />
             </Suspense>
             <Suspense fallback={<div style={{ minHeight: 200 }} />}>
                <Process />

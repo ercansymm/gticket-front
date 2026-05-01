@@ -14,7 +14,6 @@ type RequestType =
   | "iptal"
   | "degisiklik"
   | "tekerlekli_sandalye"
-  | "ozel_yemek"
   | "bagaj"
   | "diger";
 
@@ -28,7 +27,6 @@ const REQUEST_TYPES: {
   { value: "iptal", label: "İptal Talebi", description: "Bilet iadesi talep ediyorum", backend: 1, needsBooking: true },
   { value: "degisiklik", label: "Tarih / Uçuş Değişikliği", description: "Uçuş tarih veya saat değişikliği", backend: 2, needsBooking: true },
   { value: "tekerlekli_sandalye", label: "Tekerlekli Sandalye", description: "Refakat / sağlık talebi", backend: 3, needsBooking: true },
-  { value: "ozel_yemek", label: "Özel Yemek", description: "Diyet / özel yemek talebi", backend: 3, needsBooking: true },
   { value: "bagaj", label: "Ek Bagaj", description: "Ekstra bagaj talebi", backend: 3, needsBooking: true },
   { value: "diger", label: "Diğer / Genel Soru", description: "Genel soru veya geri bildirim", backend: 3, needsBooking: false },
 ];
@@ -53,6 +51,19 @@ interface BookingSummary {
   }[];
 }
 
+function isPastBooking(segments: BookingSummary["segments"]): boolean {
+  if (segments.length === 0) return false;
+  const first = segments[0];
+  if (!first.departureDate) return false;
+  const d = new Date(first.departureDate);
+  if (Number.isNaN(d.getTime())) return false;
+  if (first.departureTime) {
+    const [hh, mm] = first.departureTime.slice(0, 5).split(":").map(Number);
+    if (!Number.isNaN(hh) && !Number.isNaN(mm)) d.setHours(hh, mm, 0, 0);
+  }
+  return d < new Date();
+}
+
 export default function NewSupportTicketClient() {
   const { data: session, status: authStatus } = useSession();
   const router = useRouter();
@@ -73,12 +84,20 @@ export default function NewSupportTicketClient() {
   const needsBooking = selectedTypeMeta.needsBooking;
 
   useEffect(() => {
-    if (authStatus === "loading") return;
     if (authStatus === "unauthenticated") {
-      router.replace("/login?callbackUrl=/destek-taleplerim/yeni");
-      return;
+      router.replace("/login?callbackUrl=%2Fdestek-taleplerim%2Fyeni");
     }
   }, [authStatus, router]);
+
+  if (authStatus === "loading" || authStatus === "unauthenticated") {
+    return (
+      <>
+        <HeaderOne />
+        <main style={{ minHeight: "60vh" }} />
+        <FooterOne />
+      </>
+    );
+  }
 
   useEffect(() => {
     if (!userId) return;
@@ -101,7 +120,8 @@ export default function NewSupportTicketClient() {
             (b) =>
               (b.status === "Ticketed" || b.isFinalized === true) &&
               !b.cancelledAt &&
-              !!b.internalPnr,
+              !!b.internalPnr &&
+              !isPastBooking(b.segments ?? []),
           ),
         );
       } catch (e) {

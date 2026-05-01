@@ -25,22 +25,13 @@ const AIRLINE_NAMES: Record<string, string> = {
 };
 
 const CHECKIN_BASE_URLS: Record<string, string> = {
-  TK: "https://www.turkishairlines.com/tr-int/ucak-bileti/rezervasyonu-yonet/index.html",
+  TK: "https://www.turkishairlines.com/tr-int/ucak-bileti/rezervasyonu-yonet",
   PC: "https://www.flypgs.com/online-check-in",
   AJ: "https://www.anadolujet.com/tr/ucus-bilgileri/online-check-in",
 };
 
-function buildCheckInUrl(
-  airlineCode: string,
-  pnr: string | null | undefined,
-  lastName: string | null | undefined
-): string {
-  const base = CHECKIN_BASE_URLS[airlineCode];
-  if (!base) return "";
-  if (airlineCode === "TK" && pnr && lastName) {
-    return `${base}?ticketNo=${encodeURIComponent(pnr)}&surname=${encodeURIComponent(lastName)}`;
-  }
-  return base;
+function buildCheckInUrl(airlineCode: string): string {
+  return CHECKIN_BASE_URLS[airlineCode] ?? "";
 }
 
 const TR_MONTHS = [
@@ -79,9 +70,7 @@ function parseDepartureDateTime(day: string, time: string): Date | null {
 function getCheckInState(
   airlineCode: string,
   departureDay: string | null,
-  departureTime: string | null,
-  pnr: string | null | undefined,
-  lastName: string | null | undefined
+  departureTime: string | null
 ): CheckInState | null {
   if (!CHECKIN_BASE_URLS[airlineCode] || !departureDay || !departureTime) return null;
 
@@ -97,7 +86,7 @@ function getCheckInState(
   const opensAt = new Date(departureDateTime.getTime() - 24 * 60 * 60 * 1000);
 
   return {
-    url: buildCheckInUrl(airlineCode, pnr, lastName),
+    url: buildCheckInUrl(airlineCode),
     isAvailable: hoursUntilDeparture <= 24,
     opensAt,
   };
@@ -120,13 +109,16 @@ export default function FlightSegmentCard({
   pnr,
   passengerLastName,
 }: FlightSegmentCardProps) {
+  const [showCheckInModal, setShowCheckInModal] = useState(false);
+
   const airlineCode = segment.marketingAirline ?? "";
   const airlineName = AIRLINE_NAMES[airlineCode] ?? airlineCode;
   const flightNo = `${airlineCode} ${segment.flightNumber ?? ""}`;
   const cabinClass = segment.bookingClass ?? "";
-  const checkIn = getCheckInState(airlineCode, segment.departureDay, segment.departureTime, pnr, passengerLastName);
+  const checkIn = getCheckInState(airlineCode, segment.departureDay, segment.departureTime);
 
   return (
+    <>
     <div className="pnr-card pnr-flight">
       {/* Bar */}
       <div className="pnr-flight__bar">
@@ -205,15 +197,14 @@ export default function FlightSegmentCard({
         {checkIn && (
           <div className="pnr-checkin">
             {checkIn.isAvailable ? (
-              <a
-                href={checkIn.url}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                type="button"
+                onClick={() => setShowCheckInModal(true)}
                 className="pnr-checkin__btn pnr-checkin__btn--active"
               >
                 <ExternalLink size={13} />
                 Online Check-in
-              </a>
+              </button>
             ) : (
               <div className="pnr-checkin__tooltip-wrap">
                 <span
@@ -234,5 +225,17 @@ export default function FlightSegmentCard({
         )}
       </div>
     </div>
+
+    {showCheckInModal && checkIn && (
+      <CheckInModal
+        pnr={pnr ?? ""}
+        passengerLastName={passengerLastName ?? ""}
+        airlineCode={airlineCode}
+        airlineName={airlineName}
+        checkInUrl={checkIn.url}
+        onClose={() => setShowCheckInModal(false)}
+      />
+    )}
+    </>
   );
 }

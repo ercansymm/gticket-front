@@ -1,12 +1,13 @@
 "use client";
+import Image from "next/image";
 
 interface LogoProps {
    variant?: "white" | "dark";
 }
 
-/** AtaBilet logo — "Ata" kırmızı, "Bilet" beyaz veya koyu. Hard reload on click. */
+/** AtaBilet logo — SVG dosyasından render edilir. "Ata" kırmızı, "Bilet" beyaz veya koyu. */
 const Logo = ({ variant = "white" }: LogoProps) => {
-   const biletColor = variant === "white" ? "#FFFFFF" : "var(--ab-secondary)";
+   const src = variant === "white" ? "/images/logo-white.svg" : "/images/logo-dark.svg";
 
    const handleClick = (e: React.MouseEvent) => {
       e.preventDefault();
@@ -15,8 +16,14 @@ const Logo = ({ variant = "white" }: LogoProps) => {
 
    return (
       <a href="/" onClick={handleClick} className="bb-logo">
-         <span style={{ color: "#DC2626" }}>Ata</span>
-         <span style={{ color: biletColor }}>Bilet</span>
+         <Image
+            src={src}
+            alt="AtaBilet"
+            width={168}
+            height={44}
+            priority
+            style={{ display: "block" }}
+         />
       </a>
    );
 };

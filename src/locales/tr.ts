@@ -15,7 +15,6 @@ export const tr = {
 
   // SearchHero
   heroTitle: "Türkiye’nin En Güvenilir Bilet Platformu",
-  heroSubtitle: "Yurt içi ve yurt dışı  biletlerini karşılaştır, en iyi fiyatı güvenle yakala.",
   flight: "Uçak",
   hotel: "Otel",
   bus: "Otobüs",
@@ -25,7 +24,7 @@ export const tr = {
   transfer: "Transfer",
   istanbulkart: "İstanbulkart",
   comingSoon: "Çok Yakında",
-  comingSoonDesc: "Bu hizmet çok yakında aktif olacaktır.",
+  comingSoonDesc: "",
   bookingCheck: "Bilet Sorgula",
 
   // Flight Form

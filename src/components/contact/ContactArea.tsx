@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 
 const INFO_ITEMS = [
   {
@@ -16,14 +17,13 @@ const INFO_ITEMS = [
   {
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="10" />
-        <line x1="2" y1="12" x2="22" y2="12" />
-        <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
+        <rect x="2" y="4" width="20" height="16" rx="2" />
+        <path d="M2 7l10 7 10-7" />
       </svg>
     ),
-    label: "Web Sitesi",
-    value: "www.atabilet.com",
-    href: "/",
+    label: "E-posta",
+    value: "info@atabilet.com", // ← kendi adresinle değiştir
+    href: "mailto:info@atabilet.com", // ← kendi adresinle değiştir
   },
   {
     icon: (
@@ -36,19 +36,15 @@ const INFO_ITEMS = [
     value: "İstanbul, Türkiye",
     href: null,
   },
-  {
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
-      </svg>
-    ),
-    label: "TURSAB",
-    value: "18474",
-    href: null,
-  },
 ];
 
 const ContactArea = () => {
+  const { status } = useSession();
+  const supportHref =
+    status === "authenticated"
+      ? "/destek-taleplerim/yeni"
+      : "/login?callbackUrl=%2Fdestek-taleplerim%2Fyeni";
+
   return (
     <section className="ct-section">
       <div className="container">
@@ -93,22 +89,24 @@ const ContactArea = () => {
               Destek ekibimiz en kısa sürede sizinle iletişime geçecektir.
             </p>
           </div>
-          <Link href="/destek-taleplerim/yeni" className="ct-support-cta__btn">
+          <Link href={supportHref} className="ct-support-cta__btn">
             Talep Oluştur
           </Link>
         </div>
 
-        {/* Harita */}
-        <div className="ct-map">
-          <iframe
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d385398.5897665817!2d28.731939949999998!3d41.00498225!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x14caa7040068086b%3A0xe1ccfe98bc01b0d0!2zxLBzdGFuYnVs!5e0!3m2!1str!2str!4v1710000000000!5m2!1str!2str"
-            width="100%"
-            height="360"
-            style={{ border: 0, borderRadius: 16, display: "block" }}
-            loading="lazy"
-            title="AtaBilet Konum"
-          />
-        </div>
+ {/* Harita */}
+<div className="ct-map">
+  <iframe
+    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d233.4947377564956!2d28.947369255827965!3d41.010255070767045!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x14cab928ae4fca0f%3A0xdf9e60e4d9d12e7b!2sG%20Travel!5e1!3m2!1str!2str!4v1777558441740!5m2!1str!2str"
+    width="100%"
+    height="450"
+    style={{ border: 0, borderRadius: 16, display: "block" }}
+    allowFullScreen
+    loading="lazy"
+    referrerPolicy="no-referrer-when-downgrade"
+    title="AtaBilet Konum"
+  />
+</div>
 
       </div>
     </section>

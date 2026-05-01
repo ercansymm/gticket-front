@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Navigation } from 'swiper/modules';
 import Image from "next/image";
@@ -82,6 +82,23 @@ const getRouteImage = (toCode: string, index: number): string => {
 const Location = () => {
    const { t, lang } = useTranslation();
    const [routes, setRoutes] = useState<RouteItem[]>(staticRoutes);
+   const sectionRef = useRef<HTMLElement>(null);
+
+   useEffect(() => {
+      const el = sectionRef.current;
+      if (!el) return;
+      const obs = new IntersectionObserver(
+         ([entry]) => {
+            if (entry.isIntersecting) {
+               el.classList.add("bb-reveal--visible");
+               obs.disconnect();
+            }
+         },
+         { threshold: 0.06, rootMargin: "0px 0px -40px 0px" }
+      );
+      obs.observe(el);
+      return () => obs.disconnect();
+   }, []);
 
    useEffect(() => {
       const fetchRoutes = async () => {
@@ -106,7 +123,7 @@ const Location = () => {
    }, [lang]);
 
    return (
-      <section aria-label={t.popularRoutes} className="bb-section bb-routes-section">
+      <section aria-label={t.popularRoutes} className="bb-section bb-routes-section bb-reveal" ref={sectionRef}>
          <div className="container">
             <div className="bb-routes-header">
                <h2 className="bb-section-title">{t.popularRoutes}</h2>
@@ -128,6 +145,10 @@ const Location = () => {
                                  width={400}
                                  height={200}
                               />
+                              <span className="bb-route-card__price-badge">
+                                 <span className="bb-route-card__price-badge-label">{t.pricesFrom}</span>
+                                 <strong>{route.price} TL</strong>
+                              </span>
                            </div>
                            <div className="bb-route-card__body">
                               <div className="bb-route-card__cities">
