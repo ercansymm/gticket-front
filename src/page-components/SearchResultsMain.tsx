@@ -10,7 +10,7 @@ import MultiCityBundleCard from '../components/booking/MultiCityBundleCard';
 import FilterSidebar from '../components/booking/FilterSidebar';
 import SortBar from '../components/booking/SortBar';
 import FlightSearchLoading from '../components/flight/FlightSearchLoading';
-// import PriceCalendar, { generateMockPrices } from '../components/flight/PriceCalendar';
+import PriceCalendar, { generateMockPrices } from '../components/flight/PriceCalendar';
 import { searchFlightsThunk, setSelectedFlight, setSelectedReturnFlight, setSelectedBrandedFareItemId, setSelectedLegFlight, clearSelectedLegFlight, clearSelectedLegFlights, allocateFlightThunk, clearAllocate, setSearchParams, clearSearch } from '../redux/features/flightSlice';
 import { resetBooking } from '../redux/features/bookingSlice';
 import { resetPayment } from '../redux/features/paymentSlice';
@@ -70,23 +70,22 @@ const SearchResultsMain = () => {
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   const [mobileSortOpen, setMobileSortOpen] = useState(false);
   const [priceChangedData, setPriceChangedData] = useState<AllocateResponse | null>(null);
-  const [editFormOpen, setEditFormOpen] = useState(false);
+  const [activePanel, setActivePanel] = useState<'edit' | 'prices' | null>(null);
   const [dateNavLoading, setDateNavLoading] = useState<string | null>(null);
 
-  // // Günlük tahmini fiyatlar (mock data)
-  // const mockPrices = useMemo(
-  //   () => (searchParams?.departureDate ? generateMockPrices(searchParams.departureDate) : []),
-  //   [searchParams?.departureDate]
-  // );
+  const mockPrices = useMemo(
+    () => (searchParams?.departureDate ? generateMockPrices(searchParams.departureDate) : []),
+    [searchParams?.departureDate]
+  );
 
-  // const handlePriceDateSelect = useCallback(
-  //   (date: string) => {
-  //     if (searchParams) {
-  //       dispatch(searchFlightsThunk({ ...searchParams, departureDate: date }));
-  //     }
-  //   },
-  //   [dispatch, searchParams]
-  // );
+  const handlePriceDateSelect = useCallback(
+    (date: string) => {
+      if (searchParams) {
+        dispatch(searchFlightsThunk({ ...searchParams, departureDate: date }));
+      }
+    },
+    [dispatch, searchParams]
+  );
 
   // Gidiş-dönüş seçimleri
   const [selectedOutbound, setSelectedOutbound] = useState<{ flight: FlightResult; brandedFareItemId: string | null } | null>(null);
@@ -503,9 +502,9 @@ const SearchResultsMain = () => {
     }
   };
 
-  // Auto-close edit form when a new search starts (searchLoading flips to true)
+  // Auto-close any open panel when a new search starts (searchLoading flips to true)
   useEffect(() => {
-    if (searchLoading) setEditFormOpen(false);
+    if (searchLoading) setActivePanel(null);
   }, [searchLoading]);
 
   // Date navigation arrow handler
@@ -686,25 +685,85 @@ const SearchResultsMain = () => {
           </div>
         )}
 
-        {/* ── Compact edit summary + date navigation ── */}
+        {/* ── Compact toolbar: summary + Edit / Daily Prices toggle pills ── */}
         {searchParams && (
           <>
-            {/* Summary line with edit toggle */}
-            <div className="bb-edit-summary">
-              <span className="bb-edit-summary__text">
-                {airportCity(searchParams.origin)} → {airportCity(searchParams.destination)}
-                {' | '}{trDateShort(searchParams.departureDate)}
-                {searchParams.flightType === 'RT' && searchParams.returnDate && ` - ${trDateShort(searchParams.returnDate)}`}
-                {' | '}{(searchParams.adultCount ?? 1) + (searchParams.childCount ?? 0) + (searchParams.infantCount ?? 0)} Yolcu
-                {' | '}{CABIN_LABELS[searchParams.flightClass ?? 'Economy'] ?? 'Ekonomi'}
-              </span>
-              <button type="button" className="bb-edit-summary__btn" onClick={() => setEditFormOpen(v => !v)}>
-                Aramayı Düzenle {editFormOpen ? '▲' : '▼'}
-              </button>
+            <div className="bb-search-toolbar">
+              <div className="bb-search-toolbar__summary">
+                <span className="bb-search-toolbar__route">
+                  {airportCity(searchParams.origin)}
+                  <svg className="bb-search-toolbar__route-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M16 3h5v5" />
+                    <path d="M21 3l-7 7" />
+                    <path d="M8 21H3v-5" />
+                    <path d="M3 21l7-7" />
+                  </svg>
+                  {airportCity(searchParams.destination)}
+                </span>
+                <span className="bb-search-toolbar__sep" aria-hidden="true">|</span>
+                <span className="bb-search-toolbar__meta">
+                  {trDateShort(searchParams.departureDate)}
+                  {searchParams.flightType === 'RT' && searchParams.returnDate && ` ${trDateShort(searchParams.returnDate)}`}
+                </span>
+                <span className="bb-search-toolbar__sep" aria-hidden="true">|</span>
+                <span className="bb-search-toolbar__meta">
+                  {(searchParams.adultCount ?? 1) + (searchParams.childCount ?? 0) + (searchParams.infantCount ?? 0)} Yolcu
+                </span>
+                <span className="bb-search-toolbar__sep" aria-hidden="true">|</span>
+                <span className="bb-search-toolbar__meta">{CABIN_LABELS[searchParams.flightClass ?? 'Economy'] ?? 'Ekonomi'}</span>
+              </div>
+              <div className="bb-search-toolbar__pills" role="tablist">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activePanel === 'edit'}
+                  aria-controls="bb-toolbar-panel-edit"
+                  className={`bb-search-toolbar__pill ${activePanel === 'edit' ? 'is-active' : ''}`}
+                  onClick={() => setActivePanel(p => (p === 'edit' ? null : 'edit'))}
+                >
+                  <svg className="bb-search-toolbar__pill-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                  </svg>
+                  <span>Aramayı Düzenle</span>
+                  <svg className={`bb-search-toolbar__pill-chevron ${activePanel === 'edit' ? 'is-open' : ''}`} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activePanel === 'prices'}
+                  aria-controls="bb-toolbar-panel-prices"
+                  className={`bb-search-toolbar__pill bb-search-toolbar__pill--accent ${activePanel === 'prices' ? 'is-active' : ''}`}
+                  onClick={() => setActivePanel(p => (p === 'prices' ? null : 'prices'))}
+                >
+                  <svg className="bb-search-toolbar__pill-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <rect x="3" y="12" width="4" height="9" rx="1" />
+                    <rect x="10" y="7" width="4" height="14" rx="1" />
+                    <rect x="17" y="3" width="4" height="18" rx="1" />
+                  </svg>
+                  <span>Günlük Tahmini Fiyatlar</span>
+                  <svg className={`bb-search-toolbar__pill-chevron ${activePanel === 'prices' ? 'is-open' : ''}`} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </button>
+              </div>
             </div>
-            {editFormOpen && (
-              <div className="bb-edit-summary__form">
+            {activePanel === 'edit' && (
+              <div id="bb-toolbar-panel-edit" role="tabpanel" className="bb-toolbar-panel bb-toolbar-panel--edit">
                 <BannerFormOne />
+              </div>
+            )}
+            {activePanel === 'prices' && mockPrices.length > 0 && searchParams.departureDate && (
+              <div id="bb-toolbar-panel-prices" role="tabpanel" className="bb-toolbar-panel bb-toolbar-panel--prices">
+                <PriceCalendar
+                  prices={mockPrices}
+                  selectedDate={searchParams.departureDate}
+                  onDateSelect={handlePriceDateSelect}
+                  onClose={() => setActivePanel(null)}
+                  hideHeader
+                />
               </div>
             )}
 
@@ -838,17 +897,6 @@ const SearchResultsMain = () => {
             </button>
           ))}
         </div>
-
-        {/* Günlük Tahmini Fiyatlar — devre dışı */}
-        {/* {mockPrices.length > 0 && searchParams?.departureDate && (
-          <div className="px-4 lg:px-6 mt-3">
-            <PriceCalendar
-              prices={mockPrices}
-              selectedDate={searchParams.departureDate}
-              onDateSelect={handlePriceDateSelect}
-            />
-          </div>
-        )} */}
 
         <div className="bb-search-results__layout">
           {/* Sidebar — desktop only */}
