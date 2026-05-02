@@ -1239,7 +1239,7 @@ const BannerFormOne = () => {
                <label className="bb-flight-form__label">{t.passenger}</label>
                <i className="fa-solid fa-user bb-flight-form__input-icon" aria-hidden="true"></i>
                <button type="button" className="bb-flight-form__input bb-flight-form__pax-toggle" onClick={() => setPassengerOpen(p => !p)} aria-expanded={passengerOpen} aria-haspopup="dialog">
-                  {paxSummary}
+                  <span className="bb-pax-toggle__text">{paxSummary}</span>
                   <i className="fa-solid fa-chevron-down"></i>
                </button>
                {passengerOpen && renderPaxDropdown()}

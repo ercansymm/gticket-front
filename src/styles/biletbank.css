@@ -405,7 +405,7 @@ body.bb-home .bb-header-wrap:not(.bb-header-wrap--scrolled) .bb-header-btn:not(.
   color: #FFFFFF;
   border-color: var(--ab-primary);
   font-weight: 600;
-  border-radius: 24px;
+  border-radius: 20px;
   padding: 8px 22px;
   font-size: 14px;
 }
@@ -807,7 +807,7 @@ body.bb-home .bb-header-wrap:not(.bb-header-wrap--scrolled) .bb-header-btn:not(.
   border: 1px solid rgba(255, 255, 255, 0.30);
   backdrop-filter: blur(0px);
   -webkit-backdrop-filter: blur(0px);
-  border-radius: 14px;
+  border-radius: 20px;
   padding: 24px 32px 30px;
   box-shadow: 0 16px 50px rgba(0, 0, 0, 0.25);
   min-height: 20px;
@@ -846,6 +846,11 @@ body.bb-home .bb-header-wrap:not(.bb-header-wrap--scrolled) .bb-header-btn:not(.
   background: rgba(255, 255, 255, 0.15);
 }
 
+.bb-search-tabs__content .bb-trip-checkbox:hover {
+  color: #FFFFFF;
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
 /* Coming Soon (Otel modülü) */
 .bb-coming-soon {
   display: flex;
@@ -854,27 +859,27 @@ body.bb-home .bb-header-wrap:not(.bb-header-wrap--scrolled) .bb-header-btn:not(.
   justify-content: center;
   text-align: center;
   padding: 24px 20px;
-  color: var(--bb-gray-600);
+  color: rgba(255, 255, 255, 0.8);
   min-height: 130px;
 }
 
 .bb-coming-soon i {
   font-size: 48px;
-  color: var(--ab-primary);
+  color: rgba(255, 255, 255, 0.75);
   margin-bottom: 16px;
-  opacity: 0.7;
+  opacity: 1;
 }
 
 .bb-coming-soon h3 {
   font-size: 22px;
   font-weight: 700;
-  color: var(--ab-primary);
+  color: #FFFFFF;
   margin: 0 0 8px;
 }
 
 .bb-coming-soon p {
   font-size: 14px;
-  color: var(--bb-gray-500);
+  color: rgba(255, 255, 255, 0.7);
   margin: 0;
   max-width: 400px;
 }
@@ -1115,7 +1120,7 @@ select.bb-flight-form__input {
   overflow-y: auto;
   background: var(--bb-white);
   border: 1.5px solid var(--ab-border);
-  border-radius: 14px;
+  border-radius: var(--ab-radius-md);
   box-shadow: 0 8px 32px rgba(12, 74, 110, 0.13), 0 2px 8px rgba(0,0,0,0.06);
   z-index: 200;
   list-style: none;
@@ -1253,7 +1258,7 @@ select.bb-flight-form__input {
   max-width: min(360px, calc(100vw - 24px));
   background: var(--bb-white);
   border: 1.5px solid var(--ab-border);
-  border-radius: 16px;
+  border-radius: var(--ab-radius-md);
   box-shadow: 0 8px 32px rgba(12, 74, 110, 0.13), 0 2px 8px rgba(0,0,0,0.06);
   z-index: 200;
   padding: 16px 18px;

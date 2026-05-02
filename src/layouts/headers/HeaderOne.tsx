@@ -61,13 +61,6 @@ const HeaderOne = () => {
    }, []);
 
    const user = session?.user;
-   const displayName = user?.name || user?.email || "";
-   const initials = (() => {
-      if (!displayName) return "U";
-      const parts = displayName.split(/[\s@]+/).filter(Boolean);
-      if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-      return displayName.slice(0, 2).toUpperCase();
-   })();
 
    return (
       <>
@@ -149,14 +142,12 @@ const HeaderOne = () => {
                               aria-expanded={accountOpen}
                               aria-label="Müşteri hesabı menüsü"
                            >
-                              <i className="fa-solid fa-circle-user bb-account__toggle-icon" />
-                              <span>Hesabınız</span>
+                              <span>{user.name || user.email?.split("@")[0] || "Hesabınız"}</span>
                               <i className="fa-solid fa-chevron-down bb-account__chevron" />
                            </button>
                            {accountOpen && (
                               <div className="bb-account__menu" role="menu">
                                  <div className="bb-account__menu-header">
-                                    <span className="bb-account__avatar">{initials}</span>
                                     <div style={{ minWidth: 0 }}>
                                        <p className="bb-account__menu-name">{user.name || "Müşteri"}</p>
                                        {user.email && (
