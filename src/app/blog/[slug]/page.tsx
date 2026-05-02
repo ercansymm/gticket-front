@@ -4,7 +4,7 @@ import JsonLd from "@/components/JsonLd";
 
 export const revalidate = 300;
 
-const BACKEND = process.env.BACKEND_URL ?? "http://localhost:5000";
+const BACKEND = process.env.API_BASE_URL ?? "http://localhost:5000";
 
 interface BlogDetailPageProps {
   params: Promise<{ slug: string }>;

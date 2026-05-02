@@ -9,8 +9,13 @@ const nextConfig: NextConfig = {
         hostname: "www.atabilet.com",
       },
       {
+        protocol: "https",
+        hostname: "atabilet.com",
+      },
+      {
         protocol: "http",
         hostname: "37.148.212.253",
+        port: "5000",
       },
       {
         protocol: "https",
