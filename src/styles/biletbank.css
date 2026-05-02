@@ -2211,6 +2211,33 @@ select.bb-flight-form__input {
   padding: 48px 0;
 }
 
+/* ── Promo Banner ── */
+.bb-promo-banner {
+  position: relative;
+  display: block;
+  height: 120px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.bb-promo-banner__img {
+  object-fit: cover;
+  object-position: center;
+}
+
+@media (max-width: 768px) {
+  .bb-promo-banner {
+    height: 80px;
+    border-radius: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .bb-promo-banner {
+    height: 64px;
+  }
+}
+
 .bb-campaigns__grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
