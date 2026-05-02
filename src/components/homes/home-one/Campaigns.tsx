@@ -8,7 +8,7 @@ const Campaigns = () => {
       <div className="container">
         <a href="/" className="bb-promo-banner">
           <Image
-            src="/assets/img/banner/banner-2/atabiletbenner.jpeg"
+            src="/assets/img/banner/banner-2/Kuşbenner.jpg"
             alt="AtaBilet Kampanya"
             fill
             className="bb-promo-banner__img"

@@ -1,3 +1,5 @@
+"use client";
+
 import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from "react";
 import { tr } from "../locales/tr";
 import { en } from "../locales/en";

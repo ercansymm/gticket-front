@@ -1,4 +1,3 @@
-import { useEffect, useRef } from "react";
 import { useTranslation } from "../../../context/LanguageContext";
 
 /** AtaBilet — "Neden AtaBilet?" istatistik ve özellik bölümü.
@@ -6,23 +5,6 @@ import { useTranslation } from "../../../context/LanguageContext";
 const WhyAtaBilet = () => {
    const { lang } = useTranslation();
    const isTr = lang === "tr";
-   const sectionRef = useRef<HTMLElement>(null);
-
-   useEffect(() => {
-      const el = sectionRef.current;
-      if (!el) return;
-      const obs = new IntersectionObserver(
-         ([entry]) => {
-            if (entry.isIntersecting) {
-               el.classList.add("bb-reveal--visible");
-               obs.disconnect();
-            }
-         },
-         { threshold: 0.08, rootMargin: "0px 0px -40px 0px" }
-      );
-      obs.observe(el);
-      return () => obs.disconnect();
-   }, []);
 
    const stats = [
       {
@@ -61,8 +43,7 @@ const WhyAtaBilet = () => {
    return (
       <section
          aria-label={isTr ? "Neden AtaBilet?" : "Why AtaBilet?"}
-         className="bb-section bb-why bb-reveal"
-         ref={sectionRef}
+         className="bb-section bb-why"
       >
          <div className="container">
             <div className="bb-why__grid">

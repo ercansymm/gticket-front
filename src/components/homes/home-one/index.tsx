@@ -7,7 +7,8 @@ import FooterOne from "../../../layouts/footers/FooterOne"
 import CookieConsent from "../../common/CookieConsent"
 
 const Location = lazy(() => import("./Location"))
-const Process = lazy(() => import("./Process"))
+const HowItWorks = lazy(() => import("./HowItWorks"))
+const WhyAtaBilet = lazy(() => import("./WhyAtaBilet"))
 const Blog = lazy(() => import("./Blog"))
 
 /** AtaBilet — Ana sayfa. Arama odaklı, sade layout. */
@@ -26,7 +27,10 @@ const HomeOne = () => {
                <Location />
             </Suspense>
             <Suspense fallback={<div style={{ minHeight: 200 }} />}>
-               <Process />
+               <HowItWorks />
+            </Suspense>
+            <Suspense fallback={<div style={{ minHeight: 200 }} />}>
+               <WhyAtaBilet />
             </Suspense>
             <Suspense fallback={<div style={{ minHeight: 200 }} />}>
                <Blog />

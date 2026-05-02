@@ -1,14 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Autoplay, Navigation } from 'swiper/modules';
+import { useEffect, useState } from 'react';
 import Image from "next/image";
 import Link from "next/link";
 import { useTranslation } from "../../../context/LanguageContext";
 import { getPopularRoutes, type PopularRouteDto } from "../../../api/lookup";
 import { airports as airportData } from "../../../data/AirportData";
-
-import 'swiper/css';
-import 'swiper/css/navigation';
 
 interface RouteItem {
    id: number;
@@ -28,26 +23,6 @@ const staticRoutes: RouteItem[] = [
    { id: 5, from: "İstanbul", fromCode: "IST", to: "Bodrum", toCode: "BJV", price: "949", img: "/assets/img/cities/bodrum.jpg" },
    { id: 6, from: "Ankara", fromCode: "ESB", to: "Antalya", toCode: "AYT", price: "849", img: "/assets/img/cities/antalya.jpg" },
 ];
-
-const swiperSettings = {
-   slidesPerView: 4,
-   loop: true,
-   spaceBetween: 24,
-   autoplay: {
-      delay: 4000,
-      disableOnInteraction: false,
-   },
-   navigation: {
-      prevEl: ".bb-route-prev",
-      nextEl: ".bb-route-next",
-   },
-   breakpoints: {
-      '1400': { slidesPerView: 4 },
-      '1200': { slidesPerView: 3 },
-      '768': { slidesPerView: 2 },
-      '0': { slidesPerView: 1 },
-   },
-};
 
 /** Havalimanı kodundan şehir ismi bul (API'den gelmezse AirportData fallback) */
 const getCityName = (code: string, lang: 'tr' | 'en' = 'tr'): string => {
@@ -78,27 +53,10 @@ const getRouteImage = (toCode: string, index: number): string => {
    return cityImageMap[toCode] || fallbackImages[index % fallbackImages.length];
 };
 
-/** AtaBilet — Popüler uçuş hatları bölümü. */
+/** AtaBilet — Popüler uçuş hatları. Bento grid magazine layout. */
 const Location = () => {
    const { t, lang } = useTranslation();
    const [routes, setRoutes] = useState<RouteItem[]>(staticRoutes);
-   const sectionRef = useRef<HTMLElement>(null);
-
-   useEffect(() => {
-      const el = sectionRef.current;
-      if (!el) return;
-      const obs = new IntersectionObserver(
-         ([entry]) => {
-            if (entry.isIntersecting) {
-               el.classList.add("bb-reveal--visible");
-               obs.disconnect();
-            }
-         },
-         { threshold: 0.06, rootMargin: "0px 0px -40px 0px" }
-      );
-      obs.observe(el);
-      return () => obs.disconnect();
-   }, []);
 
    useEffect(() => {
       const fetchRoutes = async () => {
@@ -122,52 +80,71 @@ const Location = () => {
       fetchRoutes();
    }, [lang]);
 
-   return (
-      <section aria-label={t.popularRoutes} className="bb-section bb-routes-section bb-reveal" ref={sectionRef}>
-         <div className="container">
-            <div className="bb-routes-header">
-               <h2 className="bb-section-title">{t.popularRoutes}</h2>
-               <div className="bb-route-nav">
-                  <button className="bb-route-prev" aria-label={t.prev || 'Önceki'}><i className="fa-solid fa-arrow-left-long"></i></button>
-                  <button className="bb-route-next" aria-label={t.next || 'Sonraki'}><i className="fa-solid fa-arrow-right-long"></i></button>
+   const isTr = lang === "tr";
+   const items = routes.slice(0, 5);
+   const [hero, ...rest] = items;
+
+   const renderCard = (route: RouteItem, isHero?: boolean) => (
+      <Link
+         key={route.id}
+         href={`/?from=${route.fromCode}&to=${route.toCode}`}
+         className={`bb-dest-card${isHero ? ' bb-dest-card--hero' : ''}`}
+         aria-label={`${route.from} - ${route.to}`}
+      >
+         <div className="bb-dest-card__media">
+            <Image
+               src={route.img}
+               alt={`${route.from} - ${route.to}`}
+               className="bb-dest-card__img"
+               fill
+               sizes={isHero ? '(max-width: 992px) 100vw, 50vw' : '(max-width: 992px) 50vw, 25vw'}
+               loading="lazy"
+            />
+            <span className="bb-dest-card__overlay" aria-hidden="true" />
+         </div>
+         <div className="bb-dest-card__content">
+            <div className="bb-dest-card__top">
+               <span className="bb-dest-card__route-codes">
+                  {route.fromCode} <span className="bb-dest-card__arrow">→</span> {route.toCode}
+               </span>
+            </div>
+            <div className="bb-dest-card__bottom">
+               <h3 className="bb-dest-card__city">{route.to}</h3>
+               <div className="bb-dest-card__price-row">
+                  <span className="bb-dest-card__price-label">
+                     {isTr ? 'Başlangıç' : 'From'}
+                  </span>
+                  <span className="bb-dest-card__price">{route.price} <small>TL</small></span>
                </div>
             </div>
-            <Swiper {...swiperSettings} modules={[Autoplay, Navigation]} className="swiper-container">
-               {routes.map((route) => (
-                  <SwiperSlide key={route.id}>
-                     <Link href={`/?from=${route.fromCode}&to=${route.toCode}`} className="bb-route-card">
-                        <div className="bb-route-card__inner">
-                           <div className="bb-route-card__img-wrap">
-                              <Image
-                                 src={route.img}
-                                 alt={`${route.from} - ${route.to}`}
-                                 className="bb-route-card__img"
-                                 width={400}
-                                 height={200}
-                              />
-                              <span className="bb-route-card__price-badge">
-                                 <span className="bb-route-card__price-badge-label">{t.pricesFrom}</span>
-                                 <strong>{route.price} TL</strong>
-                              </span>
-                           </div>
-                           <div className="bb-route-card__body">
-                              <div className="bb-route-card__cities">
-                                 <span className="bb-route-card__city">{route.from}</span>
-                                 <i className="fa-solid fa-plane bb-route-card__icon"></i>
-                                 <span className="bb-route-card__city">{route.to}</span>
-                              </div>
-                              <div className="bb-route-card__codes">
-                                 {route.fromCode} → {route.toCode}
-                              </div>
-                              <div className="bb-route-card__price">
-                                 {t.pricesFrom} <strong>{route.price} TL</strong>{t.pricesFromSuffix}
-                              </div>
-                           </div>
-                        </div>
-                     </Link>
-                  </SwiperSlide>
-               ))}
-            </Swiper>
+         </div>
+      </Link>
+   );
+
+   return (
+      <section aria-label={t.popularRoutes} className="bb-section bb-routes-section">
+         <div className="container">
+            <div className="bb-routes-header">
+               <div>
+                  <span className="bb-section-eyebrow">{isTr ? 'Fırsatlar' : 'Deals'}</span>
+                  <h2 className="bb-section-title">{t.popularRoutes}</h2>
+                  <p className="bb-section-subtitle">
+                     {isTr
+                        ? 'En çok tercih edilen rotalarda güncel uçak bileti fiyatları.'
+                        : 'Up-to-date flight ticket prices on the most preferred routes.'}
+                  </p>
+               </div>
+               <Link href="/search-results" className="bb-blog-section__all-link">
+                  {isTr ? 'Tümünü gör' : 'View all'} <i className="fa-solid fa-arrow-right"></i>
+               </Link>
+            </div>
+
+            <div className="bb-dest-grid">
+               {hero && renderCard(hero, true)}
+               <div className="bb-dest-grid__rest">
+                  {rest.map((r) => renderCard(r))}
+               </div>
+            </div>
          </div>
       </section>
    )
