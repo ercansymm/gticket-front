@@ -5,7 +5,7 @@ const BACKEND = process.env.API_BASE_URL ?? "http://localhost:5000";
 export async function GET() {
   try {
     const res = await fetch(`${BACKEND}/api/admin/blog/public`, {
-      next: { revalidate: 300 }, // 5 dakika cache
+      cache: "no-store",
     });
 
     if (!res.ok) {
