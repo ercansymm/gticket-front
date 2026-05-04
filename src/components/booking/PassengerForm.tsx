@@ -318,56 +318,9 @@ export default function PassengerForm({ passengers, onSubmit, isInternational = 
         );
       })()}
 
-      {/* ── İLETİŞİM BİLGİLERİ ── */}
-      <div className="chk-section">
-        <div className="chk-section__head">
-          <div className="chk-section__title">İletişim Bilgileri</div>
-          <div className="chk-section__subtitle">Bilet ve uçuş bilgileri bu adrese gönderilecektir.</div>
-        </div>
-        <div className="chk-section__body">
-          <div className="pf-row pf-row--contact">
-            <Field label="Email"
-              error={contactErrors.email}
-              valid={!contactErrors.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)}>
-              <input type="email" className="pf-input" placeholder="ornek@email.com"
-                value={contact.email}
-                onChange={e=>{setContact(p=>({...p,email:e.target.value}));setContactErrors(p=>({...p,email:undefined}));}}
-                autoComplete="email" />
-            </Field>
-            <Field label="Cep Telefonu"
-              error={contactErrors.phone}
-              valid={!contactErrors.phone && getPhoneFormat(contact.phoneCode).isValid(contact.phone.replace(/\D/g,''))}>
-              <div className="pf-phone">
-                <select className="pf-select pf-phone__code"
-                  value={contact.phoneCode}
-                  onChange={e=>{
-                    const newCode = e.target.value;
-                    const newMax = getPhoneFormat(newCode).max;
-                    const digits = contact.phone.replace(/\D/g,'').slice(0, newMax);
-                    setContact(p=>({...p, phoneCode: newCode, phone: formatPhone(digits, newCode)}));
-                    setContactErrors(p=>({...p, phone: undefined}));
-                  }}>
-                  <option value="+90">TR (+90)</option>
-                  <option value="+1">US (+1)</option>
-                  <option value="+44">GB (+44)</option>
-                  <option value="+49">DE (+49)</option>
-                  <option value="+33">FR (+33)</option>
-                </select>
-                <input type="tel" className="pf-input" placeholder={getPhoneFormat(contact.phoneCode).placeholder}
-                  value={contact.phone}
-                  onChange={e=>{
-                    const digits = e.target.value.replace(/\D/g,'').slice(0, getPhoneFormat(contact.phoneCode).max);
-                    setContact(p=>({...p, phone: formatPhone(digits, p.phoneCode)}));
-                    setContactErrors(p=>({...p, phone: undefined}));
-                  }}
-                  autoComplete="tel-national" />
-              </div>
-            </Field>
-          </div>
-        </div>
-      </div>
 
-      {/* ── YOLCU BİLGİLERİ ── */}
+
+           {/* ── YOLCU BİLGİLERİ ── */}
       <div className="chk-section">
         <div className="chk-section__head">
           <div className="chk-section__title">Yolcu Bilgileri</div>
@@ -518,6 +471,57 @@ export default function PassengerForm({ passengers, onSubmit, isInternational = 
       })}
         </div>
       </div>
+
+      {/* ── İLETİŞİM BİLGİLERİ ── */}
+      <div className="chk-section">
+        <div className="chk-section__head">
+          <div className="chk-section__title">İletişim Bilgileri</div>
+          <div className="chk-section__subtitle">Bilet ve uçuş bilgileri bu adrese gönderilecektir.</div>
+        </div>
+        <div className="chk-section__body">
+          <div className="pf-row pf-row--contact">
+            <Field label="Email"
+              error={contactErrors.email}
+              valid={!contactErrors.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)}>
+              <input type="email" className="pf-input" placeholder="ornek@email.com"
+                value={contact.email}
+                onChange={e=>{setContact(p=>({...p,email:e.target.value}));setContactErrors(p=>({...p,email:undefined}));}}
+                autoComplete="email" />
+            </Field>
+            <Field label="Cep Telefonu"
+              error={contactErrors.phone}
+              valid={!contactErrors.phone && getPhoneFormat(contact.phoneCode).isValid(contact.phone.replace(/\D/g,''))}>
+              <div className="pf-phone">
+                <select className="pf-select pf-phone__code"
+                  value={contact.phoneCode}
+                  onChange={e=>{
+                    const newCode = e.target.value;
+                    const newMax = getPhoneFormat(newCode).max;
+                    const digits = contact.phone.replace(/\D/g,'').slice(0, newMax);
+                    setContact(p=>({...p, phoneCode: newCode, phone: formatPhone(digits, newCode)}));
+                    setContactErrors(p=>({...p, phone: undefined}));
+                  }}>
+                  <option value="+90">TR (+90)</option>
+                  <option value="+1">US (+1)</option>
+                  <option value="+44">GB (+44)</option>
+                  <option value="+49">DE (+49)</option>
+                  <option value="+33">FR (+33)</option>
+                </select>
+                <input type="tel" className="pf-input" placeholder={getPhoneFormat(contact.phoneCode).placeholder}
+                  value={contact.phone}
+                  onChange={e=>{
+                    const digits = e.target.value.replace(/\D/g,'').slice(0, getPhoneFormat(contact.phoneCode).max);
+                    setContact(p=>({...p, phone: formatPhone(digits, p.phoneCode)}));
+                    setContactErrors(p=>({...p, phone: undefined}));
+                  }}
+                  autoComplete="tel-national" />
+              </div>
+            </Field>
+          </div>
+        </div>
+      </div>
+
+ 
     </form>
   );
 }

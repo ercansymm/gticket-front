@@ -779,8 +779,8 @@ body.bb-home .bb-header-wrap:not(.bb-header-wrap--scrolled) .bb-header-btn:not(.
   gap: 8px;
   white-space: nowrap;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
 }
 
 .bb-search-tabs__btn:hover {
@@ -794,7 +794,7 @@ body.bb-home .bb-header-wrap:not(.bb-header-wrap--scrolled) .bb-header-btn:not(.
   font-weight: 700;
   border-color: #FFFFFF;
   text-shadow: none;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
 }
 
 .bb-search-tabs__btn--active:hover {
@@ -7425,6 +7425,7 @@ footer,
 
 .bb-flight-card__airline {
   display: flex;
+  flex-direction: row;
   align-items: center;
   gap: 10px;
   min-width: 140px;
@@ -7613,14 +7614,35 @@ footer,
 }
 
 @media (max-width: 768px) {
+  /* Grid layout: [airline | price] / [track track] */
   .bb-flight-card__top {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 14px;
-    padding: 16px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "airline price"
+      "track   track";
+    gap: 10px 12px;
+    padding: 14px 16px;
+    align-items: center;
+  }
+
+  .bb-flight-card__airline {
+    grid-area: airline;
+    min-width: unset;
   }
 
   .bb-flight-card__track {
+    grid-area: track;
+    min-width: unset;
+    width: 100%;
+    padding-top: 10px;
+    border-top: 1px solid #f3f4f6;
+  }
+
+  .bb-flight-card__price-section {
+    grid-area: price;
+    flex-direction: column;
+    align-items: flex-end;
     min-width: unset;
   }
 
@@ -7628,16 +7650,15 @@ footer,
     font-size: 18px;
   }
 
-  .bb-flight-card__price-section {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    min-width: unset;
-  }
-
   .bb-flight-card__price-amount {
     font-size: 20px;
+    white-space: nowrap;
+  }
+
+  .bb-flight-card__select-btn {
+    padding: 9px 18px;
+    font-size: 13px;
+    white-space: nowrap;
   }
 
   .bb-flight-card__badges-row {
@@ -7645,8 +7666,14 @@ footer,
   }
 
   .bb-flight-card__airline-logo {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+  }
+
+  .bb-flight-card__airline-logo img {
+    width: 36px;
+    height: 36px;
   }
 }
 
@@ -11390,37 +11417,20 @@ footer,
     display: none;
   }
 
-  /* Flight card mobile compact improvements */
+  /* Flight card mobile — keep consistent with grid layout */
   .bb-flight-card {
     border-radius: 12px;
     margin-bottom: 10px;
   }
 
+  /* These are handled by the @media (max-width: 768px) grid block above */
   .bb-flight-card__price-section {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
+    flex-direction: column;
+    align-items: flex-end;
+    width: auto;
     min-width: unset;
-    padding-top: 10px;
-    border-top: 1px solid #f3f4f6;
-  }
-
-  .bb-flight-card__track {
-    min-width: unset;
-  }
-
-  .bb-flight-card__track-time {
-    font-size: 18px;
-  }
-
-  .bb-flight-card__price-amount {
-    font-size: 20px;
-  }
-
-  .bb-flight-card__airline-logo {
-    width: 40px;
-    height: 40px;
+    padding-top: 0;
+    border-top: none;
   }
 
   /* Cookie consent mobile */
@@ -11482,10 +11492,28 @@ footer,
 @media (max-width: 479px) {
   .bb-flight-card__top {
     padding: 12px;
+    gap: 8px 10px;
   }
 
   .bb-flight-card__track-time {
     font-size: 16px;
+  }
+
+  .bb-flight-card__price-amount {
+    font-size: 17px;
+  }
+
+  .bb-flight-card__select-btn {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  .bb-flight-card__airline-name {
+    font-size: 13px;
+  }
+
+  .bb-flight-card__flight-number {
+    font-size: 11px;
   }
 
   .bb-search-summary__city {
@@ -12696,6 +12724,218 @@ footer,
   .bb-date-arrows__group { width: 100%; justify-content: center; }
   .bb-date-arrows__label { flex: 1; text-align: center; font-size: 12px; padding: 0 8px; }
   .bb-date-arrows__btn { min-width: 36px; min-height: 36px; }
+}
+
+/* ══════════════════════════════════════════════════════
+   SEARCH TOOLBAR — Modern sticky bar
+   ══════════════════════════════════════════════════════ */
+
+.bb-search-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 10px 24px;
+  position: sticky;
+  top: 0;
+  z-index: 99;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+  /* Stretch beyond bb-search-results padding */
+  margin-left: -24px;
+  margin-right: -24px;
+}
+
+.bb-search-toolbar__chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  min-width: 0;
+  flex: 1;
+}
+
+.bb-search-toolbar__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #334155;
+  background: #f1f5f9;
+  padding: 5px 12px;
+  border-radius: 20px;
+  white-space: nowrap;
+  border: 1px solid #e2e8f0;
+  line-height: 1.4;
+}
+
+.bb-search-toolbar__chip svg {
+  flex-shrink: 0;
+  color: #64748b;
+}
+
+.bb-search-toolbar__chip--route {
+  font-weight: 700;
+  color: #0c4a6e;
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.bb-search-toolbar__chip--route svg {
+  color: #0c4a6e;
+}
+
+.bb-search-toolbar__chip-arrow {
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 600;
+  margin: 0 1px;
+}
+
+.bb-search-toolbar__divider {
+  display: block;
+  width: 1px;
+  height: 18px;
+  background: #e2e8f0;
+  flex-shrink: 0;
+}
+
+.bb-search-toolbar__edit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 20px;
+  background: #0c4a6e;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+  box-shadow: 0 2px 8px rgba(12, 74, 110, 0.25);
+  letter-spacing: 0.01em;
+}
+
+.bb-search-toolbar__edit-btn:hover {
+  background: #093d5c;
+  box-shadow: 0 4px 14px rgba(12, 74, 110, 0.38);
+  transform: translateY(-1px);
+}
+
+.bb-search-toolbar__edit-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(12, 74, 110, 0.2);
+}
+
+.bb-search-toolbar__edit-btn.is-active {
+  background: #1e40af;
+  box-shadow: 0 4px 14px rgba(30, 64, 175, 0.35);
+}
+
+.bb-search-toolbar__edit-btn.is-active:hover {
+  background: #1e3a8a;
+}
+
+.bb-search-toolbar__chevron {
+  transition: transform 0.22s ease;
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.bb-search-toolbar__chevron.is-open {
+  transform: rotate(180deg);
+}
+
+/* ── Collapsible edit panel ── */
+.bb-toolbar-panel {
+  background: #ffffff;
+  border-bottom: 2px solid #e2e8f0;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.09);
+  animation: bb-panel-slide-down 0.2s ease;
+  overflow: visible;
+  position: relative;
+  z-index: 98;
+  /* Stretch beyond bb-search-results padding */
+  margin-left: -24px;
+  margin-right: -24px;
+  padding: 0 24px;
+}
+
+@keyframes bb-panel-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .bb-search-toolbar {
+    padding: 8px 16px;
+    margin-left: -24px;
+    margin-right: -24px;
+  }
+  .bb-toolbar-panel {
+    margin-left: -24px;
+    margin-right: -24px;
+    padding: 0 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .bb-search-toolbar {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 12px;
+    margin-left: -24px;
+    margin-right: -24px;
+  }
+  .bb-toolbar-panel {
+    margin-left: -24px;
+    margin-right: -24px;
+    padding: 0 12px;
+  }
+
+  .bb-search-toolbar__chips {
+    gap: 5px;
+    flex: 1 1 100%;
+    order: 1;
+  }
+
+  .bb-search-toolbar__edit-btn {
+    flex: 1 1 100%;
+    order: 2;
+    justify-content: center;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+  }
+
+  .bb-search-toolbar__divider {
+    display: none;
+  }
+
+  .bb-search-toolbar__chip {
+    font-size: 12px;
+    padding: 4px 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .bb-search-toolbar__chip--route {
+    flex: 1 1 100%;
+    justify-content: center;
+    font-size: 13px;
+  }
 }
 
 /* ══════════════════════════════════════════════════════

@@ -110,12 +110,6 @@ const Location = () => {
             </div>
             <div className="bb-dest-card__bottom">
                <h3 className="bb-dest-card__city">{route.to}</h3>
-               <div className="bb-dest-card__price-row">
-                  <span className="bb-dest-card__price-label">
-                     {isTr ? 'Başlangıç' : 'From'}
-                  </span>
-                  <span className="bb-dest-card__price">{route.price} <small>TL</small></span>
-               </div>
             </div>
          </div>
       </Link>

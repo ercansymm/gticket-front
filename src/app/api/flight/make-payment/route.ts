@@ -139,7 +139,11 @@ export async function POST(request: NextRequest) {
         try {
           const url = new URL(secureUrl);
           const allowedHosts = (process.env.ALLOWED_3DS_HOSTS || '').split(',').map((h: string) => h.trim()).filter(Boolean);
-          if (allowedHosts.length > 0 && !allowedHosts.some((h: string) => url.hostname.endsWith(h))) {
+          if (allowedHosts.length === 0) {
+            logger.error('ALLOWED_3DS_HOSTS env var not configured', {}, 'api/flight/make-payment');
+            return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+          }
+          if (!allowedHosts.some((h: string) => url.hostname.endsWith(h))) {
             logger.error('Suspicious 3DS URL blocked', { url: secureUrl }, 'api/flight/make-payment');
             return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
           }

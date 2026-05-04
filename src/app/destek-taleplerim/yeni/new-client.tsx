@@ -120,8 +120,7 @@ export default function NewSupportTicketClient() {
             (b) =>
               (b.status === "Ticketed" || b.isFinalized === true) &&
               !b.cancelledAt &&
-              !!b.internalPnr &&
-              !isPastBooking(b.segments ?? []),
+              !!b.internalPnr,
           ),
         );
       } catch (e) {
@@ -295,7 +294,7 @@ export default function NewSupportTicketClient() {
               <div className="pnr-card" style={{ marginBottom: 16 }}>
                 <label className="pnr-search__label">İlgili Uçuş</label>
                 <p style={{ margin: "0 0 12px", fontSize: 12, color: "#6B7280" }}>
-                  Talebi açacağınız aktif rezervasyonu seçin.
+                  Talebi açacağınız rezervasyonu seçin.
                 </p>
 
                 {loadingBookings && (
@@ -320,7 +319,7 @@ export default function NewSupportTicketClient() {
                       color: "#6B7280",
                     }}
                   >
-                    Aktif bir rezervasyonunuz bulunmuyor. Genel sorularınız için
+                    Biletlenmiş bir rezervasyonunuz bulunmuyor. Genel sorularınız için
                     talep tipini "Diğer" olarak seçebilirsiniz.
                   </div>
                 )}
@@ -378,6 +377,20 @@ export default function NewSupportTicketClient() {
                                   }}
                                 >
                                   ATA PNR: {b.internalPnr}
+                                </span>
+                              )}
+                              {isPastBooking(b.segments ?? []) && (
+                                <span
+                                  style={{
+                                    fontSize: 11,
+                                    fontWeight: 600,
+                                    padding: "2px 8px",
+                                    borderRadius: 6,
+                                    background: "#FEF3C7",
+                                    color: "#92400E",
+                                  }}
+                                >
+                                  Geçmiş Uçuş
                                 </span>
                               )}
                             </div>
