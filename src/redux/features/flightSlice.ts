@@ -114,8 +114,6 @@ export const allocateFlightThunk = createAsyncThunk(
       const searchResults = state.flight.searchResults;
       const enrichedParams: AllocateClientRequest = {
         ...params,
-        sessionId: params.sessionId ?? searchResults?.sessionId ?? null,
-        sessionToken: params.sessionToken ?? searchResults?.sessionToken ?? null,
       };
       const result = await allocateFlight(enrichedParams);
       return result;

@@ -35,17 +35,13 @@ export interface FlightSearchRequest {
   segments?: MultiCitySearchSegment[]; // MP (multi-city) tipinde kullanılır
 }
 
-// İstemciye dönen güvenli response — sessionId/sessionToken YOK
+// İstemciye dönen güvenli response — sessionId/sessionToken/shoppingFileId YOK (sunucu tarafında)
 export interface FlightSearchResponse {
   hasError: boolean;
   errorMessage: string | null;
   searchId: string | null;
-  sessionId: string | null;
-  sessionToken: string | null;
   flights: FlightResult[];
   filterOptions: FilterOptions | null;
-  /** DEV only — filterSensitiveFields sessionId'yi siler, bu geçici field ile badge'a aktarılır */
-  __devSessionId?: string | null;
 }
 
 export interface FlightResult {
@@ -54,7 +50,6 @@ export interface FlightResult {
   airlineCode: string | null;
   airlineName: string | null;
   flightNumber: string | null;
-  bookingProvider: string | null;
   originCode: string | null;
   originName: string | null;
   destinationCode: string | null;
@@ -321,13 +316,11 @@ export interface FlightSessionData {
 
 // ========== ALLOCATE ==========
 
-// İstemcinin gönderdiği — session bilgisi YOK, sadece searchId
+// İstemcinin gönderdiği — session bilgisi YOK, BFF server-side session cache kullanır
 export interface AllocateClientRequest {
   searchId: string;
   productId: string;
   brandedFareItemId?: string | null;
-  sessionId?: string | null;
-  sessionToken?: string | null;
   /** Round-trip: dönüş uçuşunun ProductId'si */
   returnProductId?: string | null;
   /** Round-trip: dönüş uçuşunun BrandedFareItemId'si */
@@ -345,7 +338,7 @@ export interface AllocateBackendRequest {
   selectedServiceFee?: number;
 }
 
-// İstemciye dönen güvenli response — hassas alanlar filtrelenmiş
+// İstemciye dönen güvenli response — sessionId/sessionToken/komisyon alanları filtrelenmiş
 export interface AllocateResponse {
   hasError: boolean;
   errorMessage: string | null;

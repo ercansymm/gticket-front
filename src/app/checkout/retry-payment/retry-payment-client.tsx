@@ -353,7 +353,6 @@ export default function RetryPaymentClient() {
             </div>
             <div className="chk-route__meta">
               Ödemeyi Tekrar Dene
-              {pnr ? ` · PNR: ${pnr}` : ''}
               {statusInfo.airlineCode ? ` · ${statusInfo.airlineCode}${statusInfo.flightNumber ? ' ' + statusInfo.flightNumber : ''}` : ''}
             </div>
           </div>
@@ -423,12 +422,6 @@ export default function RetryPaymentClient() {
 
                   {/* Detay tablosu */}
                   <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '10px 24px', padding: '16px 0 4px', fontSize: 14 }}>
-                    {pnr && (
-                      <>
-                        <span style={{ color: '#64748b', whiteSpace: 'nowrap' }}>PNR</span>
-                        <span style={{ fontWeight: 700, fontFamily: 'monospace', letterSpacing: '0.06em', color: '#0f172a' }}>{pnr}</span>
-                      </>
-                    )}
                     {grandTotal != null && (
                       <>
                         <span style={{ color: '#64748b' }}>Toplam Tutar</span>
@@ -513,7 +506,6 @@ export default function RetryPaymentClient() {
                 <div className="chk-summary__leg">
                   <span className="chk-summary__leg-label">{origin}</span>
                   <span className="chk-summary__leg-route">→ {destination}</span>
-                  {pnr && <span className="chk-summary__leg-date">{pnr}</span>}
                 </div>
                 <div className="chk-summary__divider" />
                 <div className="chk-summary__total">

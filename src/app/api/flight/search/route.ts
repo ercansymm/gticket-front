@@ -31,33 +31,6 @@ export async function POST(request: NextRequest) {
 
     const data = await res.json();
     const safeData = filterSensitiveFields(data);
-
-    // DEV: sessionId'yi geçici olarak frontend'e aktar (canlıda kaldırılacak)
-    if (process.env.NODE_ENV === 'development') {
-      const rawSessionId = (data as Record<string, unknown>)?.sessionId
-        ?? (data as Record<string, unknown>)?.SessionId;
-      if (rawSessionId && typeof safeData === 'object' && safeData !== null) {
-        (safeData as Record<string, unknown>)['__devSessionId'] = rawSessionId;
-      }
-    }
-    
-    // DEBUG: Paket verisi kontrolü
-    const flights = (safeData as any)?.flights;
-    if (Array.isArray(flights) && flights.length > 0) {
-      const f = flights[0];
-      console.log('[PAKET DEBUG] İlk uçuş keys:', Object.keys(f).join(', '));
-      console.log('[PAKET DEBUG] brandedFareItems:', JSON.stringify(f?.brandedFareItems)?.substring(0, 300));
-      console.log('[PAKET DEBUG] farePackages:', JSON.stringify(f?.farePackages)?.substring(0, 300));
-      // Ham backend verisinde de kontrol et
-      const rawFlights = (data as any)?.flights ?? (data as any)?.Flights;
-      if (Array.isArray(rawFlights) && rawFlights.length > 0) {
-        const rf = rawFlights[0];
-        console.log('[PAKET DEBUG RAW] İlk ham uçuş keys:', Object.keys(rf).join(', '));
-        console.log('[PAKET DEBUG RAW] BrandedFareItems:', JSON.stringify(rf?.BrandedFareItems ?? rf?.brandedFareItems)?.substring(0, 300));
-        console.log('[PAKET DEBUG RAW] FarePackages:', JSON.stringify(rf?.FarePackages ?? rf?.farePackages)?.substring(0, 300));
-      }
-    }
-    
     return NextResponse.json(safeData, { status: res.status });
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") {

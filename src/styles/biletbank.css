@@ -1482,9 +1482,23 @@ select.bb-flight-form__input {
 }
 
 .bb-swap-btn:hover {
+  background: #f1f5f9;
+  border-color: var(--ab-border);
+  color: var(--ab-primary);
+}
+
+.bb-swap-btn:focus,
+.bb-swap-btn:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+.bb-swap-btn:active {
   background: var(--ab-primary-light);
   border-color: var(--ab-primary);
   color: var(--ab-primary);
+  outline: none;
+  box-shadow: none;
 }
 
 /* ── Trip toggle group variant ── */

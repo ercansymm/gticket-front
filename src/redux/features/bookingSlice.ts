@@ -103,7 +103,6 @@ export const prepareBookingThunk = createAsyncThunk(
         lower.includes('check flight number') || lower.includes('not enough seat'));
 
     if (isTransient) {
-      console.info('[PrepareBooking] Transient error, retrying once...');
       await new Promise(r => setTimeout(r, 500));
       const retry = await attempt();
       if (retry.ok) return retry.data;
@@ -175,9 +174,7 @@ export const makePreBookingThunk = createAsyncThunk(
         return { ok: false as const, msg: 'Ön rezervasyon oluşturulamadı: Sunucudan yanıt alınamadı' };
       }
       if (result?.hasError) {
-        const raw = result?.errorMessage ?? '';
-        console.warn('[MakePreBooking] Provider error:', raw);
-        return { ok: false as const, msg: raw };
+        return { ok: false as const, msg: result?.errorMessage ?? '' };
       }
       return { ok: true as const, data: result };
     };
@@ -193,7 +190,6 @@ export const makePreBookingThunk = createAsyncThunk(
         || lower.includes('check flight number') || lower.includes('not enough seat');
 
       if (isTransient) {
-        console.info('[MakePreBooking] Transient error, retrying once...');
         await new Promise(r => setTimeout(r, 1500));
         const retry = await attempt();
         if (retry.ok) return retry.data;
@@ -203,7 +199,6 @@ export const makePreBookingThunk = createAsyncThunk(
       return rejectWithValue(mapProviderError(first.msg, 'Ön rezervasyon oluşturulamadı'));
     } catch (error: any) {
       const raw = extractErrorMessage(error, 'Ön rezervasyon oluşturulamadı');
-      console.warn('[MakePreBooking] Exception:', raw);
       return rejectWithValue(mapProviderError(raw, 'Ön rezervasyon oluşturulamadı'));
     }
   }

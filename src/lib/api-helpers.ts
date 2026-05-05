@@ -37,12 +37,13 @@ const SENSITIVE_KEYS = [
   'providerId',
   'businessId',
   'businessName',
+  'bookingProvider',
   // Debug/SOAP bilgileri
   'rawSoapResponse',
   'debugInfo',
   // İç sistem bilgileri
   'customerInfo',
-  // Session bilgileri (allocate response'unda da silinir)
+  // Session kimlikleri — BFF session-cache üzerinden taşınır, client'a gitmez
   'sessionId',
   'sessionToken',
   // Kredi kartı bilgileri (response'da dönmemeli)

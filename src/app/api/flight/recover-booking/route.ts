@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withTimeout, checkRateLimit } from '@/lib/api-helpers';
+import { filterSensitiveFields, withTimeout, checkRateLimit } from '@/lib/api-helpers';
 import { logger } from '@/lib/logger';
 
 const API_BASE = process.env.API_BASE_URL;
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     clear();
 
     const data = await res.json();
-    return NextResponse.json(data, { status: res.status });
+    return NextResponse.json(filterSensitiveFields(data), { status: res.status });
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {
       logger.error('Backend timeout', error, 'api/flight/recover-booking');
