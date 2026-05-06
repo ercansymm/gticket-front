@@ -1,7 +1,10 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+
+const ContactMap = dynamic(() => import("./ContactMap"), { ssr: false });
 
 const INFO_ITEMS = [
   {
@@ -96,16 +99,7 @@ const ContactArea = () => {
 
  {/* Harita */}
 <div className="ct-map">
-  <iframe
-    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d233.4947377564956!2d28.947369255827965!3d41.010255070767045!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x14cab928ae4fca0f%3A0xdf9e60e4d9d12e7b!2sG%20Travel!5e1!3m2!1str!2str!4v1777558441740!5m2!1str!2str"
-    width="100%"
-    height="450"
-    style={{ border: 0, borderRadius: 16, display: "block" }}
-    allowFullScreen
-    loading="lazy"
-    referrerPolicy="no-referrer-when-downgrade"
-    title="AtaBilet Konum"
-  />
+  <ContactMap />
 </div>
 
       </div>

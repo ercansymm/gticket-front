@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
             logger.error('ALLOWED_3DS_HOSTS env var not configured', {}, 'api/flight/make-payment');
             return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
           }
-          if (!allowedHosts.some((h: string) => url.hostname.endsWith(h))) {
+          if (!allowedHosts.some((h: string) => url.hostname === h || url.hostname.endsWith(`.${h}`))) {
             logger.error('Suspicious 3DS URL blocked', { url: secureUrl }, 'api/flight/make-payment');
             return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
           }

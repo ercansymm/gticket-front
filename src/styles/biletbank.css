@@ -126,26 +126,6 @@ img, video, iframe, table {
   position: relative;
 }
 
-.bb-lang-selector__toggle {
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  color: rgba(255, 255, 255, 0.85);
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  transition: all var(--bb-transition);
-}
-
-.bb-lang-selector__toggle:hover {
-  border-color: rgba(255, 255, 255, 0.6);
-  color: #FFFFFF;
-}
-
 .bb-lang-selector__arrow {
   font-size: 10px;
 }
@@ -1118,6 +1098,8 @@ select.bb-flight-form__input {
   right: 0;
   max-height: 300px;
   overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   background: var(--bb-white);
   border: 1.5px solid var(--ab-border);
   border-radius: var(--ab-radius-md);
@@ -1125,7 +1107,11 @@ select.bb-flight-form__input {
   z-index: 200;
   list-style: none;
   margin: 0;
-  padding: 6px 0;
+  padding: 4px 0 6px;
+}
+
+.bb-flight-form__dropdown::-webkit-scrollbar {
+  display: none;
 }
 
 .bb-flight-form__dropdown li {
@@ -1191,19 +1177,52 @@ select.bb-flight-form__input {
   background: transparent !important;
 }
 
+/* ── Section headers inside dropdown ── */
+.bb-dropdown-section-header {
+  padding: 6px 16px 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: default;
+  pointer-events: none;
+  user-select: none;
+}
+
+.bb-dropdown-section-header:hover {
+  background: transparent !important;
+}
+
+.bb-dropdown-section-divider {
+  height: 1px;
+  background: #e2e8f0;
+  margin: 3px 12px 3px;
+  padding: 0;
+  cursor: default;
+  pointer-events: none;
+}
+
+.bb-dropdown-section-divider:hover {
+  background: #e2e8f0 !important;
+}
+
 /* ── City group (Tüm Havalimanları) item ── */
 .bb-dropdown-city-group {
-  background: #f0fdf4;
-  border-left: 3px solid #047857;
+  background: #f8fafc;
+  border-left: 3px solid #0a1628;
   padding-left: 14px;
 }
 
 .bb-dropdown-city-group:hover {
-  background: #dcfce7 !important;
+  background: var(--ab-primary-light) !important;
 }
 
 .bb-city-group-label {
-  color: #047857;
+  color: #0a1628;
   font-size: 14px;
   font-weight: 700;
 }
@@ -1215,8 +1234,8 @@ select.bb-flight-form__input {
 }
 
 .bb-city-group-sub {
-  color: #059669 !important;
-  font-weight: 500;
+  color: #64748b !important;
+  font-weight: 400;
   font-size: 12px;
 }
 

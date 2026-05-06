@@ -198,12 +198,27 @@ const BookingCheckMain = () => {
       return `Segment ${idx + 1}`;
    };
 
-   // Action handlers (placeholder — wire up to real logic)
-   const handleDownloadPdf = () => {
-      // TODO: integrate with PDF download endpoint
-   };
-   const handleSendEmail = () => {
-      // TODO: integrate with email endpoint
+   const [pdfLoading, setPdfLoading] = useState(false);
+
+   const handleDownloadPdf = async () => {
+      if (!bookingDetail?.bookingId || pdfLoading) return;
+      setPdfLoading(true);
+      try {
+         const res = await fetch(`/api/ticket/pdf/booking/${bookingDetail.bookingId}`);
+         if (!res.ok) { alert("PDF indirilemedi. Lütfen tekrar deneyin."); return; }
+         const blob = await res.blob();
+         const url = window.URL.createObjectURL(blob);
+         const a = document.createElement("a");
+         a.href = url;
+         const pnr = bookingDetail.pnr ?? bookingDetail.bookingCode ?? bookingDetail.bookingId;
+         a.download = `AtaBilet-${pnr}.pdf`;
+         a.click();
+         window.URL.revokeObjectURL(url);
+      } catch {
+         alert("PDF indirilemedi. Lütfen tekrar deneyin.");
+      } finally {
+         setPdfLoading(false);
+      }
    };
    const handlePrint = () => {
       window.print();
@@ -238,6 +253,7 @@ const BookingCheckMain = () => {
          type: safeBackendType,
          subject,
          message,
+         ...(data.guestEmail ? { guestEmail: data.guestEmail } : {}),
       };
 
       // Giriş yapmış kullanıcı -> normal endpoint
@@ -485,7 +501,7 @@ const BookingCheckMain = () => {
                         <PnrHeaderCard
                            booking={bookingDetail}
                            onDownloadPdf={handleDownloadPdf}
-                           onSendEmail={handleSendEmail}
+                           pdfLoading={pdfLoading}
                            onPrint={handlePrint}
                         />
 
@@ -542,6 +558,7 @@ const BookingCheckMain = () => {
                   {canCreateRequest && showMobileRequestModal && (
                      <TicketRequestForm
                         submitting={mobileSubmitting}
+                        isGuest={!isAuthenticated && guestSessionReady}
                         onClose={() => {
                            if (!mobileSubmitting) setShowMobileRequestModal(false);
                         }}

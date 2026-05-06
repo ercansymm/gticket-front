@@ -14,12 +14,14 @@ export type TicketRequestType =
 export interface TicketRequestPayload {
   type: TicketRequestType;
   description: string;
+  guestEmail?: string;
 }
 
 interface TicketRequestFormProps {
   onSubmit: (data: TicketRequestPayload) => void | Promise<void>;
   onClose: () => void;
   submitting?: boolean;
+  isGuest?: boolean;
 }
 
 const REQUEST_TYPES: { value: TicketRequestType; label: string }[] = [
@@ -35,13 +37,23 @@ export default function TicketRequestForm({
   onSubmit,
   onClose,
   submitting = false,
+  isGuest = false,
 }: TicketRequestFormProps) {
   const [type, setType] = useState<TicketRequestType>("iptal");
   const [description, setDescription] = useState("");
+  const [guestEmail, setGuestEmail] = useState("");
   const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isGuest && !guestEmail.trim()) {
+      setError("Cevabın size ulaşması için e-posta adresinizi giriniz.");
+      return;
+    }
+    if (isGuest && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail.trim())) {
+      setError("Geçerli bir e-posta adresi giriniz.");
+      return;
+    }
     if (!description.trim()) {
       setError("Lütfen talebiniz hakkında kısa bir açıklama giriniz.");
       return;
@@ -51,7 +63,11 @@ export default function TicketRequestForm({
       return;
     }
     setError("");
-    await onSubmit({ type, description: description.trim() });
+    await onSubmit({
+      type,
+      description: description.trim(),
+      guestEmail: isGuest ? guestEmail.trim() : undefined,
+    });
   };
 
   return (
@@ -98,6 +114,28 @@ export default function TicketRequestForm({
                 ))}
               </select>
             </div>
+
+            {isGuest && (
+              <div className="pnr-search__field" style={{ marginTop: 12 }}>
+                <label className="pnr-search__label" htmlFor="request-email">
+                  E-posta Adresiniz
+                </label>
+                <input
+                  id="request-email"
+                  type="email"
+                  className="pnr-search__input"
+                  placeholder="ornek@eposta.com"
+                  value={guestEmail}
+                  onChange={(e) => setGuestEmail(e.target.value)}
+                  maxLength={200}
+                  disabled={submitting}
+                  autoComplete="email"
+                />
+                <span style={{ fontSize: 12, color: "var(--bb-gray-400)", marginTop: 4, display: "block" }}>
+                  Talebinize verilen yanıt bu adrese gönderilecektir.
+                </span>
+              </div>
+            )}
 
             <div className="pnr-search__field" style={{ marginTop: 12 }}>
               <label className="pnr-search__label" htmlFor="request-description">

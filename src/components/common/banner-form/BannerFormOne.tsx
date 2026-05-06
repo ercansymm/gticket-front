@@ -309,11 +309,19 @@ const BannerFormOne = () => {
       });
    }, []);
 
-   const getAirportLabel = (code: string) => {
+   const getAirportLabel = (code: string, isCity?: boolean) => {
       if (!code) return "";
       const a = allAirports.find(ap => ap.iataCode === code);
       const trInfo = getTurkishAirportInfo(code);
       const city = trInfo?.cityName ?? a?.city ?? code;
+      if (isCity && a) {
+         const cityKey = normalizeForSearch(a.city || '');
+         const members = cityIndex.get(cityKey);
+         if (members && members.length > 1) {
+            const codes = members.map(ap => ap.iataCode).join(', ');
+            return `${city} (${codes})`;
+         }
+      }
       return a ? `${city} (${a.iataCode})` : code;
    };
 
@@ -334,12 +342,17 @@ const BannerFormOne = () => {
    const filterAirports = useCallback((search: string, exclude?: string): AirportDropdownItem[] => {
       if (!search || search.length < 2) return [];
       const q = normalizeForSearch(search);
+      // Word-boundary aware match: "dam" must START the city/name or a word within it
+      const matchText = (text: string): boolean => {
+         const n = normalizeForSearch(text);
+         return n.startsWith(q) || n.includes(' ' + q);
+      };
       const matched = allAirports
          .filter(a =>
             a.iataCode !== exclude &&
-            (a.iataCode.toLowerCase().includes(q) ||
-             normalizeForSearch(a.city || '').includes(q) ||
-             normalizeForSearch(a.name || '').includes(q))
+            (a.iataCode.toLowerCase().startsWith(q) ||
+             matchText(a.city || '') ||
+             matchText(a.name || ''))
          )
          .slice(0, 12);
 
@@ -705,50 +718,75 @@ const BannerFormOne = () => {
       list: AirportDropdownItem[],
       onSelect: (airport: AirportDropdownItem) => void,
       highlightedIndex: number,
-   ) => (
-      <ul className="bb-flight-form__dropdown" role="listbox">
-         {list.map((a, i) => {
-            const isGroup = !!(a as AirportDropdownItem).isCityGroup;
-            return (
-               <li
-                  key={isGroup ? `group-${a.iataCode}-${i}` : `${a.iataCode}-${i}`}
-                  role="option"
-                  aria-selected={i === highlightedIndex}
-                  className={`${i === highlightedIndex ? 'bb-dropdown-highlighted' : ''} ${isGroup ? 'bb-dropdown-city-group' : ''}`}
-                  onClick={() => { addToAirportsList(a); onSelect(a); }}
-               >
-                  {isGroup ? (
+   ) => {
+      const groups = list.filter(a => a.isCityGroup);
+      const airports = list.filter(a => !a.isCityGroup);
+
+      const renderItem = (a: AirportDropdownItem, flatIdx: number) => {
+         const isGroup = !!a.isCityGroup;
+         return (
+            <li
+               key={isGroup ? `group-${a.iataCode}-${flatIdx}` : `${a.iataCode}-${flatIdx}`}
+               role="option"
+               aria-selected={flatIdx === highlightedIndex}
+               className={`${flatIdx === highlightedIndex ? 'bb-dropdown-highlighted' : ''} ${isGroup ? 'bb-dropdown-city-group' : ''}`}
+               onClick={() => { addToAirportsList(a); onSelect(a); }}
+            >
+               {isGroup ? (
+                  <>
+                     <div className="bb-dropdown-top">
+                        <strong className="bb-city-group-label">{a.city}</strong>
+                        <div className="bb-city-group-codes">
+                           {a.groupCodes?.map(code => (
+                              <span key={code} className="bb-airport-code">{code}</span>
+                           ))}
+                        </div>
+                     </div>
+                     <small className="bb-city-group-sub">{a.name}</small>
+                  </>
+               ) : (() => {
+                  const trInfo = getTurkishAirportInfo(a.iataCode);
+                  const cityLabel = trInfo?.cityName ?? a.city;
+                  const nameLabel = trInfo?.airportName ?? a.name;
+                  return (
                      <>
                         <div className="bb-dropdown-top">
-                           <strong className="bb-city-group-label">{a.city}</strong>
-                           <div className="bb-city-group-codes">
-                              {(a as AirportDropdownItem).groupCodes?.map(code => (
-                                 <span key={code} className="bb-airport-code">{code}</span>
-                              ))}
-                           </div>
+                           <strong>{cityLabel}</strong>
+                           <span className="bb-airport-code">{a.iataCode}</span>
                         </div>
-                        <small className="bb-city-group-sub">{a.name}</small>
+                        <small>{nameLabel}</small>
                      </>
-                  ) : (() => {
-                     const trInfo = getTurkishAirportInfo(a.iataCode);
-                     const cityLabel = trInfo?.cityName ?? a.city;
-                     const nameLabel = trInfo?.airportName ?? a.name;
-                     return (
-                        <>
-                           <div className="bb-dropdown-top">
-                              <strong>{cityLabel}</strong>
-                              <span className="bb-airport-code">{a.iataCode}</span>
-                           </div>
-                           <small>{nameLabel}</small>
-                        </>
-                     );
-                  })()}
-               </li>
-            );
-         })}
-         {list.length === 0 && <li className="bb-flight-form__no-result">{t.noResult}</li>}
-      </ul>
-   );
+                  );
+               })()}
+            </li>
+         );
+      };
+
+      return (
+         <ul className="bb-flight-form__dropdown" role="listbox">
+            {groups.length > 0 && (
+               <>
+                  <li className="bb-dropdown-section-header" role="presentation" aria-hidden="true">
+                     <i className="fa-solid fa-city" aria-hidden="true"></i>
+                     {lang === 'en' ? 'City' : 'Şehir'}
+                  </li>
+                  {groups.map((a, i) => renderItem(a, i))}
+               </>
+            )}
+            {airports.length > 0 && (
+               <>
+                  {groups.length > 0 && <li className="bb-dropdown-section-divider" role="presentation" aria-hidden="true" />}
+                  <li className="bb-dropdown-section-header" role="presentation" aria-hidden="true">
+                     <i className="fa-solid fa-plane" aria-hidden="true"></i>
+                     {lang === 'en' ? 'Airport' : 'Havalimanı'}
+                  </li>
+                  {airports.map((a, i) => renderItem(a, groups.length + i))}
+               </>
+            )}
+            {list.length === 0 && <li className="bb-flight-form__no-result">{t.noResult}</li>}
+         </ul>
+      );
+   };
 
    /** Keyboard handler for airport input fields */
    const handleAirportKeyDown = (
@@ -1086,7 +1124,7 @@ const BannerFormOne = () => {
                   type="text"
                   className={`bb-flight-form__input ${errors.from ? "bb-flight-form__input--error" : ""}`}
                   placeholder={t.cityOrAirport}
-                  value={fromOpen ? fromSearch : getAirportLabel(from)}
+                  value={fromOpen ? fromSearch : getAirportLabel(from, fromIsCity)}
                   onChange={(e) => {
                      const val = e.target.value;
                      setFromSearch(val); setFromOpen(true); setFromHighlight(-1);
@@ -1139,7 +1177,7 @@ const BannerFormOne = () => {
                   type="text"
                   className={`bb-flight-form__input ${errors.to ? "bb-flight-form__input--error" : ""}`}
                   placeholder={t.cityOrAirport2}
-                  value={toOpen ? toSearch : getAirportLabel(to)}
+                  value={toOpen ? toSearch : getAirportLabel(to, toIsCity)}
                   onChange={(e) => {
                      const val = e.target.value;
                      setToSearch(val); setToOpen(true); setToHighlight(-1);

@@ -69,6 +69,7 @@ export default function ActionPanel({
           onSubmit={handleSubmitRequest}
           onClose={closeRequest}
           submitting={submitting}
+          isGuest={!isAuthenticated && allowGuest}
         />
       )}
     </div>

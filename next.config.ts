@@ -42,7 +42,7 @@ const nextConfig: NextConfig = {
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           {
             key: "Content-Security-Policy",
-            value: "frame-ancestors 'none'; frame-src 'self' https://pay3dstage.biletbank.com https://pay3d.biletbank.com https://www.google.com https://maps.googleapis.com;",
+            value: "frame-ancestors 'none'; frame-src 'self' https://pay3dstage.biletbank.com https://pay3d.biletbank.com https://www.google.com https://maps.google.com https://maps.googleapis.com https://www.google.com.tr https://www.openstreetmap.org;",
           },
         ],
       },

@@ -1,12 +1,12 @@
 "use client";
 
-import { Download, Mail, Printer, Users } from "lucide-react";
+import { Download, Loader2, Printer, Users } from "lucide-react";
 import type { BookingDetailResponse } from "@/types/flight";
 
 interface PnrHeaderCardProps {
   booking: BookingDetailResponse;
   onDownloadPdf: () => void;
-  onSendEmail: () => void;
+  pdfLoading?: boolean;
   onPrint: () => void;
 }
 
@@ -23,7 +23,7 @@ const STATUS_CONFIG: Record<string, { label: string; badgeClass: string }> = {
 export default function PnrHeaderCard({
   booking,
   onDownloadPdf,
-  onSendEmail,
+  pdfLoading = false,
   onPrint,
 }: PnrHeaderCardProps) {
   const statusInfo = booking.status ? STATUS_CONFIG[booking.status] : null;
@@ -64,18 +64,10 @@ export default function PnrHeaderCard({
             onClick={onDownloadPdf}
             aria-label="PDF İndir"
             className="pnr-action-btn"
+            disabled={pdfLoading}
           >
-            <Download size={16} />
-            <span className="pnr-action-btn__label">PDF</span>
-          </button>
-          <button
-            type="button"
-            onClick={onSendEmail}
-            aria-label="E-posta Gönder"
-            className="pnr-action-btn"
-          >
-            <Mail size={16} />
-            <span className="pnr-action-btn__label">E-posta</span>
+            {pdfLoading ? <Loader2 size={16} className="pnr-spin" /> : <Download size={16} />}
+            <span className="pnr-action-btn__label">{pdfLoading ? "..." : "PDF"}</span>
           </button>
           <button
             type="button"

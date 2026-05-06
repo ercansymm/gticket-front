@@ -93,40 +93,7 @@ const HeaderOne = () => {
 
                      <span className="bb-divider d-none d-md-block"></span>
 
-                     {/* Language Selector */}
-                     <div ref={langRef} className="bb-lang-selector d-none d-sm-block">
-                        <button
-                           type="button"
-                           className="bb-lang-selector__toggle"
-                           onClick={() => setLangOpen(p => !p)}
-                           aria-label={t.language}
-                           aria-expanded={langOpen}
-                           aria-haspopup="listbox"
-                        >
-                           <i className="fa-solid fa-globe"></i> {lang === "tr" ? "TR" : "EN"} <i className="fa-solid fa-chevron-down bb-lang-selector__arrow"></i>
-                        </button>
-                        {langOpen && (
-                           <ul className="bb-lang-selector__dropdown" role="listbox">
-                              <li
-                                 role="option"
-                                 aria-selected={lang === "tr"}
-                                 className={lang === "tr" ? "bb-lang-selector__item--active" : ""}
-                                 onClick={() => { setLang("tr"); setLangOpen(false); }}
-                              >
-                                 {lang === "tr" && <i className="fa-solid fa-check"></i>} Türkçe
-                              </li>
-                              <li
-                                 role="option"
-                                 aria-selected={lang === "en"}
-                                 className={lang === "en" ? "bb-lang-selector__item--active" : ""}
-                                 onClick={() => { setLang("en"); setLangOpen(false); }}
-                              >
-                                 {lang === "en" && <i className="fa-solid fa-check"></i>} English
-                              </li>
-                           </ul>
-                        )}
-                     </div>
-                     <span className="bb-divider d-none d-sm-block"></span>
+     
 
                      {/* Currency Selector — arama sonrası görünür */}
                      <CurrencySelector />

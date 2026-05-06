@@ -77,7 +77,7 @@ const CurrencySelector = () => {
           </ul>
         )}
       </div>
-      <span className="bb-divider d-none d-sm-block"></span>
+      <span className=""></span>
     </>
   );
 };

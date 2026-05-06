@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { filterSensitiveFields, withTimeout, checkRateLimit } from '@/lib/api-helpers';
 import { logger } from '@/lib/logger';
 
@@ -8,13 +10,17 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ pnr: string }> },
 ) {
-  const rateLimitResponse = checkRateLimit(request, 20, 60_000);
+  const rateLimitResponse = checkRateLimit(request, 5, 60_000);
   if (rateLimitResponse) return rateLimitResponse;
+
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    return NextResponse.json({ error: 'Oturum açmanız gerekiyor.' }, { status: 401 });
+  }
 
   try {
     const { pnr } = await params;
 
-    // PNR validation — 5-10 alphanumeric
     if (!pnr || !/^[A-Z0-9]{5,10}$/i.test(pnr)) {
       return NextResponse.json({ error: 'Geçersiz PNR' }, { status: 400 });
     }
