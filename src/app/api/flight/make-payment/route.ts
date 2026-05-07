@@ -75,6 +75,7 @@ export async function POST(request: NextRequest) {
       currency: sessionData.currency || 'TRY',
       paymentType: paymentType,
       bookingId: sessionData.bookingId ?? null,
+      frontendBaseUrl: (process.env.NEXTAUTH_URL || 'http://localhost:3000').replace(/\/$/, ''),
     };
 
     // Debug: session'dan gelen alanları logla (hassas veri yok)
