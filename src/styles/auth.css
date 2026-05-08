@@ -556,6 +556,56 @@
 /* ================================================================
    Legal placeholder pages (Kullanım Şartları / Gizlilik)
    ================================================================ */
+/* ── Google OAuth button ── */
+.ab-auth__google-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 16px;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+  margin-bottom: 4px;
+}
+
+.ab-auth__google-btn:hover {
+  border-color: #4285F4;
+  box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.12);
+  background: #fafbff;
+}
+
+/* ── Divider between Google and email form ── */
+.ab-auth__divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0 4px;
+  color: #94a3b8;
+  font-size: 12.5px;
+}
+
+.ab-auth__divider::before,
+.ab-auth__divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #e2e8f0;
+}
+
+/* ── Remove top margin from form when preceded by Google btn ── */
+.ab-auth__form {
+  margin-top: 0;
+}
+
+/* ================================================================ */
+
 .ab-legal-page {
   background: #f8fafc;
   padding: 80px 16px 120px;

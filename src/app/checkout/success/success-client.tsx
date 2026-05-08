@@ -351,8 +351,8 @@ export default function SuccessClient() {
   const airBooking = allocateResult?.airBookings?.[0];
   const priceSummary = allocateResult?.priceSummary;
   const readPayment = readResult?.payments?.[0];
-  const baseFare = readResult?.baseFare || priceSummary?.totalBaseFare || airBooking?.baseFare || 0;
-  const taxes = readResult?.taxes || priceSummary?.totalTaxes || airBooking?.taxes || 0;
+  const baseFare = readResult?.baseFare || priceSummary?.totalBaseFare || airBooking?.baseFare || (bookingDetail as any)?.baseFare || 0;
+  const taxes = readResult?.taxes || priceSummary?.totalTaxes || airBooking?.taxes || (bookingDetail as any)?.taxes || 0;
   const totalFare = readResult?.grandTotal || readResult?.totalFare || readPayment?.amount || priceSummary?.grandTotal || airBooking?.totalFare || bookingDetail?.grandTotal || 0;
   const currency = readResult?.currency ?? readPayment?.currency ?? priceSummary?.currency ?? airBooking?.currency ?? bookingDetail?.currency ?? 'TRY';
 
@@ -406,12 +406,14 @@ export default function SuccessClient() {
         {/* Badges */}
         <div className="tc-flight-leg__badges">
           <span className="tc-flight-leg__badge">{getAirlineName(seg.marketingAirline)}</span>
-          {(fareName || seg.bookingClass) && (
+          {fareName && (
             <span className="tc-flight-leg__badge tc-flight-leg__badge--class">
-              {fareName ?? seg.bookingClass}
+              {fareName}
             </span>
           )}
-          <span className="tc-flight-leg__badge">{defaultBaggage}</span>
+          {defaultBaggage !== '—' && (
+            <span className="tc-flight-leg__badge">{defaultBaggage}</span>
+          )}
         </div>
 
         {/* Connection divider between legs */}

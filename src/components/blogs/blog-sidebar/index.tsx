@@ -1,37 +1,59 @@
-import Ads from "./Ads"
-import Category from "./Category"
-import RecentPost from "./RecentPost"
-import Tags from "./Tags"
+"use client";
+
+import Link from "next/link";
+import Image from "next/image";
+import { blogPosts } from "../../../data/BlogData";
+import { useTranslation } from "../../../context/LanguageContext";
 
 const BlogSidebar = () => {
-   return (
-      <div className="tg-blog-sidebar top-sticky mb-30">
-         <div className="tg-blog-sidebar-search tg-blog-sidebar-box mb-40">
-            <h5 className="tg-blog-sidebar-title mb-15">Search</h5>
-            <div className="tg-blog-sidebar-form">
-               <form onSubmit={(e) => e.preventDefault()}>
-                  <input type="text" placeholder="Type here . . ." />
-                  <button>
-                     <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <g clipPath="url(#clip0_497_1336)">
-                           <path d="M17 17L13.5247 13.5247M15.681 8.3405C15.681 12.3945 12.3945 15.681 8.3405 15.681C4.28645 15.681 1 12.3945 1 8.3405C1 4.28645 4.28645 1 8.3405 1C12.3945 1 15.681 4.28645 15.681 8.3405Z" stroke="#1A56DB" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                        </g>
-                        <defs>
-                           <clipPath id="clip0_497_1336">
-                              <rect width="18" height="18" fill="white" />
-                           </clipPath>
-                        </defs>
-                     </svg>
-                  </button>
-               </form>
-            </div>
-         </div>
-         <Category />
-         <RecentPost />
-         <Ads />
-         <Tags />
-      </div>
-   )
-}
+  const { lang } = useTranslation();
+  const isTr = lang === "tr";
+  const recentPosts = blogPosts.slice(0, 3);
 
-export default BlogSidebar
+  return (
+    <aside className="tg-blog-sidebar">
+      <div className="tg-blog-sidebar-widget mb-40">
+        <h4 className="tg-blog-sidebar-title">
+          {isTr ? "Son Yazılar" : "Recent Posts"}
+        </h4>
+        <ul className="tg-blog-sidebar-recent">
+          {recentPosts.map((post) => (
+            <li key={post.id} className="tg-blog-sidebar-recent-item">
+              <Link href={`/blog/${post.slug}`} className="tg-blog-sidebar-recent-thumb">
+                <Image
+                  src={post.thumb}
+                  alt={isTr ? post.title_tr : post.title_en}
+                  width={70}
+                  height={70}
+                />
+              </Link>
+              <div className="tg-blog-sidebar-recent-body">
+                <h6>
+                  <Link href={`/blog/${post.slug}`}>
+                    {isTr ? post.title_tr : post.title_en}
+                  </Link>
+                </h6>
+                <span>{new Date(post.date).toLocaleDateString(isTr ? "tr-TR" : "en-US", { day: "numeric", month: "short", year: "numeric" })}</span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="tg-blog-sidebar-widget mb-40">
+        <h4 className="tg-blog-sidebar-title">
+          {isTr ? "Kategoriler" : "Categories"}
+        </h4>
+        <ul className="tg-blog-sidebar-cats">
+          <li><Link href="/blog">{isTr ? "İpuçları" : "Tips"}</Link></li>
+          <li><Link href="/blog">{isTr ? "Destinasyon" : "Destination"}</Link></li>
+          <li><Link href="/blog">{isTr ? "Rehber" : "Guide"}</Link></li>
+          <li><Link href="/blog">{isTr ? "Pratik Bilgi" : "Practical Info"}</Link></li>
+          <li><Link href="/blog">{isTr ? "Tatil" : "Holiday"}</Link></li>
+        </ul>
+      </div>
+    </aside>
+  );
+};
+
+export default BlogSidebar;

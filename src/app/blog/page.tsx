@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import BlogClient from "./blog-client";
 
 export const metadata: Metadata = {
-  title: "Blog - Seyahat Rehberi",
-  description: "Seyahat ipuçları, ucuz uçak bileti tavsiyeleri ve gezi rehberleri.",
-  alternates: { canonical: "https://www.atabilet.com/blog" },
+  title: "Seyahat Blogu | AtaBilet",
+  description:
+    "Uçak bileti ipuçları, destinasyon rehberleri ve seyahat önerileri. AtaBilet blog ile en ucuz uçak biletini bulun.",
 };
 
 export default function BlogPage() {

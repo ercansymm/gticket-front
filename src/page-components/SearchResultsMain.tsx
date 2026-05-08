@@ -42,6 +42,15 @@ const CABIN_LABELS: Record<string, string> = { Economy:'Ekonomi', PremiumEconomy
 function trDateShort(s: string) { const d = new Date(s+'T00:00:00'); return `${d.getDate()} ${TR_MONTHS_SHORT[d.getMonth()]} ${d.getFullYear()}, ${TR_DAYS_SHORT[d.getDay()]}`; }
 function trDateLong(s: string) { const d = new Date(s+'T00:00:00'); return `${d.getDate()} ${TR_MONTHS_FULL[d.getMonth()]} ${TR_DAYS_FULL[d.getDay()]}`; }
 function airportCity(code: string) { return staticAirports.find(a => a.code.toUpperCase() === code.toUpperCase())?.cityTr ?? code; }
+function formatRouteLabel(codes: string): string {
+  const parts = codes.split(',').map(c => c.trim().toUpperCase()).filter(Boolean);
+  if (parts.length === 0) return codes;
+  if (parts.length === 1) return airportCity(parts[0]);
+  const cities = parts.map(c => staticAirports.find(a => a.code === c)?.cityTr ?? null);
+  const unique = [...new Set(cities.filter(Boolean))];
+  if (unique.length === 1) return `${unique[0]} (Tümü)`;
+  return parts.join(', ');
+}
 function fmtDateApi(d: Date) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 function addDays(s: string, n: number) { const d = new Date(s+'T00:00:00'); d.setDate(d.getDate()+n); return d; }
 function isPastOrToday(s: string) { const d = new Date(s+'T00:00:00'); const now = new Date(); now.setHours(0,0,0,0); return d <= now; }
@@ -557,9 +566,9 @@ const SearchResultsMain = () => {
                   )
                 ) : (
                   <>
-                    <span className="bb-search-summary__city">{searchParams?.origin ?? '...'}</span>
+                    <span className="bb-search-summary__city">{formatRouteLabel(searchParams?.origin ?? '...')}</span>
                     <span className="bb-search-summary__arrow">→</span>
-                    <span className="bb-search-summary__city">{searchParams?.destination ?? '...'}</span>
+                    <span className="bb-search-summary__city">{formatRouteLabel(searchParams?.destination ?? '...')}</span>
                   </>
                 )}
               </div>
@@ -679,9 +688,9 @@ const SearchResultsMain = () => {
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M22 2L11 13" /><path d="M22 2L15 22 11 13 2 9l20-7z" />
                   </svg>
-                  {airportCity(searchParams.origin)}
+                  {formatRouteLabel(searchParams.origin)}
                   <span className="bb-search-toolbar__chip-arrow">→</span>
-                  {airportCity(searchParams.destination)}
+                  {formatRouteLabel(searchParams.destination)}
                 </span>
                 <span className="bb-search-toolbar__divider" aria-hidden="true" />
                 <span className="bb-search-toolbar__chip">
@@ -777,9 +786,9 @@ const SearchResultsMain = () => {
                 )
               ) : (
                 <>
-                  <span className="bb-search-summary__city">{searchParams?.origin}</span>
+                  <span className="bb-search-summary__city">{formatRouteLabel(searchParams?.origin ?? '')}</span>
                   <span className="bb-search-summary__arrow">→</span>
-                  <span className="bb-search-summary__city">{searchParams?.destination}</span>
+                  <span className="bb-search-summary__city">{formatRouteLabel(searchParams?.destination ?? '')}</span>
                 </>
               )}
             </div>
@@ -959,7 +968,11 @@ const SearchResultsMain = () => {
                         </button>
                       </div>
                     ) : (
-                      regularOutbound.map((flight) => (
+                      [...regularOutbound].sort((a, b) => {
+                        if (a.productId === bestOutboundId) return -1;
+                        if (b.productId === bestOutboundId) return 1;
+                        return 0;
+                      }).map((flight) => (
                         <FlightCard
                           key={flight.productId}
                           flight={flight}
@@ -991,7 +1004,11 @@ const SearchResultsMain = () => {
                             <p className="bb-empty-state__text">Bu güzergâh için dönüş uçuşu bulunamadı.</p>
                           </div>
                         ) : (
-                          regularReturn.map((flight) => (
+                          [...regularReturn].sort((a, b) => {
+                            if (a.productId === bestReturnId) return -1;
+                            if (b.productId === bestReturnId) return 1;
+                            return 0;
+                          }).map((flight) => (
                             <FlightCard
                               key={flight.productId}
                               flight={flight}
@@ -1152,7 +1169,11 @@ const SearchResultsMain = () => {
             ) : (
               /* ═══ Tek Yön Modu ═══ */
               <div className="bb-search-results__list">
-                {displayedFlights.map((flight) => (
+                {[...displayedFlights].sort((a, b) => {
+                  if (a.productId === bestOneWayId) return -1;
+                  if (b.productId === bestOneWayId) return 1;
+                  return 0;
+                }).map((flight) => (
                   <FlightCard
                     key={flight.productId}
                     flight={flight}

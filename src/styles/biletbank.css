@@ -2253,7 +2253,9 @@ select.bb-flight-form__input {
 .bb-promo-banner {
   position: relative;
   display: block;
-  height: 160px;
+  height: 120px;
+  width: 95%;
+  margin: 0 auto;
   border-radius: 0;
   overflow: hidden;
 }
@@ -3648,6 +3650,17 @@ select.bb-flight-form__input {
 }
 
 .bb-blog-detail__breadcrumb:hover {
+  color: #fff;
+}
+
+.bb-blog-detail__breadcrumb a,
+.bb-blog-detail__breadcrumb span {
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  transition: color var(--bb-transition);
+}
+
+.bb-blog-detail__breadcrumb a:hover {
   color: #fff;
 }
 

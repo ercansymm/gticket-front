@@ -51,6 +51,7 @@ export const en = {
   addFlight: "Add Flight",
   removeFlight: "Remove Flight",
   cityOrAirport: "City or airport",
+  cityOrAirport2: "To",
   selectDate: "Select date",
   noResult: "No results found",
   allAirports: "All Airports",

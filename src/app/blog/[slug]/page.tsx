@@ -1,90 +1,39 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import BlogDetailsClient from "./blog-details-client";
-import JsonLd from "@/components/JsonLd";
+import type { ApiBlogPost } from "../../../types/blog";
 
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
-const BACKEND = process.env.API_BASE_URL ?? "http://localhost:5000";
+const API_BASE = process.env.API_BASE_URL;
 
-interface BlogDetailPageProps {
+async function getPost(slug: string): Promise<ApiBlogPost | null> {
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/blog/public/${slug}`);
+    if (!res.ok) return null;
+    return (await res.json()) as ApiBlogPost;
+  } catch {
+    return null;
+  }
+}
+
+interface Props {
   params: Promise<{ slug: string }>;
 }
 
-export async function generateMetadata({ params }: BlogDetailPageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-
-  try {
-    const res = await fetch(`${BACKEND}/api/admin/blog/public/${slug}`, {
-      next: { revalidate: 300 },
-    });
-
-    if (res.ok) {
-      const post = await res.json();
-      return {
-        title: post.metaTitleTr || post.titleTr,
-        description: post.metaDescriptionTr || post.summaryTr,
-        keywords: post.keywordsTr?.join(", "),
-        alternates: { canonical: `https://www.atabilet.com/blog/${slug}` },
-        openGraph: {
-          title: post.metaTitleTr || post.titleTr,
-          description: post.metaDescriptionTr || post.summaryTr,
-          images: post.thumbUrl ? [`${process.env.NEXT_PUBLIC_API_URL ?? ""}${post.thumbUrl}`] : [],
-        },
-      };
-    }
-  } catch {
-    // fallback
-  }
-
-  const title = slug
-    .split("-")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
-
+  const post = await getPost(slug);
+  if (!post) return {};
   return {
-    title: `${title} - Blog`,
-    description: `${title} hakkında detaylı bilgi ve seyahat rehberi.`,
-    alternates: { canonical: `https://www.atabilet.com/blog/${slug}` },
+    title: `${post.metaTitleTr || post.titleTr} | AtaBilet Blog`,
+    description: post.metaDescriptionTr || post.summaryTr,
   };
 }
 
-export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
+export default async function BlogDetailPage({ params }: Props) {
   const { slug } = await params;
-
-  let articleJsonLd: Record<string, unknown> = {
-    "@context": "https://schema.org",
-    "@type": "Article",
-    author: { "@type": "Organization", name: "AtaBilet" },
-    publisher: {
-      "@type": "Organization",
-      name: "AtaBilet",
-      logo: { "@type": "ImageObject", url: "https://www.atabilet.com/favicon.svg" },
-    },
-    mainEntityOfPage: `https://www.atabilet.com/blog/${slug}`,
-  };
-
-  try {
-    const res = await fetch(`${BACKEND}/api/admin/blog/public/${slug}`, {
-      next: { revalidate: 300 },
-    });
-    if (res.ok) {
-      const post = await res.json();
-      articleJsonLd = {
-        ...articleJsonLd,
-        headline: post.titleTr,
-        description: post.summaryTr,
-        datePublished: post.createdAt,
-        dateModified: post.updatedAt,
-      };
-    }
-  } catch {
-    // proceed without extra data
-  }
-
-  return (
-    <>
-      <JsonLd data={articleJsonLd} />
-      <BlogDetailsClient slug={slug} />
-    </>
-  );
+  const post = await getPost(slug);
+  if (!post) notFound();
+  return <BlogDetailsClient post={post} />;
 }

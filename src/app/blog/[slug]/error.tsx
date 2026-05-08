@@ -1,47 +1,12 @@
 "use client";
 
-import { useEffect } from "react";
+import Link from "next/link";
 
-export default function Error({
-  error,
-  reset,
-}: {
-  error: Error & { digest?: string };
-  reset: () => void;
-}) {
-  useEffect(() => {
-    console.error("Blog error:", error);
-  }, [error]);
-
+export default function Error() {
   return (
-    <div
-      style={{
-        minHeight: "60vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "40px 16px",
-      }}
-    >
-      <div className="bb-error-modal" style={{ position: "relative" }}>
-        <div className="bb-error-modal__header">
-          <h2>Blog Hatası</h2>
-        </div>
-        <div className="bb-error-modal__body">
-          <p>Blog içeriği yüklenirken bir hata oluştu. Lütfen tekrar deneyin.</p>
-        </div>
-        <div className="bb-error-modal__footer">
-          <button
-            className="bb-error-modal__btn bb-error-modal__btn--retry"
-            onClick={reset}
-          >
-            Tekrar Dene
-          </button>
-          <a href="/" className="bb-error-modal__btn bb-error-modal__btn--close">
-            Ana Sayfa
-          </a>
-        </div>
-      </div>
+    <div style={{ minHeight: "60vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16 }}>
+      <h2>Blog yazısı yüklenemedi.</h2>
+      <Link href="/blog">Blog'a Dön</Link>
     </div>
   );
 }

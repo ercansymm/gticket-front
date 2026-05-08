@@ -1,43 +1,18 @@
 import { NextResponse } from "next/server";
-import { blogPosts } from "@/data/BlogData";
 
-const BACKEND = process.env.API_BASE_URL ?? "http://localhost:5000";
-
-function staticToApiFormat(p: (typeof blogPosts)[number]) {
-  return {
-    id: p.id,
-    slug: p.slug,
-    titleTr: p.title_tr,
-    titleEn: p.title_en,
-    summaryTr: p.summary_tr,
-    summaryEn: p.summary_en,
-    contentTr: p.content_tr,
-    contentEn: p.content_en,
-    thumbUrl: p.thumb,
-    tagTr: p.tag_tr,
-    tagEn: p.tag_en,
-    author: p.author,
-    readTime: p.readTime,
-    createdAt: p.date,
-    updatedAt: p.date,
-  };
-}
+const API_BASE = process.env.API_BASE_URL;
 
 export async function GET() {
   try {
-    const res = await fetch(`${BACKEND}/api/admin/blog/public`, {
-      cache: "no-store",
+    const res = await fetch(`${API_BASE}/api/admin/blog/public`, {
+      next: { revalidate: 60 },
     });
-
-    if (res.ok) {
-      const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) {
-        return NextResponse.json(data);
-      }
+    if (!res.ok) {
+      return NextResponse.json({ posts: [] }, { status: res.status });
     }
+    const posts = await res.json();
+    return NextResponse.json({ posts });
   } catch {
-    // fall through to static data
+    return NextResponse.json({ posts: [] }, { status: 500 });
   }
-
-  return NextResponse.json(blogPosts.map(staticToApiFormat));
 }
