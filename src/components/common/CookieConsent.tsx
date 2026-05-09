@@ -33,11 +33,11 @@ const CookieConsent = () => {
          <div className="container">
             <div className="bb-cookie-consent__inner">
                <p className="bb-cookie-consent__text">
-                  {t.cookieMessage} <Link href="#" className="bb-cookie-consent__link">{t.cookiePolicyLink}</Link> {t.cookieMessageEnd}
+                  {t.cookieMessage} <Link href="/cerez-politikasi" className="bb-cookie-consent__link">{t.cookiePolicyLink}</Link> {t.cookieMessageEnd}
                </p>
                <div className="bb-cookie-consent__actions">
                   <button onClick={handleAccept} className="bb-cookie-consent__accept" type="button">{t.accept}</button>
-                  <Link href="#" className="bb-cookie-consent__details">{t.moreInfo}</Link>
+                  <Link href="/cerez-politikasi" className="bb-cookie-consent__details">{t.moreInfo}</Link>
                </div>
             </div>
          </div>

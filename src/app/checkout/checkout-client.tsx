@@ -836,6 +836,11 @@ export default function CheckoutClient() {
               <p>Havayolu şirketleri, ödeme kuruluşları ve yasal zorunluluk halinde yetkili kamu kurumları.</p>
               <h4>Haklarınız</h4>
               <p>KVKK&apos;nın 11. maddesi gereği; verilerinizin işlenip işlenmediğini öğrenme, düzeltme, silme ve itiraz haklarına sahipsiniz.</p>
+              <p style={{ marginTop: 12 }}>
+                <a href="/kvkk" target="_blank" rel="noopener noreferrer" className="chk-modal__link">
+                  Tam KVKK Aydınlatma Metni için tıklayınız →
+                </a>
+              </p>
             </div>
             <div className="chk-modal__footer">
               <button type="button" className="chk-modal__btn chk-modal__btn--primary" onClick={() => setShowKvkkModal(false)}>Kapat</button>

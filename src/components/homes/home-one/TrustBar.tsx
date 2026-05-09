@@ -1,3 +1,5 @@
+"use client";
+
 import { useTranslation } from "../../../context/LanguageContext";
 
 /** AtaBilet — Güven şeridi. SSL, destek, IATA ve kullanıcı sayısı bilgileri. */

@@ -312,9 +312,11 @@ const RegisterForm = () => {
         />
         <span>
           <Link href="/kullanim-sartlari" className="ab-auth__link">Kullanım şartlarını</Link>
-          {" "}ve{" "}
+          {", "}
           <Link href="/gizlilik" className="ab-auth__link">gizlilik politikasını</Link>
-          {" "}kabul ediyorum.
+          {" ve "}
+          <Link href="/kvkk" className="ab-auth__link">KVKK aydınlatma metnini</Link>
+          {" "}okudum, kabul ediyorum.
         </span>
       </label>
 

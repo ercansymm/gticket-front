@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import Logo from "../../components/common/Logo";
 import { useTranslation } from "../../context/LanguageContext";
@@ -63,8 +65,8 @@ const FooterOne = () => {
                         <li><Link href="/iletisim"><i className="fa-solid fa-envelope" />{t.contact}</Link></li>
                         <li><Link href="/sss"><i className="fa-solid fa-circle-question" />SSS</Link></li>
                         <li><Link href="/blog"><i className="fa-solid fa-newspaper" />Blog</Link></li>
-                        <li><Link href="/gizlilik"><i className="fa-solid fa-user-shield" />{t.kvkk}</Link></li>
-                        <li><Link href="/gizlilik#cerez"><i className="fa-solid fa-cookie-bite" />{t.cookiePolicy}</Link></li>
+                        <li><Link href="/kvkk"><i className="fa-solid fa-user-shield" />{t.kvkk}</Link></li>
+                        <li><Link href="/cerez-politikasi"><i className="fa-solid fa-cookie-bite" />{t.cookiePolicy}</Link></li>
                      </ul>
                   </div>
 
@@ -81,6 +83,10 @@ const FooterOne = () => {
                      <Link href="/gizlilik">Gizlilik Politikası</Link>
                      <span>·</span>
                      <Link href="/kullanim-sartlari">Kullanım Şartları</Link>
+                     <span>·</span>
+                     <Link href="/kvkk">KVKK</Link>
+                     <span>·</span>
+                     <Link href="/cerez-politikasi">Çerez Politikası</Link>
                   </div>
                </div>
             </div>

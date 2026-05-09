@@ -753,6 +753,7 @@
   border: 1px solid var(--chk-border);
 }
 .chk-modal__btn--secondary:hover { background: var(--chk-bg-soft); }
+.chk-modal__link { color: var(--chk-emerald); font-size: 13px; font-weight: 500; text-decoration: underline; }
 .chk-modal__price-compare {
   display: flex; gap: 16px; margin: 16px 0;
 }
