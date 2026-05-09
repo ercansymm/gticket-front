@@ -96,18 +96,23 @@ const Blog = ({ style: _style }: { style?: boolean }) => {
           )}
 
           <div className="bb-blog-side-list">
-            {sidePosts.map((post) => (
+            {sidePosts.map((post) => {
+              const src = thumbSrc(post.thumbUrl);
+              return (
               <article key={post.id} className="bb-blog-side-card">
                 <Link href={`/blog/${post.slug}`} className="bb-blog-side-card__img-wrap">
-                  {thumbSrc(post.thumbUrl) && (
+                  {src ? (
                     <Image
-                      src={thumbSrc(post.thumbUrl)!}
+                      src={src}
                       alt={isTr ? post.titleTr : post.titleEn}
                       className="bb-blog-side-card__img"
                       fill
-                      sizes="140px"
+                      sizes="(max-width: 576px) 300px, 480px"
+                      quality={90}
                       loading="lazy"
                     />
+                  ) : (
+                    <div className="bb-blog-side-card__placeholder" aria-hidden="true" />
                   )}
                 </Link>
                 <div className="bb-blog-side-card__body">
@@ -124,7 +129,8 @@ const Blog = ({ style: _style }: { style?: boolean }) => {
                   </div>
                 </div>
               </article>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

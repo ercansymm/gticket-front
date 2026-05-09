@@ -136,12 +136,23 @@ export default function SuccessClient() {
   const hasReduxData = !!finalizeResult;
   const hasUrlData = !!urlPnr || !!urlBookingId;
 
-  // Guard: no data at all → back
+  // Guard: no data at all → back (bookingDetail component state da kontrol edilir —
+  // URL parametreleri temizlendikten sonra veri hâlâ sayfada görünmeye devam eder)
   useEffect(() => {
-    if (!hasReduxData && !hasUrlData) {
+    if (!hasReduxData && !hasUrlData && !bookingDetail) {
       router.push('/');
     }
-  }, [hasReduxData, hasUrlData, router]);
+  }, [hasReduxData, hasUrlData, bookingDetail, router]);
+
+  // Redux state'i unmount'ta temizle — kullanıcı "Git" butonlarına basmadan
+  // sayfadan çıksa bile eski PNR sayfasına geri dönememesi için.
+  useEffect(() => {
+    return () => {
+      dispatch(resetPayment());
+      dispatch(resetBooking());
+      dispatch(clearSearch());
+    };
+  }, [dispatch]);
 
   // 3D callback sonrasi redirect ile geldiyse Redux temizlenmis olur. BookingId varsa
   // backend'den booking detayini cek (passengers, segments, prices, contact dahil).
@@ -158,6 +169,10 @@ export default function SuccessClient() {
         if (!res.ok) return;
         let detail = await res.json();
         setBookingDetail(detail);
+
+        // URL parametrelerini temizle — bookmarklanmış/paylaşılmış URL ile
+        // tekrar erişimi engeller. Veri artık component state'inde tutuluyor.
+        window.history.replaceState({}, '', '/checkout/success');
 
         // Otomatik recover: odeme alinmis (Paid) ama biletlenmemis ise FinalizeShopping'i tekrar dene.
         if (detail && detail.status === 'Paid' && detail.isFinalized === false && !hasRecovered.current) {
