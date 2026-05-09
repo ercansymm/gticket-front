@@ -11,10 +11,10 @@ import CurrencySelector from "../../components/common/CurrencySelector";
 import { Info, BookOpen, HelpCircle, Phone } from "lucide-react";
 
 const NAV_LINKS = [
-   { label: "Hakkımızda", href: "/about",  Icon: Info },
-   { label: "Blog",        href: "/blog",   Icon: BookOpen },
-   { label: "SSS",         href: "/faq",    Icon: HelpCircle },
-   { label: "İletişim",   href: "/contact", Icon: Phone },
+   { label: "Hakkımızda", href: "/hakkimizda", Icon: Info },
+   { label: "Blog",        href: "/blog",        Icon: BookOpen },
+   { label: "SSS",         href: "/sss",         Icon: HelpCircle },
+   { label: "İletişim",   href: "/iletisim",    Icon: Phone },
 ];
 
 /** AtaBilet — Header. Logo, navigasyon, dil seçici, döviz seçici ve müşteri hesabı menüsü. */
@@ -86,14 +86,6 @@ const HeaderOne = () => {
                      </nav>
                   </div>
                   <div className="bb-header-right">
-                     {/* Bilet Sorgula */}
-                     <Link href="/bilet-sorgula" className="bb-header-btn d-none d-md-inline-flex">
-                        <i className="fa-solid fa-ticket"></i> {t.bookingCheck}
-                     </Link>
-
-                     <span className="bb-divider d-none d-md-block"></span>
-
-     
 
                      {/* Currency Selector — arama sonrası görünür */}
                      <CurrencySelector />
@@ -159,7 +151,7 @@ const HeaderOne = () => {
                            )}
                         </div>
                      ) : (
-                        <Link href="/login" className="bb-header-btn bb-header-btn--login d-none d-sm-inline-flex">
+                        <Link href="/giris" className="bb-header-btn bb-header-btn--login d-none d-sm-inline-flex">
                            <i className="fa-solid fa-user"></i> {t.login}
                         </Link>
                      )}

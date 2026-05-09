@@ -70,7 +70,7 @@ const About = () => {
                      </div>
                      <div className="tg-about-su-author-wrap">
                         <div className="mr-30 mb-10">
-                           <Link className="tg-btn tg-btn-hover" href="/about">Hakkımızda</Link>
+                           <Link className="tg-btn tg-btn-hover" href="/hakkimizda">Hakkımızda</Link>
                         </div>
                         <div className="tg-about-su-author d-flex align-items-center mb-10">
                            <div className="tg-about-su-author-avatar mr-10">

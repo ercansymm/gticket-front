@@ -4,7 +4,7 @@ import PricingClient from "./pricing-client";
 export const metadata: Metadata = {
   title: "Fiyatlandırma",
   description: "AtaBilet hizmet fiyatları ve paketleri.",
-  alternates: { canonical: "https://www.atabilet.com/pricing" },
+  alternates: { canonical: "https://www.atabilet.com/fiyatlandirma" },
 };
 
 export default function PricingPage() {

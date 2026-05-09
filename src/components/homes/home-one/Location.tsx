@@ -128,7 +128,7 @@ const Location = () => {
                         : 'Up-to-date flight ticket prices on the most preferred routes.'}
                   </p>
                </div>
-               <Link href="/search-results" className="bb-blog-section__all-link">
+               <Link href="/ucus-sonuclari" className="bb-blog-section__all-link">
                   {isTr ? 'Tümünü gör' : 'View all'} <i className="fa-solid fa-arrow-right"></i>
                </Link>
             </div>

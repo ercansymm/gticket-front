@@ -53,15 +53,11 @@ export default function CheckInModal({
 
   const handleOpenUrl = () => {
     window.open(checkInUrl, "_blank", "noopener,noreferrer");
-    onClose();
   };
 
   return (
     <div
       className="checkin-modal-overlay"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
       role="dialog"
       aria-modal="true"
       aria-labelledby="checkin-modal-title"
@@ -109,7 +105,7 @@ export default function CheckInModal({
               <line x1="12" y1="16" x2="12.01" y2="16" />
             </svg>
             <p className="checkin-modal__info-text">
-              Check-in formunu otomatik dolduramıyoruz. Aşağıdaki bilgileri kopyalayıp check-in sayfasına manuel girin.
+              Aşağıdaki bilgileri havayolu check-in sayfasındaki ilgili alanlara girmeniz gerekmektedir. Sayfayı açtıktan sonra bu pencereden kopyalama yapabilirsiniz.
             </p>
           </div>
 

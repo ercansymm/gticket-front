@@ -27,10 +27,10 @@ const HomeOne = () => {
                <Location />
             </Suspense>
             <Suspense fallback={<div style={{ minHeight: 200 }} />}>
-               <HowItWorks />
+               <WhyAtaBilet />
             </Suspense>
             <Suspense fallback={<div style={{ minHeight: 200 }} />}>
-               <WhyAtaBilet />
+               <HowItWorks />
             </Suspense>
             <Suspense fallback={<div style={{ minHeight: 200 }} />}>
                <Blog />

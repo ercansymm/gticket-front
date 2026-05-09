@@ -5,7 +5,7 @@ import JsonLd from "@/components/JsonLd";
 export const metadata: Metadata = {
   title: "Sıkça Sorulan Sorular",
   description: "AtaBilet hakkında sıkça sorulan sorular ve cevapları.",
-  alternates: { canonical: "https://www.atabilet.com/faq" },
+  alternates: { canonical: "https://www.atabilet.com/sss" },
 };
 
 const faqJsonLd = {

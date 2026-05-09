@@ -91,9 +91,9 @@ export const authOptions: NextAuthOptions = {
     },
   },
   pages: {
-    signIn: "/login",
-    newUser: "/register",
-    error: "/login",
+    signIn: "/giris",
+    newUser: "/kayit-ol",
+    error: "/giris",
   },
   secret: process.env.NEXTAUTH_SECRET,
 };

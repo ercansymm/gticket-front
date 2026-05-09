@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
-const PROTECTED_PATHS = ["/wishlist"];
+const PROTECTED_PATHS = ["/favoriler"];
 
 export async function middleware(request: NextRequest) {
   // HTTPS redirect in production
@@ -22,7 +22,7 @@ export async function middleware(request: NextRequest) {
   if (isProtected) {
     const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
     if (!token) {
-      const loginUrl = new URL("/login", request.url);
+      const loginUrl = new URL("/giris", request.url);
       loginUrl.searchParams.set("callbackUrl", request.nextUrl.pathname);
       return NextResponse.redirect(loginUrl);
     }

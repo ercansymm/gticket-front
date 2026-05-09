@@ -92,10 +92,10 @@ const BookingCheckMain = () => {
    ];
 
    const topics = [
-      { label: "Online check-in nasıl yapılır?", href: "/faq" },
-      { label: "Uçak yolculuklarında el bagajı limitleri", href: "/faq" },
-      { label: "Uçak yolculuğunda bagaj zarar görürse ne yapılmalıdır?", href: "/faq" },
-      { label: "Havaalanlarındaki lounge hizmetleri", href: "/faq" },
+      { label: "Online check-in nasıl yapılır?", href: "/sss" },
+      { label: "Uçak yolculuklarında el bagajı limitleri", href: "/sss" },
+      { label: "Uçak yolculuğunda bagaj zarar görürse ne yapılmalıdır?", href: "/sss" },
+      { label: "Havaalanlarındaki lounge hizmetleri", href: "/sss" },
    ];
 
    const handlePnrChange = (e: React.ChangeEvent<HTMLInputElement>) => {

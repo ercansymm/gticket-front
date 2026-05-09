@@ -20,7 +20,7 @@ const menu_data: MenuItem[] = [
     {
         id: 2,
         title: "Hakkımızda",
-        link: "/about",
+        link: "/hakkimizda",
         has_dropdown: false,
     },
     {
@@ -38,14 +38,14 @@ const menu_data: MenuItem[] = [
     {
         id: 5,
         title: "Sıkça Sorulan Sorular",
-        link: "/faq",
+        link: "/sss",
         has_dropdown: false,
     },
     {
         id: 6,
         has_dropdown: false,
         title: "İletişim",
-        link: "/contact",
+        link: "/iletisim",
     },
 ];
 

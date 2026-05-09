@@ -114,7 +114,7 @@ const RegisterForm = () => {
       setLoading(false);
 
       if (signInRes?.error) {
-        router.push("/login");
+        router.push("/giris");
         return;
       }
       router.push("/");
@@ -332,7 +332,7 @@ const RegisterForm = () => {
 
       <p className="ab-auth__footer">
         Zaten bir hesabınız var mı?
-        <Link href="/login">Giriş yapın</Link>
+        <Link href="/giris">Giriş yapın</Link>
       </p>
     </form>
     </>

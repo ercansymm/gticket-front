@@ -4,7 +4,7 @@ import ContactClient from "./contact-client";
 export const metadata: Metadata = {
   title: "İletişim",
   description: "AtaBilet ile iletişime geçin. Sorularınız ve önerileriniz için bize ulaşın.",
-  alternates: { canonical: "https://www.atabilet.com/contact" },
+  alternates: { canonical: "https://www.atabilet.com/iletisim" },
 };
 
 export default function ContactPage() {

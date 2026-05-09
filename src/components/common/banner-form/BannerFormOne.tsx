@@ -665,7 +665,7 @@ const BannerFormOne = () => {
          sessionStorage.removeItem('payment_3ds_session');
          dispatch(setSearchParams(searchRequest));
          dispatch(searchFlightsThunk(searchRequest));
-         router.push('/search-results');
+         router.push('/ucus-sonuclari');
          return;
       }
 
@@ -710,7 +710,7 @@ const BannerFormOne = () => {
       dispatch(searchFlightsThunk(searchRequest));
 
       // Arama sonuçları sayfasına yönlendir
-      router.push('/search-results');
+      router.push('/ucus-sonuclari');
    };
 
    // ── Shared airport dropdown renderer ──

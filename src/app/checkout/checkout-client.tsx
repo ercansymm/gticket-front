@@ -395,7 +395,7 @@ export default function CheckoutClient() {
   }, [dispatch, searchId, cardForm]);
 
   const handleRejectPriceChange = useCallback(() => {
-    setPriceChangedResult(null); dispatch(resetBooking()); router.push('/search-results');
+    setPriceChangedResult(null); dispatch(resetBooking()); router.push('/ucus-sonuclari');
   }, [dispatch, router]);
 
   if (!allocateResult || !selectedFlight) return null;
@@ -530,7 +530,7 @@ export default function CheckoutClient() {
                         <div>{preBookingError}</div>
                         <div className="chk-alert__actions">
                           <button type="button" disabled={preBookingLoading} onClick={triggerPassengerSubmit} className="chk-alert__btn chk-alert__btn--primary">Tekrar dene</button>
-                          <button type="button" onClick={() => router.push('/search-results')} className="chk-alert__btn chk-alert__btn--ghost">Farklı uçuş seç</button>
+                          <button type="button" onClick={() => router.push('/ucus-sonuclari')} className="chk-alert__btn chk-alert__btn--ghost">Farklı uçuş seç</button>
                         </div>
                       </div>
                     </div>

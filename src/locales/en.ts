@@ -72,7 +72,7 @@ export const en = {
   pnrCode: "PNR Code",
   lastName: "Last Name",
   query: "Search",
-  pnrPlaceholder: "e.g. ABC123",
+  pnrPlaceholder: "e.g. ATA123",
   lastNamePlaceholder: "Passenger last name",
   bookingCheckTitle: "Check Booking",
 

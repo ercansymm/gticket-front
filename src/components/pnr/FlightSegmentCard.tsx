@@ -26,8 +26,9 @@ const AIRLINE_NAMES: Record<string, string> = {
 
 const CHECKIN_BASE_URLS: Record<string, string> = {
   TK: "https://www.turkishairlines.com/tr-int/ucak-bileti/rezervasyonu-yonet",
-  PC: "https://www.flypgs.com/online-check-in",
-  AJ: "https://www.anadolujet.com/tr/ucus-bilgileri/online-check-in",
+  PC: "https://www.flypgs.com/check-in",
+  VF: "https://ajet.com/tr/checkin",
+  XQ: "https://www.sunexpress.com/tr-tr/check-in/login/",
 };
 
 function buildCheckInUrl(airlineCode: string): string {

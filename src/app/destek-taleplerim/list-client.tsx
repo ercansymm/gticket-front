@@ -50,7 +50,7 @@ export default function SupportTicketsListClient() {
   useEffect(() => {
     if (authStatus === "loading") return;
     if (authStatus === "unauthenticated") {
-      router.replace("/login?callbackUrl=/destek-taleplerim");
+      router.replace("/giris?callbackUrl=/destek-taleplerim");
       return;
     }
 
@@ -59,6 +59,12 @@ export default function SupportTicketsListClient() {
         setLoading(true);
         setError(null);
         const res = await fetch("/api/support/tickets", { cache: "no-store" });
+        if (res.status === 401) {
+          // Oturum sunucuda geçersiz — router cache'i temizleyip login'e yönlendir
+          router.refresh();
+          router.replace("/giris?callbackUrl=/destek-taleplerim");
+          return;
+        }
         const data = await res.json().catch(() => []);
         if (!res.ok) {
           throw new Error(

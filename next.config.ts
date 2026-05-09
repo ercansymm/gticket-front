@@ -32,6 +32,21 @@ const nextConfig: NextConfig = {
   // SEO-uyumlu trailing slash
   trailingSlash: false,
 
+  // Eski İngilizce URL'lerden yeni Türkçe URL'lere kalıcı yönlendirme (SEO dostu 308)
+  async redirects() {
+    return [
+      { source: "/about",          destination: "/hakkimizda",   permanent: true },
+      { source: "/contact",        destination: "/iletisim",      permanent: true },
+      { source: "/faq",            destination: "/sss",           permanent: true },
+      { source: "/pricing",        destination: "/fiyatlandirma", permanent: true },
+      { source: "/login",          destination: "/giris",         permanent: true },
+      { source: "/register",       destination: "/kayit-ol",      permanent: true },
+      { source: "/search-results", destination: "/ucus-sonuclari",permanent: true },
+      { source: "/cart",           destination: "/sepet",         permanent: true },
+      { source: "/wishlist",       destination: "/favoriler",     permanent: true },
+    ];
+  },
+
   // Güvenlik başlıkları
   async headers() {
     return [

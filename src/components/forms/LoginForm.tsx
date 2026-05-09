@@ -138,7 +138,7 @@ const LoginForm = () => {
 
       <p className="ab-auth__footer">
         Hesabınız yok mu?
-        <Link href="/register">Hemen kayıt olun</Link>
+        <Link href="/kayit-ol">Hemen kayıt olun</Link>
       </p>
     </form>
     </>

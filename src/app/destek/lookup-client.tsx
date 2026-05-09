@@ -4,70 +4,66 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import { Hash, User, ChevronRight, Home, Loader2, ShieldCheck } from "lucide-react";
 import HeaderOne from "@/layouts/headers/HeaderOne";
 import FooterOne from "@/layouts/footers/FooterOne";
-import { Loader2, Headset, ShieldCheck, LogIn } from "lucide-react";
+import TrustBar from "@/components/homes/home-one/TrustBar";
 import { saveGuestSession, getGuestSession } from "@/lib/guest-support";
+
+const turkishToUpper = (v: string): string => {
+  const map: Record<string, string> = { ş: "S", Ş: "S", ç: "C", Ç: "C", ğ: "G", Ğ: "G", ı: "I", İ: "I", ö: "O", Ö: "O", ü: "U", Ü: "U", i: "I" };
+  return v.split("").map((c) => map[c] || c).join("").toUpperCase();
+};
 
 export default function LookupClient() {
   const router = useRouter();
   const { status } = useSession();
-  const [pnr, setPnr] = useState("");
-  const [surname, setSurname] = useState("");
+  const [pnr, setPnr]               = useState("");
+  const [surname, setSurname]       = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [errors, setErrors]         = useState<Record<string, string>>({});
+  const [apiError, setApiError]     = useState<string | null>(null);
 
-  // Üye olarak giriş yapılmışsa üye destek listesine yönlendir
   useEffect(() => {
-    if (status === "authenticated") {
-      router.replace("/destek-taleplerim");
-    }
+    if (status === "authenticated") router.replace("/destek-taleplerim");
   }, [status, router]);
 
-  // Misafir oturumu varsa doğrudan listeye gönder
   useEffect(() => {
     if (status === "authenticated") return;
     const sess = getGuestSession();
     if (sess) router.replace("/destek/talepler");
   }, [router, status]);
 
+  const validate = (): boolean => {
+    const e: Record<string, string> = {};
+    if (!pnr.trim())         e.pnr     = "PNR kodunuzu giriniz.";
+    else if (pnr.length < 5) e.pnr     = "PNR 5-10 karakter olmalıdır.";
+    if (!surname.trim())     e.surname = "Soyadınızı giriniz.";
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-
-    const pnrTrim = pnr.trim().toUpperCase();
-    const surnameTrim = surname.trim();
-
-    if (!pnrTrim || !surnameTrim) {
-      setError("PNR ve soyad zorunludur.");
-      return;
-    }
-    if (pnrTrim.length < 5 || pnrTrim.length > 10) {
-      setError("PNR 5-10 karakter olmalıdır.");
-      return;
-    }
-
+    if (!validate()) return;
+    setApiError(null);
     try {
       setSubmitting(true);
       const res = await fetch("/api/support/guest/lookup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pnr: pnrTrim, surname: surnameTrim }),
+        body: JSON.stringify({ pnr: pnr.trim().toUpperCase(), surname: surname.trim() }),
         cache: "no-store",
       });
       const data = await res.json().catch(() => ({}));
-
       if (!res.ok) {
-        // Backend zaten generic mesaj dönüyor
-        const msg = (data as { error?: string })?.error;
-        if (res.status === 429) {
-          setError("Çok fazla deneme yaptınız. Lütfen bir süre bekleyin.");
-        } else {
-          setError(msg || "PNR veya soyad hatalı.");
-        }
+        setApiError(
+          res.status === 429
+            ? "Çok fazla deneme yaptınız. Lütfen bir süre bekleyin."
+            : ((data as { error?: string })?.error ?? "PNR veya soyad hatalı.")
+        );
         return;
       }
-
       saveGuestSession({
         token: data.token,
         expiresAt: data.expiresAt,
@@ -75,23 +71,20 @@ export default function LookupClient() {
         passengerDisplayName: data.passengerDisplayName,
         bookingId: data.bookingId,
       });
-
       router.push("/destek/talepler");
     } catch {
-      setError("Sunucuya ulaşılamadı. Lütfen tekrar deneyin.");
+      setApiError("Sunucuya ulaşılamadı. Lütfen tekrar deneyin.");
     } finally {
       setSubmitting(false);
     }
   };
 
-  // Üye girişi varken misafir formunu render etme (yönlendirme yapılırken kısa boş ekran)
   if (status === "loading" || status === "authenticated") {
     return (
       <>
+        <TrustBar />
         <HeaderOne />
-        <main className="pnr-page">
-          <div className="pnr-page__wide" style={{ maxWidth: 540, minHeight: 300 }} />
-        </main>
+        <section className="pnr-hero" style={{ minHeight: 260 }} />
         <FooterOne />
       </>
     );
@@ -99,180 +92,87 @@ export default function LookupClient() {
 
   return (
     <>
+      <TrustBar />
       <HeaderOne />
-      <main className="pnr-page">
-        <div className="pnr-page__wide" style={{ maxWidth: 540 }}>
-          <div className="pnr-card" style={{ padding: 32 }}>
-            <div style={{ textAlign: "center", marginBottom: 24 }}>
-              <div
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: 56,
-                  height: 56,
-                  borderRadius: 16,
-                  background: "#EFF6FF",
-                  color: "#2563EB",
-                  marginBottom: 12,
-                }}
-              >
-                <Headset size={28} />
-              </div>
-              <h1
-                className="pnr-search__title"
-                style={{ marginBottom: 6, fontSize: 22 }}
-              >
-                Misafir Destek Girişi
-              </h1>
-              <p style={{ margin: 0, fontSize: 13, color: "#6B7280" }}>
-                Üye olmadan rezervasyonunuz hakkında destek talebi açabilirsiniz.
-              </p>
-            </div>
 
+      {/* ─── Hero ─── */}
+      <section className="pnr-hero">
+        <div className="pnr-hero__inner">
+          <h1 className="pnr-hero__title">Destek Talebi</h1>
+          <div className="pnr-hero__form-card">
             <form onSubmit={handleSubmit} noValidate>
-              <div style={{ marginBottom: 14 }}>
-                <label
-                  htmlFor="pnr"
-                  style={{
-                    display: "block",
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: "#374151",
-                    marginBottom: 6,
-                  }}
-                >
-                  PNR Kodu
-                </label>
-                <input
-                  id="pnr"
-                  type="text"
-                  value={pnr}
-                  onChange={(e) => setPnr(e.target.value.toUpperCase())}
-                  placeholder="Örn: ABC123"
-                  maxLength={10}
-                  autoComplete="off"
-                  className="pnr-search__input"
-                  style={{
-                    width: "100%",
-                    textTransform: "uppercase",
-                    letterSpacing: 1,
-                  }}
-                />
-              </div>
-
-              <div style={{ marginBottom: 14 }}>
-                <label
-                  htmlFor="surname"
-                  style={{
-                    display: "block",
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: "#374151",
-                    marginBottom: 6,
-                  }}
-                >
-                  Yolcu Soyadı
-                </label>
-                <input
-                  id="surname"
-                  type="text"
-                  value={surname}
-                  onChange={(e) => setSurname(e.target.value)}
-                  placeholder="Bilet üzerindeki soyad"
-                  maxLength={64}
-                  autoComplete="family-name"
-                  className="pnr-search__input"
-                  style={{ width: "100%" }}
-                />
-              </div>
-
-              {error && (
-                <div
-                  style={{
-                    padding: 10,
-                    borderRadius: 8,
-                    background: "#FEF2F2",
-                    border: "1px solid #FECACA",
-                    color: "#991B1B",
-                    fontSize: 13,
-                    marginBottom: 14,
-                  }}
-                >
-                  {error}
+              <div className="pnr-hero__form-row">
+                <div className="pnr-hero__field">
+                  <div className={`pnr-hero__input-wrap${errors.pnr ? " pnr-hero__input-wrap--error" : ""}`}>
+                    <span className="pnr-hero__input-icon"><Hash size={16} /></span>
+                    <input
+                      type="text"
+                      className="pnr-hero__input pnr-hero__input--mono"
+                      placeholder="PNR / Rezervasyon Kodu"
+                      value={pnr}
+                      onChange={(e) => { setPnr(turkishToUpper(e.target.value).replace(/[^A-Z0-9]/g, "")); setErrors((p) => ({ ...p, pnr: "" })); setApiError(null); }}
+                      maxLength={10}
+                      autoComplete="off"
+                    />
+                  </div>
+                  {errors.pnr && <span className="pnr-hero__error">{errors.pnr}</span>}
                 </div>
+
+                <div className="pnr-hero__field">
+                  <div className={`pnr-hero__input-wrap${errors.surname ? " pnr-hero__input-wrap--error" : ""}`}>
+                    <span className="pnr-hero__input-icon"><User size={16} /></span>
+                    <input
+                      type="text"
+                      className="pnr-hero__input"
+                      placeholder="Yolcunun Soyadı"
+                      value={surname}
+                      onChange={(e) => { setSurname(turkishToUpper(e.target.value).replace(/[^A-Z\s]/g, "")); setErrors((p) => ({ ...p, surname: "" })); setApiError(null); }}
+                      autoComplete="off"
+                    />
+                  </div>
+                  {errors.surname && <span className="pnr-hero__error">{errors.surname}</span>}
+                </div>
+
+                <button type="submit" disabled={submitting} className="pnr-hero__btn">
+                  {submitting ? (
+                    <><Loader2 size={16} className="pnr-spin" /> Kontrol ediliyor...</>
+                  ) : (
+                    <>Devam Et <ChevronRight size={16} /></>
+                  )}
+                </button>
+              </div>
+
+              {apiError && (
+                <div className="pnr-lookup-api-error">{apiError}</div>
               )}
-
-              <button
-                type="submit"
-                disabled={submitting}
-                className="pnr-search__btn"
-                style={{
-                  width: "100%",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 8,
-                  opacity: submitting ? 0.6 : 1,
-                }}
-              >
-                {submitting ? (
-                  <>
-                    <Loader2 size={16} className="pnr-spin" />
-                    Kontrol ediliyor...
-                  </>
-                ) : (
-                  <>
-                    <LogIn size={16} />
-                    Devam Et
-                  </>
-                )}
-              </button>
             </form>
-
-            <div
-              style={{
-                marginTop: 18,
-                padding: 12,
-                borderRadius: 8,
-                background: "#F0FDF4",
-                border: "1px solid #BBF7D0",
-                display: "flex",
-                gap: 10,
-                alignItems: "flex-start",
-              }}
-            >
-              <ShieldCheck
-                size={18}
-                style={{ color: "#16A34A", flexShrink: 0, marginTop: 1 }}
-              />
-              <p style={{ margin: 0, fontSize: 12, color: "#166534" }}>
-                Güvenliğiniz için bilgileriniz şifreli olarak saklanır. Oturumunuz 30
-                dakika sonra otomatik kapanır.
-              </p>
-            </div>
-
-            <div
-              style={{
-                marginTop: 16,
-                paddingTop: 16,
-                borderTop: "1px solid #E5E7EB",
-                fontSize: 13,
-                textAlign: "center",
-                color: "#6B7280",
-              }}
-            >
-              Üye misiniz?{" "}
-              <Link
-                href="/login?callbackUrl=/destek-taleplerim"
-                style={{ color: "#2563EB", fontWeight: 500 }}
-              >
-                Giriş yapın
-              </Link>
-            </div>
           </div>
         </div>
-      </main>
+      </section>
+
+      {/* ─── Below hero ─── */}
+      <div className="pnr-below-hero">
+        <div className="pnr-content-wrap">
+          <nav className="pnr-breadcrumb" aria-label="breadcrumb">
+            <a href="/"><Home size={14} /></a>
+            <ChevronRight size={14} />
+            <span className="pnr-breadcrumb__current">Destek Talebi</span>
+          </nav>
+
+          <div className="pnr-lookup-info-box">
+            <ShieldCheck size={18} className="pnr-lookup-info-box__icon" />
+            <p className="pnr-lookup-info-box__text">
+              Bilgileriniz şifreli olarak saklanır. Oturumunuz 30 dakika sonra otomatik kapanır.
+              {" "}Üye iseniz{" "}
+              <Link href="/giris?callbackUrl=/destek-taleplerim" className="pnr-lookup-info-box__link">
+                giriş yaparak
+              </Link>{" "}
+              tüm taleplerinize ulaşabilirsiniz.
+            </p>
+          </div>
+        </div>
+      </div>
+
       <FooterOne />
     </>
   );

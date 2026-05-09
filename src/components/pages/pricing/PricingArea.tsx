@@ -24,7 +24,7 @@ const PricingArea = () => {
                            <span className="dates">/month *</span>
                         </div>
                         <div className="tg-pricing-btn mb-40">
-                           <Link className="tg-btn text-center w-100" href="/contact">Satın Al</Link>
+                           <Link className="tg-btn text-center w-100" href="/iletisim">Satın Al</Link>
                         </div>
                         <div className="tg-pricing-list">
                            <ul>

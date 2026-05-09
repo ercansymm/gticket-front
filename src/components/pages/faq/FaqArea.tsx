@@ -152,7 +152,7 @@ const FaqArea = () => {
               </div>
             </div>
             <div className="faq-cta__actions">
-              <Link href="/contact" className="faq-cta__btn faq-cta__btn--primary">
+              <Link href="/iletisim" className="faq-cta__btn faq-cta__btn--primary">
                 <Phone size={15} />
                 İletişime Geç
               </Link>
