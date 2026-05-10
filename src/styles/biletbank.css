@@ -6,8 +6,13 @@
    ===================================================== */
 
 /* ── Global overflow guard ── */
-html, body {
-  overflow-x: hidden !important;
+html {
+  /* clip prevents horizontal overflow without creating a scroll container,
+     so position:sticky elements inside body still work correctly. */
+  overflow-x: clip;
+}
+body {
+  overflow-x: hidden;
   width: 100%;
   max-width: 100%;
 }
@@ -783,10 +788,10 @@ body.bb-home .bb-header-wrap:not(.bb-header-wrap--scrolled) .bb-header-btn:not(.
 }
 
 .bb-search-tabs__content {
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.30);
-  backdrop-filter: blur(0px);
-  -webkit-backdrop-filter: blur(0px);
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-radius: 20px;
   padding: 24px 32px 30px;
   box-shadow: 0 16px 50px rgba(0, 0, 0, 0.25);
@@ -801,34 +806,55 @@ body.bb-home .bb-header-wrap:not(.bb-header-wrap--scrolled) .bb-header-btn:not(.
 }
 
 .bb-search-tabs__content .bb-trip-radio {
-  color: rgba(255, 255, 255, 0.80);
-  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  color: #FFFFFF;
+  border: 1.5px solid transparent;
+  background: transparent;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  font-weight: 600;
+}
+
+.bb-search-tabs__content .bb-trip-radio .bb-trip-radio__box {
+  border-color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.10);
 }
 
 .bb-search-tabs__content .bb-trip-radio:hover:not(.bb-trip-radio--active) {
-  border-color: rgba(255, 255, 255, 0.70);
-  background: rgba(255, 255, 255, 0.10);
+  border-color: transparent;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .bb-search-tabs__content .bb-trip-radio--active {
   color: #FFFFFF;
-  background: var(--ab-primary);
-  border-color: rgba(255, 255, 255, 0.80);
+  background: #16a34a;
+  border-color: #16a34a;
+  text-shadow: none;
 }
 
 .bb-search-tabs__content .bb-trip-checkbox {
-  color: rgba(255, 255, 255, 0.80);
+  color: #FFFFFF;
+  border-color: transparent;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  font-weight: 600;
 }
 
 .bb-search-tabs__content .bb-trip-checkbox--active {
   color: #FFFFFF;
-  border-color: rgba(255, 255, 255, 0.70);
-  background: rgba(255, 255, 255, 0.15);
+  border-color: #16a34a;
+  background: rgba(22, 163, 74, 0.35);
+  text-shadow: none;
 }
 
 .bb-search-tabs__content .bb-trip-checkbox:hover {
   color: #FFFFFF;
-  border-color: rgba(255, 255, 255, 0.6);
+  border-color: transparent;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Home page hero — green accent for input focus only */
+.bb-search-hero .bb-flight-form__input:focus,
+.bb-search-hero .bb-flight-form__field--with-icon .bb-flight-form__input:focus {
+  border-color: #16a34a;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.18);
 }
 
 /* Coming Soon (Otel modülü) */
@@ -892,16 +918,36 @@ body.bb-home .bb-header-wrap:not(.bb-header-wrap--scrolled) .bb-header-btn:not(.
 }
 
 .bb-trip-radio input[type="radio"] {
-  accent-color: var(--bb-primary);
-  margin: 0;
-  width: 16px;
-  height: 16px;
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.bb-trip-radio__box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 2px solid var(--bb-gray-400);
+  transition: all var(--bb-transition);
+  flex-shrink: 0;
 }
 
 .bb-trip-radio--active {
   color: #FFFFFF;
-  background: var(--ab-primary);
+  background: #16a34a;
+  border-color: #16a34a;
   font-weight: 600;
+}
+
+.bb-trip-radio--active .bb-trip-radio__box {
+  border-color: #ffffff;
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
 }
 
 /* Nonstop checkbox toggle (right side of trip type row) */
@@ -926,9 +972,9 @@ body.bb-home .bb-header-wrap:not(.bb-header-wrap--scrolled) .bb-header-btn:not(.
 }
 
 .bb-trip-checkbox--active {
-  color: var(--ab-primary);
-  border-color: var(--ab-primary);
-  background: rgba(4, 120, 87, 0.06);
+  color: #16a34a;
+  border-color: #16a34a;
+  background: rgba(22, 163, 74, 0.07);
   font-weight: 600;
 }
 
@@ -945,8 +991,8 @@ body.bb-home .bb-header-wrap:not(.bb-header-wrap--scrolled) .bb-header-btn:not(.
 }
 
 .bb-trip-checkbox--active .bb-trip-checkbox__box {
-  border-color: var(--ab-primary);
-  background: var(--ab-primary);
+  border-color: #16a34a;
+  background: #16a34a;
   color: #fff;
 }
 
@@ -1428,7 +1474,7 @@ select.bb-flight-form__input {
 .bb-flight-form__submit {
   width: 100%;
   height: 58px;
-  background: linear-gradient(135deg, #0C4A6E 0%, #0A3D5C 100%);
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
   color: #FFFFFF;
   border: none;
   border-radius: 12px;
@@ -1458,8 +1504,8 @@ select.bb-flight-form__input {
 }
 
 .bb-flight-form__submit:hover {
-  background: linear-gradient(135deg, #0E5685 0%, #0C4A6E 100%);
-  box-shadow: 0 10px 26px rgba(12, 74, 110, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  background: linear-gradient(135deg, #15803d 0%, #166534 100%);
+  box-shadow: 0 10px 26px rgba(22, 163, 74, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.2);
   transform: translateY(-2px);
 }
 
@@ -5993,7 +6039,33 @@ select.bb-flight-form__input {
   width: 280px;
   flex-shrink: 0;
   position: sticky;
-  top: 24px;
+  align-self: flex-start;
+  /* dynamically set via --search-sticky-height JS variable; fallback = 290px */
+  top: calc(66px + var(--search-sticky-height, 290px) + 16px);
+  /* Allow long filter content to scroll inside the sidebar instead of pushing layout */
+  max-height: calc(100vh - 66px - var(--search-sticky-height, 290px) - 32px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* Subtle scrollbar styling */
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.bb-search-results__sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.bb-search-results__sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.bb-search-results__sidebar::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 3px;
+}
+
+.bb-search-results__sidebar::-webkit-scrollbar-thumb:hover {
+  background-color: #94a3b8;
 }
 
 .bb-search-results__content {
@@ -8228,6 +8300,179 @@ footer,
 
 .bb-empty-state__btn:hover {
   background: var(--ab-primary-hover);
+}
+
+/* ── Boarding Pass style empty state ── */
+.bb-empty-state--boarding {
+  max-width: 520px;
+  margin: 64px auto;
+  padding: 0;
+}
+
+.bb-empty-bp {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: #fff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 16px 16px 0 0;
+  padding: 28px 32px 24px;
+  position: relative;
+}
+
+.bb-empty-bp__left,
+.bb-empty-bp__right {
+  flex: 1;
+  min-width: 0;
+}
+
+.bb-empty-bp__right {
+  text-align: right;
+}
+
+.bb-empty-bp__label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #94a3b8;
+  margin-bottom: 4px;
+}
+
+.bb-empty-bp__code {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #0c4a6e;
+  line-height: 1;
+  letter-spacing: -1px;
+}
+
+.bb-empty-bp__city {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 3px;
+  font-weight: 500;
+}
+
+.bb-empty-bp__route {
+  flex: 0 0 120px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px;
+}
+
+.bb-empty-bp__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #cbd5e1;
+  flex-shrink: 0;
+}
+
+.bb-empty-bp__dot--red {
+  background: #dc2626;
+}
+
+.bb-empty-bp__line {
+  flex: 1;
+  min-width: 0;
+}
+
+.bb-empty-bp__line svg {
+  width: 100%;
+  height: 24px;
+  display: block;
+}
+
+.bb-empty-state__divider {
+  height: 0;
+  border-top: 2px dashed #e2e8f0;
+  margin: 0;
+  position: relative;
+}
+
+.bb-empty-state__divider::before,
+.bb-empty-state__divider::after {
+  content: '';
+  position: absolute;
+  top: -10px;
+  width: 20px;
+  height: 20px;
+  background: var(--ab-bg-light, #f8fafc);
+  border-radius: 50%;
+  border: 1.5px solid #e2e8f0;
+}
+
+.bb-empty-state__divider::before { left: -10px; }
+.bb-empty-state__divider::after  { right: -10px; }
+
+.bb-empty-state--boarding .bb-empty-state__title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 8px;
+}
+
+.bb-empty-state--boarding .bb-empty-state__text {
+  font-size: 14px;
+  color: #64748b;
+  line-height: 1.65;
+  margin: 0 0 24px;
+  max-width: none;
+}
+
+.bb-empty-state--boarding > .bb-empty-state__title,
+.bb-empty-state--boarding > .bb-empty-state__text,
+.bb-empty-state--boarding > .bb-empty-state__actions {
+  background: #fff;
+  padding-left: 32px;
+  padding-right: 32px;
+}
+
+.bb-empty-state--boarding > .bb-empty-state__title {
+  padding-top: 24px;
+  border-left: 1.5px solid #e2e8f0;
+  border-right: 1.5px solid #e2e8f0;
+}
+
+.bb-empty-state--boarding > .bb-empty-state__text {
+  border-left: 1.5px solid #e2e8f0;
+  border-right: 1.5px solid #e2e8f0;
+}
+
+.bb-empty-state--boarding > .bb-empty-state__actions {
+  padding-bottom: 28px;
+  border: 1.5px solid #e2e8f0;
+  border-top: none;
+  border-radius: 0 0 16px 16px;
+}
+
+.bb-empty-state__actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.bb-empty-state__btn--primary {
+  background: #16a34a;
+  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.28);
+}
+
+.bb-empty-state__btn--primary:hover {
+  background: #15803d;
+}
+
+.bb-empty-state__btn--outline {
+  background: transparent;
+  color: #0c4a6e;
+  border: 1.5px solid #0c4a6e;
+}
+
+.bb-empty-state__btn--outline:hover {
+  background: #eff6ff;
+  border-color: #0c4a6e;
 }
 
 /* ══════════════════════════════════════════════════════
@@ -12452,49 +12697,6 @@ footer,
   margin-right: 6px;
 }
 
-.bb-filter-section__title {
-  display: flex;
-  align-items: center;
-}
-
-/* Price inputs row */
-.bb-filter-section__price-inputs,
-.bb-filter-section__time-inputs {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.bb-filter-section__input {
-  flex: 1;
-  padding: 6px 10px;
-  border: 1px solid var(--ab-border, #e2e8f0);
-  border-radius: 6px;
-  font-size: 13px;
-  font-family: inherit;
-  color: #1e293b;
-  background: #fff;
-  outline: none;
-  transition: border-color 0.15s;
-}
-
-.bb-filter-section__input:focus {
-  border-color: var(--ab-primary, #0c4a6e);
-}
-
-.bb-filter-section__separator {
-  color: #9ca3af;
-  font-size: 14px;
-  flex-shrink: 0;
-}
-
-.bb-filter-section__range {
-  width: 100%;
-  margin-top: 8px;
-  accent-color: var(--ab-primary, #0c4a6e);
-}
-
 /* ============================================================
    RESPONSIVE — Fare Package Cards
    ============================================================ */
@@ -13072,8 +13274,24 @@ footer,
 }
 
 /* ══════════════════════════════════════════════════════
-   SEARCH TOOLBAR — Modern sticky bar
+   SEARCH STICKY TOP — Wraps toolbar + edit form + date arrows
    ══════════════════════════════════════════════════════ */
+
+.bb-search-sticky-top {
+  position: sticky;
+  top: 66px; /* below the sticky header */
+  z-index: 99;
+  background: #ffffff;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  width: 100%;
+}
+
+.bb-search-sticky-top__inner {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+/* ── Search Toolbar (chips bar) ── */
 
 .bb-search-toolbar {
   display: flex;
@@ -13083,13 +13301,6 @@ footer,
   background: #ffffff;
   border-bottom: 1px solid #e2e8f0;
   padding: 10px 24px;
-  position: sticky;
-  top: 0;
-  z-index: 99;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
-  /* Stretch beyond bb-search-results padding */
-  margin-left: -24px;
-  margin-right: -24px;
 }
 
 .bb-search-toolbar__chips {
@@ -13196,18 +13407,14 @@ footer,
   transform: rotate(180deg);
 }
 
-/* ── Collapsible edit panel ── */
+/* ── Always-visible edit panel (inside bb-search-sticky-top) ── */
 .bb-toolbar-panel {
   background: #ffffff;
-  border-bottom: 2px solid #e2e8f0;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.09);
-  animation: bb-panel-slide-down 0.2s ease;
+  border-top: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
   overflow: visible;
   position: relative;
-  z-index: 98;
-  /* Stretch beyond bb-search-results padding */
-  margin-left: -24px;
-  margin-right: -24px;
+  z-index: 1;
   padding: 0 24px;
 }
 
@@ -13224,29 +13431,35 @@ footer,
 
 /* ── Responsive ── */
 @media (max-width: 900px) {
+  .bb-search-sticky-top__inner {
+    padding: 0;
+  }
   .bb-search-toolbar {
     padding: 8px 16px;
-    margin-left: -24px;
-    margin-right: -24px;
   }
   .bb-toolbar-panel {
-    margin-left: -24px;
-    margin-right: -24px;
     padding: 0 16px;
   }
 }
 
 @media (max-width: 768px) {
+  /* On mobile the sticky edit form takes too much space — disable sticky */
+  .bb-search-sticky-top {
+    position: static;
+    box-shadow: none;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .bb-search-results__sidebar {
+    top: 24px; /* sidebar is hidden on mobile (drawer used) */
+    max-height: none;
+    overflow: visible;
+  }
   .bb-search-toolbar {
     flex-wrap: wrap;
     gap: 8px;
     padding: 8px 12px;
-    margin-left: -24px;
-    margin-right: -24px;
   }
   .bb-toolbar-panel {
-    margin-left: -24px;
-    margin-right: -24px;
     padding: 0 12px;
   }
 
@@ -13254,15 +13467,6 @@ footer,
     gap: 5px;
     flex: 1 1 100%;
     order: 1;
-  }
-
-  .bb-search-toolbar__edit-btn {
-    flex: 1 1 100%;
-    order: 2;
-    justify-content: center;
-    padding: 10px 16px;
-    border-radius: 8px;
-    font-size: 14px;
   }
 
   .bb-search-toolbar__divider {

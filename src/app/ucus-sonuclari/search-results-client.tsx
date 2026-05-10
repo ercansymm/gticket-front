@@ -1,13 +1,25 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import SearchResultsMain from "@/page-components/SearchResultsMain";
+import { searchFlightsThunk, setSearchParams } from "@/redux/features/flightSlice";
+import type { AppDispatch, RootState } from "@/redux/store";
+import type { CabinClass, FlightSearchRequest } from "@/types";
 
 const SESSION_DURATION = 900; // 15 minutes in seconds
 
+const CABIN_MAP: Record<string, CabinClass> = {
+  economy: 'Economy',
+  premiumeconomy: 'PremiumEconomy',
+  business: 'Business',
+  first: 'First',
+};
+
 export default function SearchResultsClient() {
-  const searchResults = useSelector((state: { flight: { searchResults: unknown } }) => state.flight.searchResults);
+  const dispatch = useDispatch<AppDispatch>();
+  const searchResults = useSelector((state: RootState) => state.flight.searchResults);
+  const searchLoading = useSelector((state: RootState) => state.flight.searchLoading);
   const [timeLeft, setTimeLeft] = useState(SESSION_DURATION);
   const [showExpiredModal, setShowExpiredModal] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -18,6 +30,40 @@ export default function SearchResultsClient() {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
+  }, []);
+
+  // Auto-trigger search from URL params on mount (handles F5 / URL copy / browser back)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (searchResults || searchLoading) return;
+    const p = new URLSearchParams(window.location.search);
+    const from = p.get('from');
+    const to = p.get('to');
+    const date = p.get('date');
+    if (!from || !to || !date) return;
+    const params: FlightSearchRequest = {
+      origin: from.toUpperCase(),
+      destination: to.toUpperCase(),
+      departureDate: date,
+      returnDate: p.get('retdate') ?? null,
+      adultCount: Math.max(1, parseInt(p.get('adt') ?? '1', 10)),
+      childCount: Math.max(0, parseInt(p.get('chd') ?? '0', 10)),
+      infantCount: Math.max(0, parseInt(p.get('inf') ?? '0', 10)),
+      flightClass: CABIN_MAP[(p.get('class') ?? 'economy').toLowerCase()] ?? 'Economy',
+      flightType: p.get('type') === 'roundtrip' ? 'RT' : 'OW',
+      originCountryCode: 'TR',
+      destinationCountryCode: 'TR',
+      originIsCity: false,
+      destinationIsCity: false,
+      directFlightsOnly: false,
+      refundablesOnly: false,
+      searchTimeoutMilliseconds: 0,
+      preferredAirlines: null,
+      searchReason: 'SearchAndBook',
+    };
+    dispatch(setSearchParams(params));
+    dispatch(searchFlightsThunk(params));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Start/reset timer when searchResults change

@@ -669,6 +669,22 @@ const BannerFormOne = () => {
          return;
       }
 
+      // URL search params builder (OW + RT only; multi-city skips URL params)
+      const buildSearchUrl = (req: FlightSearchRequest): string => {
+         if (req.flightType === 'MP') return '/ucus-sonuclari';
+         const p = new URLSearchParams();
+         p.set('from', req.origin);
+         p.set('to', req.destination);
+         p.set('date', req.departureDate);
+         p.set('adt', String(req.adultCount ?? 1));
+         p.set('chd', String(req.childCount ?? 0));
+         p.set('inf', String(req.infantCount ?? 0));
+         p.set('class', (req.flightClass ?? 'Economy').toLowerCase());
+         p.set('type', req.flightType === 'RT' ? 'roundtrip' : 'oneway');
+         if (req.returnDate && req.flightType === 'RT') p.set('retdate', req.returnDate);
+         return `/ucus-sonuclari?${p.toString()}`;
+      };
+
       // Tarih formatı: YYYY-MM-DD (lokal saat dilimi — UTC kaymasını önler)
       const formatDateForApi = (d: Date): string => {
          const yyyy = d.getFullYear();
@@ -709,8 +725,8 @@ const BannerFormOne = () => {
       dispatch(setSearchParams(searchRequest));
       dispatch(searchFlightsThunk(searchRequest));
 
-      // Arama sonuçları sayfasına yönlendir
-      router.push('/ucus-sonuclari');
+      // Arama sonuçları sayfasına yönlendir (URL params ile — F5/geri tuşu desteği)
+      router.push(buildSearchUrl(searchRequest));
    };
 
    // ── Shared airport dropdown renderer ──
@@ -1320,6 +1336,13 @@ function renderTripToggle(
                style={disabled ? { opacity: 0.5, cursor: 'not-allowed', position: 'relative' } : undefined}
             >
                <input type="radio" name="tripType" value={value} checked={active === value} onChange={() => !disabled && setType(value)} disabled={disabled} />
+               <span className="bb-trip-radio__box">
+                  {active === value && (
+                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M2 6L5 9L10 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                     </svg>
+                  )}
+               </span>
                {icon && <i className={icon}></i>} {label}
                {badge && (
                   <span style={{ fontSize: 10, background: '#eab308', color: '#fff', borderRadius: 8, padding: '1px 6px', marginLeft: 6, fontWeight: 600 }}>
