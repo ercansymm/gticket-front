@@ -85,6 +85,11 @@
   border-radius: 50%;
   background: #475569;
 }
+@media (max-width: 480px) {
+  .chk-trust-bar__inner { gap: 12px; padding: 8px 16px; }
+  .chk-trust-bar { font-size: 11px; }
+  .chk-trust-bar__item + .chk-trust-bar__item::before { left: -7px; }
+}
 
 /* ==========================================================================
    ROUTE HEADER
@@ -243,8 +248,11 @@
   gap: 16px;
 }
 @media (max-width: 600px) {
-  .chk-flight__row { grid-template-columns: 36px 1fr 1fr; }
-  .chk-flight__route { display: none; }
+  .chk-flight__row { grid-template-columns: 36px 1fr auto 1fr; gap: 8px; }
+  .chk-flight__route { align-items: center; gap: 2px; }
+  .chk-flight__duration { font-size: 10px; }
+  .chk-flight__flightno { display: none; }
+  .chk-flight__track { display: none; }
 }
 .chk-flight__airline {
   width: 44px; height: 44px;
@@ -350,6 +358,9 @@
   max-width: 340px;
   margin: 0 auto 20px;
   perspective: 1000px;
+}
+@media (max-width: 400px) {
+  .chk-card-preview { max-width: calc(100vw - 32px); }
 }
 
 .chk-card-preview__inner {

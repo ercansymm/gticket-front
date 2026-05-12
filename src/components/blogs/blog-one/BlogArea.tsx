@@ -12,6 +12,7 @@ const thumbSrc = (url: string | null) => {
   if (url.startsWith("/uploads/")) return `${API_URL}${url}`;
   return url;
 };
+const isUpload = (url: string | null) => url?.startsWith("/uploads/") ?? false;
 
 const BlogArea = () => {
   const { t, lang } = useTranslation();
@@ -47,6 +48,7 @@ const BlogArea = () => {
                 width={400}
                 height={260}
                 loading="lazy"
+                unoptimized={isUpload(post.thumbUrl)}
               />
             )}
             <span className="bb-blog-card__tag">{isTr ? post.tagTr : post.tagEn}</span>

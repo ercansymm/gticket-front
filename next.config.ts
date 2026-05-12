@@ -25,8 +25,13 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "images.kiwi.com",
       },
+      {
+        protocol: "https",
+        hostname: "devtest.atabilet.com",
+      },
     ],
-    formats: ["image/avif", "image/webp"],
+    formats: ["image/webp"],
+    minimumCacheTTL: 2592000,
   },
 
   // SEO-uyumlu trailing slash
