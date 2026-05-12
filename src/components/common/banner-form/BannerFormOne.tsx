@@ -156,6 +156,7 @@ const BannerFormOne = () => {
       const urlFrom = searchParams?.get("from");
       const urlTo = searchParams?.get("to");
       const urlDate = searchParams?.get("date");
+      const urlReturn = searchParams?.get("retdate");
       const urlPax = searchParams?.get("pax");
       const urlClass = searchParams?.get("class");
       const urlType = searchParams?.get("type");
@@ -163,9 +164,12 @@ const BannerFormOne = () => {
       if (urlFrom) setFrom(urlFrom.toUpperCase());
       if (urlTo) setTo(urlTo.toUpperCase());
       if (urlDate) {
-         // T00:00:00 ekleyerek lokal saat diliminde parse et (UTC kaymasını önler)
          const d = new Date(urlDate.includes('T') ? urlDate : urlDate + 'T00:00:00');
          if (!isNaN(d.getTime())) setDepartDate(d);
+      }
+      if (urlReturn) {
+         const d = new Date(urlReturn.includes('T') ? urlReturn : urlReturn + 'T00:00:00');
+         if (!isNaN(d.getTime())) setReturnDate(d);
       }
       if (urlPax) {
          const n = parseInt(urlPax, 10);

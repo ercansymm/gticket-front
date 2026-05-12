@@ -8032,53 +8032,57 @@ footer,
 }
 
 @media (max-width: 768px) {
-  /* Ticket-style: single compact row on mobile */
   .bb-flight-card {
     border-radius: 10px;
     margin-bottom: 10px;
   }
 
+  /* 2-satır grid: [logo+isim | fiyat+buton] / [track tam genişlik] */
   .bb-flight-card__top {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 8px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "airline price"
+      "track   track";
+    gap: 8px 10px;
     padding: 12px 14px;
+    align-items: center;
   }
 
   .bb-flight-card__airline {
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    min-width: unset;
-    flex-shrink: 0;
-    width: 44px;
+    grid-area: airline;
+    min-width: 0;
   }
 
   .bb-flight-card__airline-logo {
-    width: 32px;
-    height: 32px;
+    width: 30px;
+    height: 30px;
     flex-shrink: 0;
   }
 
   .bb-flight-card__airline-logo img {
-    width: 32px;
-    height: 32px;
+    width: 30px;
+    height: 30px;
   }
 
-  .bb-flight-card__airline-info {
-    display: none;
+  .bb-flight-card__airline-name {
+    font-size: 12px;
+  }
+
+  .bb-flight-card__flight-number {
+    font-size: 11px;
   }
 
   .bb-flight-card__track {
-    flex: 1;
+    grid-area: track;
     min-width: 0;
-    padding-top: 0;
-    border-top: none;
+    width: 100%;
+    padding-top: 8px;
+    border-top: 1px solid #f3f4f6;
   }
 
   .bb-flight-card__track-time {
-    font-size: 16px;
+    font-size: 17px;
   }
 
   .bb-flight-card__track-code {
@@ -8090,11 +8094,11 @@ footer,
   }
 
   .bb-flight-card__price-section {
+    grid-area: price;
     flex-direction: column;
     align-items: flex-end;
     min-width: unset;
-    flex-shrink: 0;
-    gap: 6px;
+    gap: 5px;
   }
 
   .bb-flight-card__price-amount {
