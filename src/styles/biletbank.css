@@ -6241,13 +6241,6 @@ select.bb-flight-form__input {
     padding-bottom: 72px;
   }
 
-  .bb-flight-card__top {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-    padding: 14px;
-  }
-
   .bb-flight-card__action {
     width: 100%;
     justify-content: space-between;
@@ -8095,9 +8088,12 @@ footer,
 
   .bb-flight-card__price-section {
     grid-area: price;
+    display: flex;
     flex-direction: column;
     align-items: flex-end;
+    justify-content: flex-start;
     min-width: unset;
+    width: auto;
     gap: 5px;
   }
 
