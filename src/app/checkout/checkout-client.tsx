@@ -157,6 +157,9 @@ export default function CheckoutClient() {
   });
   const [cardErrors, setCardErrors] = useState<Record<string, string>>({});
   const [threeDSError, setThreeDSError] = useState<string | null>(null);
+  const [showExpiredModal, setShowExpiredModal] = useState(false);
+  const checkoutTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const checkoutOriginalTitleRef = useRef<string>('');
   const hasFinalized = useRef(false);
   const finalizeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -179,15 +182,32 @@ export default function CheckoutClient() {
   useEffect(() => { if (!allocateResult) router.push('/'); }, [allocateResult, router]);
   useEffect(() => { dispatch(setStep('passenger')); }, [dispatch]);
 
-  // Ödeme sayfasında 20 dakika geçince otomatik ana sayfaya yönlendir
+  // Ödeme sayfasında 20 dakika sayaç — tab başlığı + süre dolunca modal
   useEffect(() => {
-    const timer = setTimeout(() => {
-      dispatch(clearSearch());
-      dispatch(resetBooking());
-      dispatch(resetPayment());
-      router.push('/');
-    }, 20 * 60 * 1000);
-    return () => clearTimeout(timer);
+    const CHECKOUT_DURATION = 20 * 60;
+    checkoutOriginalTitleRef.current = document.title;
+    let remaining = CHECKOUT_DURATION;
+    const fmt = (s: number) => {
+      const m = Math.floor(s / 60);
+      const sec = s % 60;
+      return `${m}:${sec.toString().padStart(2, '0')}`;
+    };
+    document.title = `${fmt(remaining)} | ATABILET`;
+    checkoutTimerRef.current = setInterval(() => {
+      remaining -= 1;
+      if (remaining <= 0) {
+        clearInterval(checkoutTimerRef.current!);
+        checkoutTimerRef.current = null;
+        document.title = '0:00 | ATABILET';
+        setShowExpiredModal(true);
+      } else {
+        document.title = `${fmt(remaining)} | ATABILET`;
+      }
+    }, 1000);
+    return () => {
+      if (checkoutTimerRef.current) clearInterval(checkoutTimerRef.current);
+      document.title = checkoutOriginalTitleRef.current;
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -1026,6 +1046,36 @@ export default function CheckoutClient() {
               <button className="chk-modal__btn chk-modal__btn--secondary" onClick={handleRejectPriceChange}>Vazgeç</button>
               <button className="chk-modal__btn chk-modal__btn--primary" onClick={handleAcceptPriceChange}>Devam et</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Checkout session expired modal */}
+      {showExpiredModal && (
+        <div className="bb-session-modal-overlay">
+          <div className="bb-session-modal">
+            <div className="bb-session-modal__icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+            </div>
+            <h2 className="bb-session-modal__title">Rezervasyon Süresi Doldu</h2>
+            <p className="bb-session-modal__message">
+              Ödeme için ayrılan 20 dakikalık süre dolmuştur. Lütfen yeni bir arama yaparak tekrar deneyin.
+            </p>
+            <button
+              type="button"
+              className="bb-session-modal__btn"
+              onClick={() => {
+                dispatch(clearSearch());
+                dispatch(resetBooking());
+                dispatch(resetPayment());
+                router.push('/');
+              }}
+            >
+              Yeni Arama Yap
+            </button>
           </div>
         </div>
       )}
