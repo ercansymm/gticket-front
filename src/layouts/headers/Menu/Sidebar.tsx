@@ -23,7 +23,7 @@ const Sidebar = ({ sidebar, setSidebar }: SidebarProps) => {
                </div>
                <div className="contact-list mb-30">
                   <h4>Telefon</h4>
-                  <p>0850 555 00 00</p>
+                  <p>0850 302 02 82</p>
                </div>
                <div className="contact-list mb-30">
                   <h4>E-posta</h4>
@@ -31,10 +31,7 @@ const Sidebar = ({ sidebar, setSidebar }: SidebarProps) => {
                </div>
             </div>
             <div className="offCanvas__social-icon mt-30">
-               <Link href="#"><i className="fab fa-facebook-f"></i></Link>
-               <Link href="#"><i className="fab fa-twitter"></i></Link>
                <Link href="#"><i className="fab fa-instagram"></i></Link>
-               <Link href="#"><i className="fab fa-youtube"></i></Link>
             </div>
          </div>
          <div onClick={() => setSidebar(false)} className={`offCanvas__overly ${sidebar ? "active" : ""}`}></div>

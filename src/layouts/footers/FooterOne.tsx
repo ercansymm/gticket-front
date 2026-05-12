@@ -20,9 +20,9 @@ const FooterOne = () => {
                   <div className="col-lg-3 col-md-6 bb-footer__col">
                      <Logo variant="white" />
                      <p className="bb-footer__brand-desc">{t.footerDesc}</p>
-                     <a href="tel:08505550000" className="bb-footer__phone">
+                     <a href="tel:08503020282" className="bb-footer__phone">
                         <i className="fa-solid fa-phone-volume" />
-                        0850 555 00 00
+                        0850 302 0282
                      </a>
                      <div className="bb-footer__social">
                         <a href="https://www.instagram.com/atabiletcom/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
