@@ -5,6 +5,14 @@ import { useState, useEffect } from "react";
 const ScrollToTop = () => {
    const [visible, setVisible] = useState(false);
    const [hovered, setHovered] = useState(false);
+   const [isMobile, setIsMobile] = useState(false);
+
+   useEffect(() => {
+      const checkMobile = () => setIsMobile(window.innerWidth <= 768);
+      checkMobile();
+      window.addEventListener("resize", checkMobile);
+      return () => window.removeEventListener("resize", checkMobile);
+   }, []);
 
    useEffect(() => {
       const onScroll = () => {
@@ -14,7 +22,7 @@ const ScrollToTop = () => {
       return () => window.removeEventListener("scroll", onScroll);
    }, []);
 
-   if (!visible) return null;
+   if (!visible || isMobile) return null;
 
    return (
       <button

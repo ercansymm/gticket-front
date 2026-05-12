@@ -8,7 +8,8 @@ import HeaderOne from '@/layouts/headers/HeaderOne';
 import FooterOne from '@/layouts/footers/FooterOne';
 import PassengerForm from '@/components/booking/PassengerForm';
 import { prepareBookingThunk, setStep, setPassengers, setContactInfo, resetBooking } from '@/redux/features/bookingSlice';
-import { makePaymentThunk, finalizeShoppingThunk, clearFinalizeError } from '@/redux/features/paymentSlice';
+import { makePaymentThunk, finalizeShoppingThunk, clearFinalizeError, resetPayment } from '@/redux/features/paymentSlice';
+import { clearSearch } from '@/redux/features/flightSlice';
 import type { RootState, AppDispatch } from '@/redux/store';
 import type { PassengerItem, ContactInfo, MakePreBookingResponse } from '@/types/booking';
 import { useSessionTimeout } from '@/hooks/UseSessionTimeout';
@@ -177,6 +178,18 @@ export default function CheckoutClient() {
 
   useEffect(() => { if (!allocateResult) router.push('/'); }, [allocateResult, router]);
   useEffect(() => { dispatch(setStep('passenger')); }, [dispatch]);
+
+  // Ödeme sayfasında 20 dakika geçince otomatik ana sayfaya yönlendir
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      dispatch(clearSearch());
+      dispatch(resetBooking());
+      dispatch(resetPayment());
+      router.push('/');
+    }, 20 * 60 * 1000);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const airBookings = allocateResult?.airBookings ?? [];
   const passengers = allocateResult?.passengers ?? [];
