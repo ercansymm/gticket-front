@@ -624,6 +624,111 @@ export default function CheckoutClient() {
                   )}
                 </div>
               </div>
+
+              {/* ── Mobil Ödeme Formu (≤1023px'de gösterilir, sidebar gizlidir) ── */}
+              <div className="chk-section chk-mobile-pay">
+                <div className="chk-section__head">
+                  <div className="chk-section__title">Ödeme Bilgileri</div>
+                  <div className="chk-section__subtitle">Kart bilgilerinizi güvenli şekilde girin</div>
+                </div>
+                <div className="chk-section__body">
+                  <CardPreview
+                    cardNumber={cardForm.cardNumber}
+                    cardHolder={cardForm.cardHolderName}
+                    expiryMonth={cardForm.expiryMonth}
+                    expiryYear={cardForm.expiryYear}
+                    cvv={cardForm.cvv}
+                    showBack={cvvFocused}
+                  />
+                  <div className="chk-card-brands" style={{ marginBottom: 14 }}>
+                    <span>VISA</span><span>MASTER CARD</span>
+                  </div>
+                  <div className="chk-field">
+                    <label className="chk-field__label">Kart Üzerindeki İsim</label>
+                    <input type="text" placeholder="Ad Soyad"
+                      value={cardForm.cardHolderName}
+                      onChange={e => {
+                        const raw = e.target.value
+                          .replace(/[^A-Za-zÀ-ſİıĞğŞşÜüÖöÇç ]/g, '')
+                          .replace(/ {2,}/g, ' ')
+                          .replace(/^ +/, '');
+                        const formatted = raw
+                          .split(' ')
+                          .map((w: string) => w ? w.charAt(0).toLocaleUpperCase('tr-TR') + w.slice(1).toLocaleLowerCase('tr-TR') : '')
+                          .join(' ');
+                        setCardForm(p => ({ ...p, cardHolderName: formatted }));
+                        setCardErrors(p => ({ ...p, cardHolderName: '' }));
+                      }}
+                      maxLength={100} autoComplete="cc-name"
+                      className={`chk-input ${cardErrors.cardHolderName ? 'chk-input--error' : ''}`} />
+                    {cardErrors.cardHolderName && <div className="chk-field__error">{cardErrors.cardHolderName}</div>}
+                  </div>
+                  <div className="chk-field">
+                    <label className="chk-field__label">Kart Numarası</label>
+                    <input type="text" inputMode="numeric" placeholder="0000 0000 0000 0000"
+                      value={cardForm.cardNumber.replace(/(\d{4})(?=\d)/g, '$1 ')}
+                      onChange={e => {
+                        const v = e.target.value.replace(/\D/g, '').slice(0, 16);
+                        setCardForm(p => ({ ...p, cardNumber: v }));
+                        setCardErrors(p => ({ ...p, cardNumber: '' }));
+                      }}
+                      maxLength={19} autoComplete="cc-number"
+                      className={`chk-input chk-input--card ${cardErrors.cardNumber ? 'chk-input--error' : ''}`} />
+                    {cardErrors.cardNumber && <div className="chk-field__error">{cardErrors.cardNumber}</div>}
+                  </div>
+                  <div className="chk-field-row chk-field-row--exp">
+                    <div className="chk-field">
+                      <label className="chk-field__label">Son Kullanma</label>
+                      <div className="chk-exp-row">
+                        <select value={cardForm.expiryMonth}
+                          onChange={e => { setCardForm(p => ({ ...p, expiryMonth: e.target.value })); setCardErrors(p => ({ ...p, expiryMonth: '' })); }}
+                          autoComplete="cc-exp-month"
+                          className={`chk-select ${cardErrors.expiryMonth ? 'chk-select--error' : ''}`}>
+                          <option value="">AA</option>
+                          {Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0')).map(m => (
+                            <option key={m} value={m}>{m}</option>
+                          ))}
+                        </select>
+                        <select value={cardForm.expiryYear}
+                          onChange={e => { setCardForm(p => ({ ...p, expiryYear: e.target.value })); setCardErrors(p => ({ ...p, expiryYear: '' })); }}
+                          autoComplete="cc-exp-year"
+                          className={`chk-select ${cardErrors.expiryYear ? 'chk-select--error' : ''}`}>
+                          <option value="">YYYY</option>
+                          {Array.from({ length: 10 }, (_, i) => String(new Date().getFullYear() + i)).map(y => (
+                            <option key={y} value={y}>{y}</option>
+                          ))}
+                        </select>
+                      </div>
+                      {(cardErrors.expiryMonth || cardErrors.expiryYear) && (
+                        <div className="chk-field__error">{cardErrors.expiryMonth || cardErrors.expiryYear}</div>
+                      )}
+                    </div>
+                    <div className="chk-field">
+                      <label className="chk-field__label">CVV</label>
+                      <input type="text" inputMode="numeric" placeholder="•••"
+                        value={cardForm.cvv}
+                        onChange={e => { const v = e.target.value.replace(/\D/g, '').slice(0, 4); setCardForm(p => ({ ...p, cvv: v })); setCardErrors(p => ({ ...p, cvv: '' })); }}
+                        onFocus={() => setCvvFocused(true)}
+                        onBlur={() => setCvvFocused(false)}
+                        maxLength={4} autoComplete="cc-csc"
+                        className={`chk-input ${cardErrors.cvv ? 'chk-input--error' : ''}`} />
+                      {cardErrors.cvv && <div className="chk-field__error">{cardErrors.cvv}</div>}
+                    </div>
+                  </div>
+                  <button type="button" className="chk-summary__pay-btn" style={{ marginTop: 16 }}
+                    disabled={payDisabled} onClick={triggerPassengerSubmit}>
+                    {isProcessing ? 'İşleniyor...' : (
+                      <>
+                        <IconLock size={15} />
+                        <span>Güvenli Ödeme Yap</span>
+                      </>
+                    )}
+                  </button>
+                  <div className="chk-summary__secure" style={{ marginTop: 8 }}>
+                    <IconShield size={13} /><span>3D Secure ile güvenli ödeme</span>
+                  </div>
+                </div>
+              </div>
             </div>
             {/* /chk-main */}
 

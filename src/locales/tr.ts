@@ -29,7 +29,7 @@ export const tr = {
 
   // Flight Form
   oneWay: "Tek Yön",
-  roundTrip: "Gidiş Dönüş",
+  roundTrip: "Gidiş-Dönüş",
   multiCity: "Çoklu Uçuş",
   group: "Grup",
   from: "",
