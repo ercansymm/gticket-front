@@ -779,6 +779,28 @@
 .chk-modal__price-col-value { font-size: 20px; font-weight: 800; color: var(--chk-navy); }
 
 /* ==========================================================================
+   MOBILE PAYMENT SECTION
+   ========================================================================== */
+.chk-mobile-pay {
+  display: none;
+}
+@media (max-width: 1023px) {
+  .chk-mobile-pay {
+    display: block;
+  }
+  .chk-mobile-pay .chk-card-preview {
+    max-width: 100%;
+    margin-bottom: 16px;
+  }
+  .chk-mobile-pay .chk-field {
+    margin-bottom: 12px;
+  }
+  .chk-mobile-pay .chk-field:last-of-type {
+    margin-bottom: 0;
+  }
+}
+
+/* ==========================================================================
    PASSENGER FORM — pf- prefix, obilet style
    ========================================================================== */
 .pf-section { margin-bottom: 0; }

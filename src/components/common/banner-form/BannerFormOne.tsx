@@ -266,7 +266,9 @@ const BannerFormOne = () => {
          const target = e.target as Node;
          if (fromRef.current && !fromRef.current.contains(target)) setFromOpen(false);
          if (toRef.current && !toRef.current.contains(target)) setToOpen(false);
-         if (paxRef.current && !paxRef.current.contains(target)) setPassengerOpen(false);
+         // Portal renders outside paxRef, so also check [data-pax-portal] to avoid closing when tapping inside the bottom sheet
+         const inPaxPortal = (target as Element).closest?.('[data-pax-portal]');
+         if (paxRef.current && !paxRef.current.contains(target) && !inPaxPortal) setPassengerOpen(false);
          // Close multi-city dropdowns only when clicking outside the multi-city form
          if (multiCityRef.current && !multiCityRef.current.contains(target)) {
             setSegments(prev => prev.map(s => ({ ...s, fromOpen: false, toOpen: false })));
@@ -1063,7 +1065,7 @@ const BannerFormOne = () => {
       const sheet = (
          <>
             <div className="bb-pax-overlay" onClick={closePax} onTouchEnd={(e) => { e.preventDefault(); closePax(); }} />
-            <div className="bb-flight-form__pax-dropdown bb-flight-form__pax-dropdown--portal">
+            <div className="bb-flight-form__pax-dropdown bb-flight-form__pax-dropdown--portal" data-pax-portal>
                <div className="bb-pax-drag-handle" />
                <p className="bb-pax-section-title">{t.passenger}</p>
                {paxRows.map(({ key, label, desc, icon }) => (

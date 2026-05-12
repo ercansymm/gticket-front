@@ -914,6 +914,7 @@ body.bb-home .bb-header-wrap:not(.bb-header-wrap--scrolled) .bb-header-btn:not(.
   cursor: pointer;
   padding: 6px 12px;
   border-radius: 20px;
+  border: 1.5px solid transparent;
   transition: all var(--bb-transition);
 }
 
@@ -8031,66 +8032,96 @@ footer,
 }
 
 @media (max-width: 768px) {
-  /* Grid layout: [airline | price] / [track track] */
+  /* Ticket-style: single compact row on mobile */
+  .bb-flight-card {
+    border-radius: 10px;
+    margin-bottom: 10px;
+  }
+
   .bb-flight-card__top {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    grid-template-areas:
-      "airline price"
-      "track   track";
-    gap: 10px 12px;
-    padding: 14px 16px;
+    display: flex;
+    flex-direction: row;
     align-items: center;
+    gap: 8px;
+    padding: 12px 14px;
   }
 
   .bb-flight-card__airline {
-    grid-area: airline;
-    min-width: unset;
-  }
-
-  .bb-flight-card__track {
-    grid-area: track;
-    min-width: unset;
-    width: 100%;
-    padding-top: 10px;
-    border-top: 1px solid #f3f4f6;
-  }
-
-  .bb-flight-card__price-section {
-    grid-area: price;
     flex-direction: column;
-    align-items: flex-end;
+    align-items: center;
+    gap: 4px;
     min-width: unset;
-  }
-
-  .bb-flight-card__track-time {
-    font-size: 18px;
-  }
-
-  .bb-flight-card__price-amount {
-    font-size: 20px;
-    white-space: nowrap;
-  }
-
-  .bb-flight-card__select-btn {
-    padding: 9px 18px;
-    font-size: 13px;
-    white-space: nowrap;
-  }
-
-  .bb-flight-card__badges-row {
-    padding: 0 16px 12px;
+    flex-shrink: 0;
+    width: 44px;
   }
 
   .bb-flight-card__airline-logo {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     flex-shrink: 0;
   }
 
   .bb-flight-card__airline-logo img {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
+  }
+
+  .bb-flight-card__airline-info {
+    display: none;
+  }
+
+  .bb-flight-card__track {
+    flex: 1;
+    min-width: 0;
+    padding-top: 0;
+    border-top: none;
+  }
+
+  .bb-flight-card__track-time {
+    font-size: 16px;
+  }
+
+  .bb-flight-card__track-code {
+    font-size: 11px;
+  }
+
+  .bb-flight-card__track-duration {
+    font-size: 10px;
+  }
+
+  .bb-flight-card__price-section {
+    flex-direction: column;
+    align-items: flex-end;
+    min-width: unset;
+    flex-shrink: 0;
+    gap: 6px;
+  }
+
+  .bb-flight-card__price-amount {
+    font-size: 16px;
+    white-space: nowrap;
+  }
+
+  .bb-flight-card__select-btn {
+    padding: 7px 14px;
+    font-size: 12px;
+    white-space: nowrap;
+    border-radius: 6px;
+  }
+
+  .bb-flight-card__badges-row {
+    padding: 0 14px 10px;
+    gap: 4px;
+  }
+
+  .bb-flight-card__details-toggle {
+    font-size: 11px;
+    padding: 3px 8px;
+  }
+
+  .bb-flight-card__best-badge {
+    font-size: 11px;
+    padding: 4px 10px;
   }
 }
 
