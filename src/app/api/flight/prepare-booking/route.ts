@@ -128,6 +128,21 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Başarılı prebooking — make-payment'ın ihtiyacı olan fiyat + bookingId'yi cache'e yaz
+    if (prebookRes.ok) {
+      const normalized = normalizeToCamelCase(prebookDataRaw) as Record<string, unknown>;
+      if (!normalized.hasError && normalized.totalFare) {
+        const currentCache = getSessionCache(searchId) ?? {};
+        setSessionCache(searchId, {
+          ...currentCache,
+          grandTotal: normalized.totalFare,
+          totalFare: normalized.totalFare,
+          currency: normalized.currency ?? currentCache.currency ?? 'TRY',
+          bookingId: normalized.bookingId ?? currentCache.bookingId ?? null,
+        });
+      }
+    }
+
     return NextResponse.json(filterSensitiveFields(prebookDataRaw), { status: prebookRes.status });
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {

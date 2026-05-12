@@ -13,6 +13,7 @@ const thumbSrc = (url: string | null) => {
   if (url.startsWith("/uploads/")) return `${API_URL}${url}`;
   return url;
 };
+const isUpload = (url: string | null) => url?.startsWith("/uploads/") ?? false;
 
 const Blog = ({ style: _style }: { style?: boolean }) => {
   const { t, lang } = useTranslation();
@@ -67,6 +68,7 @@ const Blog = ({ style: _style }: { style?: boolean }) => {
                       fill
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 400px"
                       loading="lazy"
+                      unoptimized={isUpload(post.thumbUrl)}
                     />
                   ) : (
                     <div style={{ position: "absolute", inset: 0, background: "#e2e8f0" }} />

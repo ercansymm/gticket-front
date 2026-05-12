@@ -1,32 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Görsel optimizasyonu
+  // Görsel optimizasyonu — unoptimized: true ile next/image encode adımı atlanır,
+  // resimler doğrudan kaynak URL'den sunulur. Cloudflare Cache-Control ile cache'ler.
   images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "www.atabilet.com",
-      },
-      {
-        protocol: "https",
-        hostname: "atabilet.com",
-      },
-      {
-        protocol: "http",
-        hostname: "37.148.212.253",
-        port: "5000",
-      },
-      {
-        protocol: "https",
-        hostname: "pics.avs.io",
-      },
-      {
-        protocol: "https",
-        hostname: "images.kiwi.com",
-      },
-    ],
-    formats: ["image/avif", "image/webp"],
+    unoptimized: true,
   },
 
   // SEO-uyumlu trailing slash

@@ -15,6 +15,7 @@ const thumbSrc = (url: string | null) => {
   if (url.startsWith("/uploads/")) return `${API_URL}${url}`;
   return url;
 };
+const isUpload = (url: string | null) => url?.startsWith("/uploads/") ?? false;
 
 interface Props {
   post: ApiBlogPost;
@@ -105,6 +106,7 @@ const BlogDetailsClient = ({ post }: Props) => {
                     width={900}
                     height={480}
                     priority
+                    unoptimized={isUpload(post.thumbUrl)}
                     style={{ width: "100%", height: "auto" }}
                   />
                 </div>
@@ -145,6 +147,7 @@ const BlogDetailsClient = ({ post }: Props) => {
                             alt={isTr ? item.titleTr : item.titleEn}
                             fill
                             sizes="80px"
+                            unoptimized={isUpload(item.thumbUrl)}
                             style={{ objectFit: "cover" }}
                           />
                         )}
