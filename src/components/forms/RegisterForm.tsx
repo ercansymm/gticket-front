@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import OtpInput from "@/components/auth/OtpInput";
 
-/* Phone format per country dial code — checkout (PassengerForm) ile aynı */
+/* Phone format per country dial code */
 interface PhoneFormat { groups: number[]; max: number; placeholder: string; isValid: (d: string) => boolean; }
 const PHONE_FORMATS: Record<string, PhoneFormat> = {
   "+90": { groups: [3, 3, 2, 2],   max: 10, placeholder: "5XX XXX XX XX",   isValid: (d) => d.length === 10 && d.startsWith("5") },
@@ -30,9 +31,12 @@ function formatPhone(digits: string, code: string): string {
   return parts.join(" ");
 }
 
+type Step = "form" | "otp";
+
 const RegisterForm = () => {
   const router = useRouter();
 
+  // Form alanları
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -41,10 +45,22 @@ const RegisterForm = () => {
   const [confirm, setConfirm] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [terms, setTerms] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  // Simple password strength meter (length + variety)
+  // UI state
+  const [step, setStep] = useState<Step>("form");
+  const [maskedPhone, setMaskedPhone] = useState("");
+  const [otpValue, setOtpValue] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  // Arka planda saklanan bilgiler (OTP adımında gerekli)
+  const [savedEmail, setSavedEmail] = useState("");
+  const [savedPassword, setSavedPassword] = useState("");
+  const [savedPhone, setSavedPhone] = useState("");
+
   const strength = useMemo(() => {
     if (!password) return { score: 0, label: "", color: "#e2e8f0" };
     let score = 0;
@@ -57,34 +73,22 @@ const RegisterForm = () => {
     return { score, label: labels[score], color: colors[score] };
   }, [password]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // ── Adım 1: Kayıt formu gönder ──────────────────────────────────────
+  const handleSubmit = async (e: { preventDefault(): void }) => {
     e.preventDefault();
     setError(null);
 
-    if (!terms) {
-      setError("Devam etmek için kullanım şartlarını kabul etmelisiniz.");
-      return;
-    }
+    if (!terms) { setError("Devam etmek için kullanım şartlarını kabul etmelisiniz."); return; }
+
     const phoneDigits = phone.replace(/\D/g, "");
-    if (!phoneDigits) {
-      setError("Telefon numarası zorunludur.");
-      return;
-    }
-    if (!getPhoneFormat(phoneCode).isValid(phoneDigits)) {
-      setError("Geçerli bir telefon numarası giriniz.");
-      return;
-    }
-    if (password.length < 6) {
-      setError("Şifre en az 6 karakter olmalıdır.");
-      return;
-    }
-    if (password !== confirm) {
-      setError("Şifreler eşleşmiyor.");
-      return;
-    }
+    if (!phoneDigits) { setError("Telefon numarası zorunludur."); return; }
+    if (!getPhoneFormat(phoneCode).isValid(phoneDigits)) { setError("Geçerli bir telefon numarası giriniz."); return; }
+    if (password.length < 6) { setError("Şifre en az 6 karakter olmalıdır."); return; }
+    if (password !== confirm) { setError("Şifreler eşleşmiyor."); return; }
 
     setLoading(true);
     try {
+      const fullPhone = (phoneCode + phoneDigits).trim();
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -92,39 +96,176 @@ const RegisterForm = () => {
           fullName: fullName.trim(),
           email: email.trim().toLowerCase(),
           password,
-          phone: (phoneCode + phoneDigits).trim(),
+          phone: fullPhone,
         }),
       });
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        // Backend already returns "Bu e-posta zaten kayıtlı." for duplicates.
         setError(data?.error || "Kayıt başarısız.");
         setLoading(false);
         return;
       }
 
-      // Auto-login
-      const signInRes = await signIn("credentials", {
-        email: email.trim().toLowerCase(),
-        password,
-        redirect: false,
-      });
-
+      if (data?.requiresPhoneVerification) {
+        // OTP adımına geç
+        setSavedEmail(email.trim().toLowerCase());
+        setSavedPassword(password);
+        setSavedPhone(fullPhone);
+        setMaskedPhone(data.maskedPhone ?? fullPhone);
+        setStep("otp");
+        startResendCooldown();
+      } else {
+        // OTP gerekmiyorsa (eski kullanıcılar) direkt login
+        await autoLogin(email.trim().toLowerCase(), password);
+      }
+    } catch {
+      setError("Sunucuya ulaşılamadı.");
+    } finally {
       setLoading(false);
+    }
+  };
 
-      if (signInRes?.error) {
-        router.push("/giris");
+  // ── Adım 2: OTP doğrula ─────────────────────────────────────────────
+  const handleVerifyOtp = async () => {
+    if (otpValue.length < 6) { setError("Lütfen 6 haneli kodu eksiksiz girin."); return; }
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/verify-phone", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: savedPhone, code: otpValue }),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        setError(data?.error || "Kod doğrulanamadı.");
+        setLoading(false);
         return;
       }
-      router.push("/");
-      router.refresh();
+
+      // Telefon doğrulandi — auto login
+      setSuccessMsg("Telefon doğrulandı! Giriş yapılıyor...");
+      await autoLogin(savedEmail, savedPassword);
     } catch {
       setError("Sunucuya ulaşılamadı.");
       setLoading(false);
     }
   };
 
+  // ── Kodu yeniden gönder ─────────────────────────────────────────────
+  const handleResend = async () => {
+    if (resendCooldown > 0) return;
+    setError(null);
+    setResendLoading(true);
+    try {
+      const res = await fetch("/api/auth/resend-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: savedPhone }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { setError(data?.error || "Kod gönderilemedi."); }
+      else { setSuccessMsg("Yeni kod gönderildi."); startResendCooldown(); }
+    } catch {
+      setError("Sunucuya ulaşılamadı.");
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
+  const autoLogin = async (emailVal: string, pass: string) => {
+    const signInRes = await signIn("credentials", { email: emailVal, password: pass, redirect: false });
+    if (signInRes?.error) { router.push("/giris"); return; }
+    router.push("/");
+    router.refresh();
+  };
+
+  const startResendCooldown = () => {
+    setResendCooldown(60);
+    const t = setInterval(() => {
+      setResendCooldown((c) => {
+        if (c <= 1) { clearInterval(t); return 0; }
+        return c - 1;
+      });
+    }, 1000);
+  };
+
+  // ═══════════════════════════════════════════════════════════════════
+  // OTP Adımı
+  // ═══════════════════════════════════════════════════════════════════
+  if (step === "otp") {
+    return (
+      <div className="ab-auth__otp-step">
+        <div className="ab-auth__otp-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#047857" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.67A2 2 0 012 .84h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 8.64a16 16 0 006.29 6.29l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z" />
+          </svg>
+        </div>
+        <h2 className="ab-auth__otp-title">Telefonunuzu Doğrulayın</h2>
+        <p className="ab-auth__otp-desc">
+          <strong>{maskedPhone}</strong> numaralı telefonunuza 6 haneli doğrulama kodu gönderdik.
+        </p>
+
+        <OtpInput onChange={setOtpValue} disabled={loading} />
+
+        {error && (
+          <div className="ab-auth__alert ab-auth__alert--error" role="alert">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span>{error}</span>
+          </div>
+        )}
+        {successMsg && !error && (
+          <div className="ab-auth__alert ab-auth__alert--success" role="status">
+            <span>{successMsg}</span>
+          </div>
+        )}
+
+        <button
+          type="button"
+          className="ab-auth__submit"
+          onClick={handleVerifyOtp}
+          disabled={loading || otpValue.length < 6}
+          style={{ marginTop: 16 }}
+        >
+          {loading ? (
+            <>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: "spin 1s linear infinite" }}>
+                <path d="M21 12a9 9 0 11-6.219-8.56" />
+              </svg>
+              Doğrulanıyor...
+            </>
+          ) : "Doğrula"}
+        </button>
+
+        <div className="ab-auth__otp-resend">
+          {resendCooldown > 0 ? (
+            <span className="ab-auth__text-muted">Yeniden gönder ({resendCooldown}s)</span>
+          ) : (
+            <button
+              type="button"
+              className="ab-auth__link-btn"
+              onClick={handleResend}
+              disabled={resendLoading}
+            >
+              {resendLoading ? "Gönderiliyor..." : "Kodu yeniden gönder"}
+            </button>
+          )}
+        </div>
+
+        <button type="button" className="ab-auth__link-btn" onClick={() => { setStep("form"); setError(null); }}>
+          Geri dön
+        </button>
+      </div>
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Kayıt Formu (Adım 1)
+  // ═══════════════════════════════════════════════════════════════════
   return (
     <>
       <button
@@ -151,17 +292,8 @@ const RegisterForm = () => {
         <label className="ab-auth__label" htmlFor="reg-name">Ad Soyad</label>
         <div className="ab-auth__input-wrap">
           <i className="fa-regular fa-user ab-auth__leading" />
-          <input
-            id="reg-name"
-            className="ab-auth__input"
-            type="text"
-            placeholder="Ad ve soyadınız"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            required
-            autoComplete="name"
-            autoFocus
-          />
+          <input id="reg-name" className="ab-auth__input" type="text" placeholder="Ad ve soyadınız"
+            value={fullName} onChange={(e) => setFullName(e.target.value)} required autoComplete="name" autoFocus />
         </div>
       </div>
 
@@ -169,56 +301,35 @@ const RegisterForm = () => {
         <label className="ab-auth__label" htmlFor="reg-email">E-posta</label>
         <div className="ab-auth__input-wrap">
           <i className="fa-regular fa-envelope ab-auth__leading" />
-          <input
-            id="reg-email"
-            className="ab-auth__input"
-            type="email"
-            inputMode="email"
-            placeholder="ornek@mail.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            autoComplete="email"
-          />
+          <input id="reg-email" className="ab-auth__input" type="email" inputMode="email" placeholder="ornek@mail.com"
+            value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
         </div>
       </div>
 
       <div className="ab-auth__field">
         <label className="ab-auth__label" htmlFor="reg-phone">Cep Telefonu</label>
         <div className="ab-auth__phone">
-          <select
-            className="ab-auth__phone-code"
-            value={phoneCode}
+          <select className="ab-auth__phone-code" value={phoneCode}
             onChange={(e) => {
               const newCode = e.target.value;
-              const newMax = getPhoneFormat(newCode).max;
-              const digits = phone.replace(/\D/g, "").slice(0, newMax);
+              const newMax  = getPhoneFormat(newCode).max;
+              const digits  = phone.replace(/\D/g, "").slice(0, newMax);
               setPhoneCode(newCode);
               setPhone(formatPhone(digits, newCode));
-            }}
-            aria-label="Ülke kodu"
-          >
+            }} aria-label="Ülke kodu">
             <option value="+90">TR (+90)</option>
             <option value="+1">US (+1)</option>
             <option value="+44">GB (+44)</option>
             <option value="+49">DE (+49)</option>
             <option value="+33">FR (+33)</option>
           </select>
-          <input
-            id="reg-phone"
-            className="ab-auth__input ab-auth__phone-input"
-            type="tel"
-            inputMode="tel"
-            placeholder={getPhoneFormat(phoneCode).placeholder}
-            value={phone}
+          <input id="reg-phone" className="ab-auth__input ab-auth__phone-input" type="tel" inputMode="tel"
+            placeholder={getPhoneFormat(phoneCode).placeholder} value={phone}
             onChange={(e) => {
-              const max = getPhoneFormat(phoneCode).max;
+              const max    = getPhoneFormat(phoneCode).max;
               const digits = e.target.value.replace(/\D/g, "").slice(0, max);
               setPhone(formatPhone(digits, phoneCode));
-            }}
-            required
-            autoComplete="tel-national"
-          />
+            }} required autoComplete="tel-national" />
         </div>
       </div>
 
@@ -226,46 +337,20 @@ const RegisterForm = () => {
         <label className="ab-auth__label" htmlFor="reg-password">Şifre</label>
         <div className="ab-auth__input-wrap">
           <i className="fa-solid fa-lock ab-auth__leading" />
-          <input
-            id="reg-password"
-            className="ab-auth__input ab-auth__input--has-trailing"
-            type={showPassword ? "text" : "password"}
-            placeholder="En az 6 karakter"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            autoComplete="new-password"
-            minLength={6}
-          />
-          <button
-            type="button"
-            className="ab-auth__toggle"
+          <input id="reg-password" className="ab-auth__input ab-auth__input--has-trailing"
+            type={showPassword ? "text" : "password"} placeholder="En az 6 karakter"
+            value={password} onChange={(e) => setPassword(e.target.value)}
+            required autoComplete="new-password" minLength={6} />
+          <button type="button" className="ab-auth__toggle"
             onClick={() => setShowPassword((s) => !s)}
-            aria-label={showPassword ? "Şifreyi gizle" : "Şifreyi göster"}
-            tabIndex={-1}
-          >
+            aria-label={showPassword ? "Şifreyi gizle" : "Şifreyi göster"} tabIndex={-1}>
             <i className={`fa-regular ${showPassword ? "fa-eye-slash" : "fa-eye"}`} />
           </button>
         </div>
         {password && (
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
-            <div
-              style={{
-                flex: 1,
-                height: 4,
-                borderRadius: 4,
-                background: "#e2e8f0",
-                overflow: "hidden",
-              }}
-            >
-              <div
-                style={{
-                  width: `${(strength.score / 4) * 100}%`,
-                  height: "100%",
-                  background: strength.color,
-                  transition: "width 0.2s, background 0.2s",
-                }}
-              />
+            <div style={{ flex: 1, height: 4, borderRadius: 4, background: "#e2e8f0", overflow: "hidden" }}>
+              <div style={{ width: `${(strength.score / 4) * 100}%`, height: "100%", background: strength.color, transition: "width 0.2s, background 0.2s" }} />
             </div>
             <span style={{ fontSize: 11.5, color: strength.color, fontWeight: 600, minWidth: 70, textAlign: "right" }}>
               {strength.label}
@@ -278,22 +363,13 @@ const RegisterForm = () => {
         <label className="ab-auth__label" htmlFor="reg-confirm">Şifre Tekrar</label>
         <div className="ab-auth__input-wrap">
           <i className="fa-solid fa-lock ab-auth__leading" />
-          <input
-            id="reg-confirm"
-            className="ab-auth__input"
-            type={showPassword ? "text" : "password"}
-            placeholder="Şifrenizi tekrar girin"
-            value={confirm}
-            onChange={(e) => setConfirm(e.target.value)}
-            required
-            autoComplete="new-password"
-            minLength={6}
-          />
+          <input id="reg-confirm" className="ab-auth__input"
+            type={showPassword ? "text" : "password"} placeholder="Şifrenizi tekrar girin"
+            value={confirm} onChange={(e) => setConfirm(e.target.value)}
+            required autoComplete="new-password" minLength={6} />
         </div>
         {confirm && password !== confirm && (
-          <span className="ab-auth__hint" style={{ color: "#dc2626" }}>
-            Şifreler eşleşmiyor.
-          </span>
+          <span className="ab-auth__hint" style={{ color: "#dc2626" }}>Şifreler eşleşmiyor.</span>
         )}
       </div>
 
@@ -305,11 +381,7 @@ const RegisterForm = () => {
       )}
 
       <label className="ab-auth__check" style={{ marginTop: 4 }}>
-        <input
-          type="checkbox"
-          checked={terms}
-          onChange={(e) => setTerms(e.target.checked)}
-        />
+        <input type="checkbox" checked={terms} onChange={(e) => setTerms(e.target.checked)} />
         <span>
           <Link href="/kullanim-sartlari" className="ab-auth__link">Kullanım şartlarını</Link>
           {", "}
