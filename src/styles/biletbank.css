@@ -216,6 +216,11 @@ img, video, iframe, table {
   transition: box-shadow 0.25s ease;
 }
 
+/* Anasayfa body arka planı — şeffaf header altındaki boşlukta beyaz görünmemesi için */
+body.bb-home {
+  background-color: #0a1628;
+}
+
 /* Anasayfada header şeffaf — fotoğraf hero'dan arkaya taşar */
 body.bb-home .bb-header-wrap {
   background: linear-gradient(
@@ -6342,6 +6347,11 @@ select.bb-flight-form__input {
     border-radius: 0;
     margin-bottom: 16px;
   }
+
+  /* Kartlar tam genişlik — yanlardaki padding'i azalt */
+  .bb-search-results {
+    padding: 12px 6px 0;
+  }
 }
 
 /* ── MOBILE FILTER BAR (Enuygun/Ucuzabilet pattern) ── */
@@ -8104,6 +8114,7 @@ footer,
 
   .bb-flight-card__select-btn {
     padding: 7px 14px;
+    min-height: unset;
     font-size: 12px;
     white-space: nowrap;
     border-radius: 6px;
