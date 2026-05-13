@@ -12076,17 +12076,18 @@ footer,
     display: none;
   }
 
-  /* Flight card mobile — keep consistent with grid layout */
+  /* Flight card mobile — flex column layout */
   .bb-flight-card {
     border-radius: 12px;
     margin-bottom: 10px;
   }
 
-  /* These are handled by the @media (max-width: 768px) grid block above */
+  /* Price + select button: full-width row, price left / button right */
   .bb-flight-card__price-section {
-    flex-direction: column;
-    align-items: flex-end;
-    width: auto;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
     min-width: unset;
     padding-top: 0;
     border-top: none;
