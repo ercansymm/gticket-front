@@ -8000,13 +8000,18 @@ footer,
   color: #fff;
   border: none;
   border-radius: 8px;
-  padding: 10px 28px;
+  padding: 10px 0;
+  width: 120px;
+  min-width: 120px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s;
   white-space: nowrap;
   font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .bb-flight-card__select-btn:hover {
@@ -8059,7 +8064,7 @@ footer,
     flex-wrap: nowrap;
     align-items: stretch;
     gap: 0;
-    padding: 12px 14px 0;
+    padding: 14px 16px 0;
   }
 
   /* Satır 1 — Havayolu: [logo | isim + sefer no] */
@@ -8067,24 +8072,24 @@ footer,
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     min-width: 0;
-    padding-bottom: 8px;
+    padding-bottom: 12px;
   }
 
   .bb-flight-card__airline-logo {
-    width: 26px;
-    height: 26px;
+    width: 32px;
+    height: 32px;
     flex-shrink: 0;
   }
 
   .bb-flight-card__airline-logo img {
-    width: 26px;
-    height: 26px;
+    width: 32px;
+    height: 32px;
   }
 
   .bb-flight-card__airline-name {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
     white-space: nowrap;
     overflow: hidden;
@@ -8092,7 +8097,7 @@ footer,
   }
 
   .bb-flight-card__flight-number {
-    font-size: 11px;
+    font-size: 12px;
     color: #9ca3af;
     white-space: nowrap;
   }
@@ -8109,26 +8114,26 @@ footer,
     flex: none;
     width: 100%;
     min-width: 0;
-    padding: 10px 0;
+    padding: 14px 0;
     border-top: 1px solid #f0f2f5;
     border-bottom: 1px solid #f0f2f5;
   }
 
   .bb-flight-card__track-endpoint {
-    min-width: 50px;
+    min-width: 52px;
   }
 
   .bb-flight-card__track-time {
-    font-size: 19px;
+    font-size: 22px;
     font-weight: 700;
   }
 
   .bb-flight-card__track-code {
-    font-size: 11px;
+    font-size: 12px;
   }
 
   .bb-flight-card__track-duration {
-    font-size: 10px;
+    font-size: 11px;
   }
 
   /* Satır 3 — Fiyat + Seç butonu: space-between */
@@ -8139,12 +8144,12 @@ footer,
     justify-content: space-between;
     width: 100%;
     min-width: unset;
-    padding: 10px 0 10px;
+    padding: 14px 0 12px;
     gap: 8px;
   }
 
   .bb-flight-card__price-amount {
-    font-size: 19px;
+    font-size: 21px;
     font-weight: 800;
     white-space: nowrap;
     color: var(--ab-primary);
@@ -8152,8 +8157,10 @@ footer,
 
   .bb-flight-card__select-btn {
     flex-shrink: 0;
-    padding: 9px 20px;
-    font-size: 13px;
+    padding: 11px 0;
+    width: 110px;
+    min-width: 110px;
+    font-size: 14px;
     font-weight: 600;
     min-height: unset;
     border-radius: 8px;
@@ -8162,13 +8169,13 @@ footer,
 
   /* ── Detay satırı ── */
   .bb-flight-card__badges-row {
-    padding: 0 14px 10px;
+    padding: 0 16px 12px;
     gap: 4px;
   }
 
   .bb-flight-card__details-toggle {
-    font-size: 11px;
-    padding: 3px 8px;
+    font-size: 12px;
+    padding: 4px 10px;
   }
 
   .bb-flight-card__best-badge {
@@ -12165,29 +12172,28 @@ footer,
 /* ── Small mobile (<480px) enhancements ── */
 @media (max-width: 479px) {
   .bb-flight-card__top {
-    padding: 10px 12px 0;
+    padding: 12px 14px 0;
   }
 
   .bb-flight-card__track-time {
-    font-size: 17px;
+    font-size: 20px;
   }
 
   .bb-flight-card__price-amount {
-    font-size: 17px;
+    font-size: 19px;
   }
 
   .bb-flight-card__select-btn {
-    padding: 8px 14px;
-    font-size: 12px;
-    transform: none !important;
+    padding: 10px 18px;
+    font-size: 13px;
   }
 
   .bb-flight-card__airline-name {
-    font-size: 12px;
+    font-size: 13px;
   }
 
   .bb-flight-card__flight-number {
-    font-size: 10px;
+    font-size: 11px;
   }
 
   .bb-search-summary__city {

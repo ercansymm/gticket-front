@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import type { FlightResult, FarePackage } from '@/types';
 import FarePackageSelector from './FarePackageSelector';
@@ -19,17 +19,9 @@ const FlightCard = ({ flight, onSelect, isSelected = false, allocateLoading = fa
   const [logoError, setLogoError] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
   const logoPath = getAirlineLogoUrl(flight.airlineCode);
   const brandStyle = getAirlineBrandStyle(flight.airlineCode);
   const { formatPrice, currency, getCurrencySymbol } = useCurrency();
-
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768);
-    check();
-    window.addEventListener('resize', check);
-    return () => window.removeEventListener('resize', check);
-  }, []);
 
   const hasPackages = flight.farePackages && flight.farePackages.length > 1;
 
@@ -129,19 +121,19 @@ const FlightCard = ({ flight, onSelect, isSelected = false, allocateLoading = fa
           <button
             className="bb-flight-card__select-btn"
             onClick={() => {
-              if (hasPackages && !isMobile) {
+              if (hasPackages) {
                 setExpanded(!expanded);
               } else {
                 onSelect(null);
               }
             }}
           >
-            {hasPackages && !isMobile
+            {hasPackages
               ? (expanded ? 'Gizle' : 'Seç')
               : 'Seç ve İlerle'}
             {' '}
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 4 }}>
-              {hasPackages && !isMobile && expanded
+              {hasPackages && expanded
                 ? <polyline points="18 15 12 9 6 15" />
                 : <polyline points="9 18 15 12 9 6" />}
             </svg>
@@ -205,8 +197,8 @@ const FlightCard = ({ flight, onSelect, isSelected = false, allocateLoading = fa
         </div>
       )}
 
-      {/* Fare Packages — only shown on desktop; mobile bypasses directly */}
-      {hasPackages && expanded && !isMobile && (
+      {/* Fare Packages */}
+      {hasPackages && expanded && (
         <FarePackageSelector
           packages={flight.farePackages}
           selectedId={selectedPkg?.brandedFareItemId ?? null}
