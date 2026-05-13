@@ -6,8 +6,8 @@
 @import "./vendor/bootstrap.min.css";
 @import "./vendor/default.css";
 @import "./vendor/flatpicker.css";
-/* fontawesome stays in public — references ../fonts/ relative paths */
-@import "../../public/assets/css/fontawesome-all.min.css";
+/* fontawesome stays in public/assets/css — loaded via <link> in app/layout.tsx
+   because Next.js does not allow @import from the public/ folder. */
 
 /* AtaBilet custom styles */
 @import "./biletbank.css";
