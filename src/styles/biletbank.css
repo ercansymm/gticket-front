@@ -662,7 +662,7 @@ body.bb-home .bb-header-wrap:not(.bb-header-wrap--scrolled) .bb-header-btn:not(.
   padding-bottom: 0;
   display: flex;
   align-items: center;
-  background: url('/assets/img/hero/backend/2.jpg') center top / cover no-repeat;
+  background: url('/assets/img/hero/backend/2.webp') center top / cover no-repeat;
   overflow: visible;
 }
 
@@ -6345,15 +6345,55 @@ select.bb-flight-form__input {
     padding: 0 14px 12px;
   }
 
-  /* Search summary mobile */
+  /* Search summary mobile — keep rounded so it visually matches the cards */
   .bb-search-summary {
-    border-radius: 0;
-    margin-bottom: 16px;
+    border-radius: 12px;
+    margin-bottom: 14px;
+    padding: 12px 0;
   }
 
-  /* Kartlar tam genişlik — yanlardaki padding'i azalt */
+  .bb-search-summary__inner {
+    padding: 0 14px;
+  }
+
+  /* Kart listesi: kartlar parent'ı tam doldursun (asymmetric gap fix) */
+  .bb-search-results__list {
+    width: 100%;
+  }
+
+  .bb-search-results__list > .bb-flight-card,
+  .bb-search-results__list > .bb-bundle-flight-card {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Symmetric horizontal padding so summary bar + cards align with viewport */
   .bb-search-results {
-    padding: 12px 6px 0;
+    padding: 12px 12px 0;
+    /* Override desktop max-width:1280px + margin:auto so it never centers narrow on mobile */
+    max-width: 100%;
+    width: 100%;
+    margin: 0;
+  }
+
+  /* Force layout to behave on mobile — content fills available width, no centering */
+  .bb-search-results__layout {
+    width: 100%;
+    margin: 0;
+  }
+
+  .bb-search-results__content {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  /* Reset any inherited min-widths inside cards on mobile */
+  .bb-flight-card__airline,
+  .bb-flight-card__track,
+  .bb-flight-card__price-section,
+  .bb-flight-card__price {
+    min-width: 0 !important;
   }
 }
 
@@ -7809,7 +7849,6 @@ footer,
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
-    padding: 0 16px;
   }
   .bb-search-summary__city {
     font-size: 15px;

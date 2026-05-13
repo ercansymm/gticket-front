@@ -80,6 +80,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="tr" className={inter.variable}>
+      <head>
+        {/* FontAwesome lives in public/assets/css and references ../fonts via relative paths */}
+        <link rel="stylesheet" href="/assets/css/fontawesome-all.min.css" />
+      </head>
       <body suppressHydrationWarning>
         {/* Add bb-home class to body BEFORE header renders to prevent dark blue flash on refresh */}
         <script

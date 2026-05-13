@@ -3,10 +3,10 @@
 import { useEffect, useState, useRef } from "react";
 
 const IMAGES = [
-  "/ethiopia-search/ethiopiasearch2.png",
-  "/ethiopia-search/ethiopiasearch3.png",
-  "/ethiopia-search/ethiopiasearch4..jpeg",
-  "/ethiopia-search/ethiopiasearch5.jpg",
+  "/ethiopia-search/ethiopiasearch2.webp",
+  "/ethiopia-search/ethiopiasearch3.webp",
+  "/ethiopia-search/ethiopiasearch4..webp",
+  "/ethiopia-search/ethiopiasearch5.webp",
 ];
 
 const SLOGANS = [
