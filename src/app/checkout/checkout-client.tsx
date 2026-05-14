@@ -18,6 +18,20 @@ import { useCurrency } from '@/context/CurrencyContext';
 import AirlineLogo from '@/components/common/AirlineLogo';
 import './checkout.css';
 
+/* ─────────── BiletBank error mapper ─────────── */
+function translateBookingError(msg: string): string {
+  const m = msg.toLowerCase();
+  if (m.includes('passport number cannot be empty') || m.includes('passport') && m.includes('empty'))
+    return 'TC kimlik numaranız doğrulanamadı veya pasaport bilgisi eksik. Lütfen bilgilerinizi kontrol edip tekrar deneyiniz.';
+  if (m.includes('too many requests') || m.includes('too many'))
+    return 'Çok fazla istek yapıldı. Lütfen birkaç dakika bekleyip tekrar deneyiniz.';
+  if (m.includes('session') && (m.includes('expired') || m.includes('invalid')))
+    return 'Oturumunuzun süresi doldu. Lütfen uçuşu yeniden seçiniz.';
+  if (m.includes('citizen') || m.includes('citizenno'))
+    return 'TC kimlik numarası geçersiz. Lütfen kontrol ediniz.';
+  return msg;
+}
+
 /* ─────────── Icons ─────────── */
 const IconArrow = ({ size = 18 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -554,7 +568,7 @@ export default function CheckoutClient() {
                   )}
                   {updatePassengersError && (
                     <div className="chk-alert chk-alert--error"><IconAlert />
-                      <div className="chk-alert__body">{updatePassengersError}</div>
+                      <div className="chk-alert__body">{translateBookingError(updatePassengersError)}</div>
                     </div>
                   )}
                   {preBookingError && !isProcessing && (

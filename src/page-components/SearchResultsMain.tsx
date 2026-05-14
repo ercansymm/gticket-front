@@ -651,14 +651,18 @@ const SearchResultsMain = () => {
 
   // Allocate hatası
   if (allocateError) {
+    const allocateErrorMessage = /too many requests/i.test(allocateError)
+      ? "Bu uçuş için çok fazla istek yapıldı. Lütfen birkaç dakika bekleyip tekrar deneyin."
+      : "Seçilen uçuş tahsis edilemedi. Lütfen başka bir uçuş seçin.";
+
     return (
       <>
         <HeaderOne />
-        <main className="bb-search-results">
+        <main className="bb-search-results" style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div className="bb-empty-state">
             <div className="bb-empty-state__icon"><i className="fa-solid fa-triangle-exclamation"></i></div>
             <h2 className="bb-empty-state__title">Uçuş Tahsis Edilemedi</h2>
-            <p className="bb-empty-state__text">{allocateError}</p>
+            <p className="bb-empty-state__text">{allocateErrorMessage}</p>
             <button className="bb-empty-state__btn" onClick={() => dispatch(clearAllocate())}>
               Başka Uçuş Seç
             </button>
