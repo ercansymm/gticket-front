@@ -1,6 +1,5 @@
 import Link from "next/link";
 import MobileMenu from "./MobileMenu";
-import Logo from "../../../components/common/Logo";
 
 interface OffcanvasUser {
    name?: string | null;
@@ -25,14 +24,6 @@ const Offcanvas = ({ offCanvas, setOffCanvas, user, onSignOut }: MobileSidebarPr
       <div className={offCanvas ? "mobile-menu-visible" : ""}>
          <div className="tgmobile__menu">
             <nav className="tgmobile__menu-box">
-               {/* Header */}
-               <div className="nav-logo">
-                  <Logo variant="white" />
-                  <div onClick={close} className="close-btn" role="button" aria-label="Menüyü kapat">
-                     <i className="fa-solid fa-xmark" />
-                  </div>
-               </div>
-
                {/* Navigation */}
                <div className="tgmobile__menu-outer">
                   <MobileMenu />

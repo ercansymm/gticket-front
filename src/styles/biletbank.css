@@ -413,7 +413,13 @@ body.bb-home .bb-header-wrap:not(.bb-header-wrap--scrolled) .bb-header-btn:not(.
   color: rgba(255, 255, 255, 0.9);
   font-size: 22px;
   cursor: pointer;
-  padding: 4px;
+  padding: 4px 6px;
+  transition: color 0.2s ease;
+  line-height: 1;
+}
+
+.bb-mobile-toggle--open {
+  color: #ffffff;
 }
 
 /* ══════════════════════════════════════════════════════
@@ -448,37 +454,9 @@ body.bb-home .bb-header-wrap:not(.bb-header-wrap--scrolled) .bb-header-btn:not(.
   flex-direction: column;
 }
 
-.tgmobile__menu .nav-logo {
-  position: relative;
-  padding: 22px 24px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  flex-shrink: 0;
-}
-
-.tgmobile__menu .close-btn {
-  position: absolute;
-  right: 14px;
-  top: 18px;
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  color: rgba(255, 255, 255, 0.6);
-  cursor: pointer;
-  border-radius: 6px;
-  transition: background 0.2s ease, color 0.2s ease;
-  z-index: 10;
-}
-
-.tgmobile__menu .close-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
-}
-
 .tgmobile__menu-outer {
   flex: 1;
+  padding-top: 8px;
 }
 
 .tgmobile__menu .navigation {

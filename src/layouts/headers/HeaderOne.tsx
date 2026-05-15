@@ -156,13 +156,14 @@ const HeaderOne = () => {
                         </Link>
                      )}
 
-                     {/* Mobile menu toggle */}
+                     {/* Mobile menu toggle — icon switches between ≡ and × */}
                      <button
-                        onClick={() => setMobileMenu(true)}
-                        className="bb-mobile-toggle d-block d-lg-none"
-                        aria-label={t.menuOpen}
+                        onClick={() => setMobileMenu((p) => !p)}
+                        className={`bb-mobile-toggle d-block d-lg-none${mobileMenu ? " bb-mobile-toggle--open" : ""}`}
+                        aria-label={mobileMenu ? "Menüyü kapat" : t.menuOpen}
+                        aria-expanded={mobileMenu}
                      >
-                        <i className="fa-solid fa-bars"></i>
+                        <i className={`fa-solid ${mobileMenu ? "fa-xmark" : "fa-bars"}`} />
                      </button>
                   </div>
                </div>
