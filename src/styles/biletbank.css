@@ -428,10 +428,10 @@ body.bb-home .bb-header-wrap:not(.bb-header-wrap--scrolled) .bb-header-btn:not(.
 .tgmobile__menu {
   position: fixed;
   right: 0;
-  top: 0;
+  top: 66px;
   width: 300px;
   max-width: 100%;
-  height: 100%;
+  height: calc(100% - 66px);
   z-index: 900;
   transform: translateX(101%);
   transition: all 0.3s cubic-bezier(0.785, 0.135, 0.15, 0.86);
@@ -756,7 +756,10 @@ body.bb-home .bb-header-wrap:not(.bb-header-wrap--scrolled) .bb-header-btn:not(.
 
 .tgmobile__menu-backdrop {
   position: fixed;
-  inset: 0;
+  top: 66px;
+  left: 0;
+  right: 0;
+  bottom: 0;
   z-index: 800;
   opacity: 0;
   visibility: hidden;
@@ -4790,6 +4793,15 @@ select.bb-flight-form__input {
   .bb-header-wrap {
     height: 52px;
     padding: 0 12px;
+  }
+
+  .tgmobile__menu {
+    top: 52px;
+    height: calc(100% - 52px);
+  }
+
+  .tgmobile__menu-backdrop {
+    top: 52px;
   }
 
   .bb-header-right {
