@@ -37,7 +37,8 @@ const RegisterForm = () => {
   const router = useRouter();
 
   // Form alanları
-  const [fullName, setFullName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [phoneCode, setPhoneCode] = useState("+90");
@@ -78,6 +79,8 @@ const RegisterForm = () => {
     e.preventDefault();
     setError(null);
 
+    if (!firstName.trim()) { setError("Ad zorunludur."); return; }
+    if (!lastName.trim()) { setError("Soyad zorunludur."); return; }
     if (!terms) { setError("Devam etmek için kullanım şartlarını kabul etmelisiniz."); return; }
 
     const phoneDigits = phone.replace(/\D/g, "");
@@ -89,11 +92,12 @@ const RegisterForm = () => {
     setLoading(true);
     try {
       const fullPhone = (phoneCode + phoneDigits).trim();
+      const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          fullName: fullName.trim(),
+          fullName,
           email: email.trim().toLowerCase(),
           password,
           phone: fullPhone,
@@ -200,7 +204,7 @@ const RegisterForm = () => {
       <div className="ab-auth__otp-step">
         <div className="ab-auth__otp-icon">
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#047857" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.67A2 2 0 012 .84h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 8.64a16 16 0 006.29 6.29l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z" />
+            <path d="M6.62 10.79a15.053 15.053 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.01-.24 11.36 11.36 0 0 0 3.56.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1 11.36 11.36 0 0 0 .57 3.57 1 1 0 0 1-.25 1.02l-2.2 2.2z" />
           </svg>
         </div>
         <h2 className="ab-auth__otp-title">Telefonunuzu Doğrulayın</h2>
@@ -288,12 +292,22 @@ const RegisterForm = () => {
       </div>
 
       <form className="ab-auth__form" onSubmit={handleSubmit} noValidate>
-      <div className="ab-auth__field">
-        <label className="ab-auth__label" htmlFor="reg-name">Ad Soyad</label>
-        <div className="ab-auth__input-wrap">
-          <i className="fa-regular fa-user ab-auth__leading" />
-          <input id="reg-name" className="ab-auth__input" type="text" placeholder="Ad ve soyadınız"
-            value={fullName} onChange={(e) => setFullName(e.target.value)} required autoComplete="name" autoFocus />
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <div className="ab-auth__field">
+          <label className="ab-auth__label" htmlFor="reg-firstname">Ad</label>
+          <div className="ab-auth__input-wrap">
+            <i className="fa-regular fa-user ab-auth__leading" />
+            <input id="reg-firstname" className="ab-auth__input" type="text" placeholder="Adınız"
+              value={firstName} onChange={(e) => setFirstName(e.target.value)} required autoComplete="given-name" autoFocus />
+          </div>
+        </div>
+        <div className="ab-auth__field">
+          <label className="ab-auth__label" htmlFor="reg-lastname">Soyad</label>
+          <div className="ab-auth__input-wrap">
+            <i className="fa-regular fa-user ab-auth__leading" />
+            <input id="reg-lastname" className="ab-auth__input" type="text" placeholder="Soyadınız"
+              value={lastName} onChange={(e) => setLastName(e.target.value)} required autoComplete="family-name" />
+          </div>
         </div>
       </div>
 
