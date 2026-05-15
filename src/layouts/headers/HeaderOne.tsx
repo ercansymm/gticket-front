@@ -168,7 +168,12 @@ const HeaderOne = () => {
                </div>
             </div>
          </header>
-         <Offcanvas offCanvas={mobileMenu} setOffCanvas={setMobileMenu} />
+         <Offcanvas
+            offCanvas={mobileMenu}
+            setOffCanvas={setMobileMenu}
+            user={user ?? null}
+            onSignOut={() => signOut({ callbackUrl: "/" })}
+         />
       </>
    )
 }

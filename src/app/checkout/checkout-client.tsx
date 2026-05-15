@@ -317,7 +317,7 @@ export default function CheckoutClient() {
       };
       sessionStorage.setItem('payment_3ds_session', JSON.stringify(paymentSession));
       if (threeDSecureUrl) {
-        const timer = setTimeout(() => { window.location.href = threeDSecureUrl; }, 300);
+        const timer = setTimeout(() => { window.location.href = threeDSecureUrl; }, 50);
         return () => clearTimeout(timer);
       } else if (threeDSecureHtml) {
         const win = window.open('', '_blank', 'width=500,height=700,scrollbars=yes');
@@ -345,8 +345,7 @@ export default function CheckoutClient() {
       finalizeTimeoutRef.current = setTimeout(() => {
         if (!finalizeResultRef.current) dispatch({ type: 'payment/finalizeTimeout' });
       }, 60_000);
-      const timer = setTimeout(() => { dispatch(finalizeShoppingThunk({ searchId })); }, 300);
-      return () => clearTimeout(timer);
+      dispatch(finalizeShoppingThunk({ searchId }));
     }
   }, [isPaymentSuccessful, paymentResult?.autoFinalized, searchId, dispatch, finalizeResult, finalizeError]);
 
@@ -367,7 +366,7 @@ export default function CheckoutClient() {
     if (finalizeError && /duplicate|zaten biletlen/i.test(finalizeError) && searchId) {
       if (finalizeTimeoutRef.current) { clearTimeout(finalizeTimeoutRef.current); finalizeTimeoutRef.current = null; }
       setIsProcessing(false);
-      const timer = setTimeout(() => { router.push('/bilet-sorgula'); }, 3000);
+      const timer = setTimeout(() => { router.push('/bilet-sorgula'); }, 1500);
       return () => clearTimeout(timer);
     }
   }, [finalizeError, searchId, router]);

@@ -440,31 +440,45 @@ body.bb-home .bb-header-wrap:not(.bb-header-wrap--scrolled) .bb-header-btn:not(.
   max-height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
-  background: var(--bb-white);
+  background: #0a1628;
   padding: 0;
   z-index: 5;
-  box-shadow: -9px 0 14px 0 rgba(0, 0, 0, 0.06);
+  box-shadow: -9px 0 30px 0 rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
 }
 
 .tgmobile__menu .nav-logo {
   position: relative;
-  padding: 30px 25px;
-  text-align: left;
+  padding: 22px 24px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
 }
 
 .tgmobile__menu .close-btn {
   position: absolute;
-  right: 15px;
-  top: 28px;
-  line-height: 30px;
-  width: 35px;
-  text-align: center;
-  font-size: 23px;
-  color: var(--ab-primary);
+  right: 14px;
+  top: 18px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.6);
   cursor: pointer;
-  padding: 8px;
+  border-radius: 6px;
+  transition: background 0.2s ease, color 0.2s ease;
   z-index: 10;
-  transition: all 0.5s ease;
+}
+
+.tgmobile__menu .close-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.tgmobile__menu-outer {
+  flex: 1;
 }
 
 .tgmobile__menu .navigation {
@@ -472,44 +486,46 @@ body.bb-home .bb-header-wrap:not(.bb-header-wrap--scrolled) .bb-header-btn:not(.
   display: block;
   width: 100%;
   margin: 0;
-  padding: 0;
+  padding: 8px 0;
   list-style: none;
 }
 
 .tgmobile__menu .navigation li {
   position: relative;
   display: block;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .tgmobile__menu .navigation li > a {
   display: block;
-  padding: 10px 60px 10px 25px;
-  font-size: 15px;
+  padding: 12px 56px 12px 24px;
+  font-size: 14px;
   font-weight: 600;
-  color: var(--ab-text);
+  color: #94a3b8;
   text-transform: uppercase;
-  transition: all 0.3s ease;
-  letter-spacing: 1px;
+  letter-spacing: 0.8px;
+  transition: color 0.2s ease, background 0.2s ease;
+  border-radius: 0;
 }
 
 .tgmobile__menu .navigation li > a:hover {
-  color: var(--ab-primary);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .tgmobile__menu .navigation li.menu-item-has-children .dropdown-btn {
   position: absolute;
-  right: 20px;
-  top: 6px;
+  right: 16px;
+  top: 8px;
   width: 32px;
   height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--ab-text);
-  background: var(--ab-bg-light);
+  color: #64748b;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   z-index: 5;
 }
 
@@ -520,7 +536,7 @@ body.bb-home .bb-header-wrap:not(.bb-header-wrap--scrolled) .bb-header-btn:not(.
   transform: translate(-50%, -50%);
   width: 12px;
   height: 2px;
-  background-color: var(--ab-primary);
+  background-color: #94a3b8;
   transition: all 0.3s ease;
 }
 
@@ -532,16 +548,16 @@ body.bb-home .bb-header-wrap:not(.bb-header-wrap--scrolled) .bb-header-btn:not(.
   transform: translate(-50%, -50%);
   width: 2px;
   height: 12px;
-  background-color: var(--ab-primary);
+  background-color: #94a3b8;
   transition: all 0.3s ease;
 }
 
 .tgmobile__menu .navigation li.menu-item-has-children .dropdown-btn.open {
-  background-color: var(--ab-primary);
+  background-color: #047857;
 }
 
 .tgmobile__menu .navigation li.menu-item-has-children .dropdown-btn.open .plus-line {
-  background-color: var(--bb-white);
+  background-color: #ffffff;
 }
 
 .tgmobile__menu .navigation li.menu-item-has-children .dropdown-btn.open .plus-line::after {
@@ -557,62 +573,207 @@ body.bb-home .bb-header-wrap:not(.bb-header-wrap--scrolled) .bb-header-btn:not(.
 
 .tgmobile__menu .navigation li ul li > a {
   margin-left: 20px;
-  font-size: 14px;
+  font-size: 13px;
   text-transform: capitalize;
+  color: #64748b;
+}
+
+.tgmobile__menu .navigation li ul li > a:hover {
+  color: #cbd5e1;
 }
 
 .tgmobile__menu .navigation:last-child {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.tgmobile__menu .tgmobile__search {
-  padding: 0 25px 15px;
-}
-
-.tgmobile__menu .tgmobile__search input {
-  width: 100%;
-  padding: 8px 12px;
-  border: 1px solid var(--ab-border);
-  border-radius: var(--ab-radius-sm);
-  font-size: 14px;
-  outline: none;
-}
-
-.tgmobile__menu .tgmobile__search input:focus {
-  border-color: var(--ab-primary);
+.tgmobile__menu .social-links {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
 }
 
 .tgmobile__menu .social-links ul {
   display: flex;
-  padding: 30px 20px 20px;
+  padding: 16px 20px;
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
   list-style: none;
   margin: 0;
+  gap: 8px;
 }
 
 .tgmobile__menu .social-links ul li {
   display: inline-block;
-  margin: 0 6px 10px;
+  margin: 0;
 }
 
 .tgmobile__menu .social-links ul li a {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  font-size: 16px;
-  color: var(--ab-primary);
-  border: 1px solid var(--ab-border);
-  transition: all 0.3s ease;
+  width: 34px;
+  height: 34px;
+  font-size: 14px;
+  color: #64748b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  transition: all 0.2s ease;
 }
 
 .tgmobile__menu .social-links ul li a:hover {
-  border-color: var(--ab-primary);
-  background: var(--ab-primary);
-  color: var(--bb-white);
+  border-color: #047857;
+  background: #047857;
+  color: #ffffff;
+}
+
+/* Mobile auth CTA (bottom of offcanvas) */
+.bb-mobile-auth {
+  padding: 20px 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+.bb-mobile-auth__btns {
+  display: flex;
+  gap: 10px;
+}
+
+.bb-mobile-auth__login {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 11px 16px;
+  background: #047857;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: background 0.2s ease;
+  cursor: pointer;
+}
+
+.bb-mobile-auth__login:hover {
+  background: #065f46;
+  color: #ffffff;
+}
+
+.bb-mobile-auth__register {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 11px 16px;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.bb-mobile-auth__register:hover {
+  border-color: #94a3b8;
+  color: #ffffff;
+}
+
+.bb-mobile-auth__user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.bb-mobile-auth__avatar {
+  width: 38px;
+  height: 38px;
+  background: #047857;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.bb-mobile-auth__user-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.bb-mobile-auth__user-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bb-mobile-auth__user-email {
+  font-size: 12px;
+  color: #64748b;
+  margin: 2px 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bb-mobile-auth__links {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bb-mobile-auth__link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  color: #94a3b8;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.bb-mobile-auth__link:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+}
+
+.bb-mobile-auth__signout {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  color: #f87171;
+  font-size: 14px;
+  font-weight: 500;
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-radius: 6px;
+  width: 100%;
+  text-align: left;
+  transition: all 0.2s ease;
+  margin-top: 2px;
+}
+
+.bb-mobile-auth__signout:hover {
+  background: rgba(248, 113, 113, 0.1);
 }
 
 .tgmobile__menu-backdrop {
