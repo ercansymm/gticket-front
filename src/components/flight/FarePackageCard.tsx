@@ -1,7 +1,7 @@
 ﻿'use client';
 
 import { useState } from 'react';
-import type { FarePackage, FarePackageRule } from '@/types';
+import type { FarePackage, FarePackageRule, FreeBaggageAllowance } from '@/types';
 import { useCurrency } from '@/context/CurrencyContext';
 import {
   translateCategory,
@@ -14,6 +14,7 @@ interface FarePackageCardProps {
   onSelect: (pkg: FarePackage) => void;
   compact?: boolean;
   isCheapest?: boolean;
+  freeBaggageAllowances?: FreeBaggageAllowance[];
 }
 
 // Görüntüleme sırası: en önemli kategoriler üstte.
@@ -113,10 +114,37 @@ function groupRulesByCategory(rules: FarePackageRule[]): Array<{ key: string; ru
   return ordered;
 }
 
-const FarePackageCard = ({ pkg, isActive, onSelect, compact = false, isCheapest = false }: FarePackageCardProps) => {
+const CHECKED_CATS = new Set(['BG', 'BAGGAGE', 'CB', 'CHECKED_BAGGAGE']);
+const CABIN_CATS = new Set(['CY', 'CABIN_BAGGAGE', 'CARRY_ON', 'HAND_BAGGAGE']);
+const BAGGAGE_ALL_KEYS = new Set(['BG', 'BAGGAGE', 'CY', 'CABIN_BAGGAGE', 'CB', 'CHECKED_BAGGAGE', 'CARRY_ON', 'HAND_BAGGAGE']);
+
+function buildBagFallback(allowances: FreeBaggageAllowance[]): string[] {
+  const items: string[] = [];
+  const adtChecked = allowances.find(a =>
+    CHECKED_CATS.has((a.category ?? '').toUpperCase()) &&
+    ['ADT', 'ADULT'].includes((a.paxType ?? 'ADT').toUpperCase())
+  ) ?? allowances.find(a => CHECKED_CATS.has((a.category ?? '').toUpperCase()));
+  const adtCabin = allowances.find(a =>
+    CABIN_CATS.has((a.category ?? '').toUpperCase()) &&
+    ['ADT', 'ADULT'].includes((a.paxType ?? 'ADT').toUpperCase())
+  ) ?? allowances.find(a => CABIN_CATS.has((a.category ?? '').toUpperCase()));
+  if (adtChecked?.allowance) {
+    items.push(`${adtChecked.allowance}${adtChecked.unit ? ' ' + adtChecked.unit : ''} bagaj hakkı`);
+  }
+  if (adtCabin?.allowance) {
+    items.push(`${adtCabin.allowance}${adtCabin.unit ? ' ' + adtCabin.unit : ''} el bagajı`);
+  }
+  return items;
+}
+
+const FarePackageCard = ({ pkg, isActive, onSelect, compact = false, isCheapest = false, freeBaggageAllowances = [] }: FarePackageCardProps) => {
   const [paxOpen, setPaxOpen] = useState(false);
   const { formatPrice } = useCurrency();
   const grouped = groupRulesByCategory(pkg.rules);
+  const hasBaggageRules = grouped.some(g => BAGGAGE_ALL_KEYS.has(g.key));
+  const bagFallbackItems = (!hasBaggageRules && freeBaggageAllowances.length > 0)
+    ? buildBagFallback(freeBaggageAllowances)
+    : [];
 
   return (
     <div
@@ -138,6 +166,19 @@ const FarePackageCard = ({ pkg, isActive, onSelect, compact = false, isCheapest 
       </div>
 
       <div className="bb-pkg-card__body">
+        {bagFallbackItems.length > 0 && (
+          <div className="bb-pkg-card__category">
+            <h5 className="bb-pkg-card__category-title">BAGAJ</h5>
+            <ul className="bb-pkg-card__rules">
+              {bagFallbackItems.map((item, i) => (
+                <li key={i} className="bb-pkg-card__rule bb-pkg-card__rule--included">
+                  <StatusIcon state="included" />
+                  <span className="bb-pkg-card__rule-label">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         {grouped.map(({ key, rules }) => (
           <div key={key} className="bb-pkg-card__category">
             <h5 className="bb-pkg-card__category-title">
@@ -161,6 +202,9 @@ const FarePackageCard = ({ pkg, isActive, onSelect, compact = false, isCheapest 
             </ul>
           </div>
         ))}
+        {grouped.length === 0 && bagFallbackItems.length === 0 && (
+          <p className="bb-pkg-card__empty-note">Bu tarife için detaylı bilgi mevcut değildir.</p>
+        )}
       </div>
 
       <div className="bb-pkg-card__price-area">

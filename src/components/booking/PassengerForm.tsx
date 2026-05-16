@@ -75,7 +75,7 @@ interface PassengerFormData {
   birthDate: string;          // ISO yyyy-mm-dd
   birthDateMasked: string;    // GG/AA/YYYY
   citizenNo: string; isTurkishCitizen: boolean;
-  passportNo: string; passportCountry: string; passportExpiry: string; nationality: string;
+  passportNo: string; nationality: string;
 }
 interface FormErrors { [k: string]: string; }
 
@@ -135,7 +135,7 @@ export default function PassengerForm({ passengers, onSubmit, isInternational = 
       firstName:'', lastName:'', gender:'',
       birthDate:'', birthDateMasked:'',
       citizenNo:'', isTurkishCitizen:true,
-      passportNo:'', passportCountry:'', passportExpiry:'', nationality:'TR',
+      passportNo:'', nationality:'TR',
     })));
 
   const [contact, setContact] = useState({ email:'', phone:'', phoneCode:'+90' });
@@ -193,18 +193,12 @@ export default function PassengerForm({ passengers, onSubmit, isInternational = 
     }
     if (isInternational) {
       if (!form.passportNo||form.passportNo.trim().length<5) e.passportNo='Boş bırakılamaz';
-      if (!form.passportCountry||form.passportCountry.length!==2) e.passportCountry='Ülke kodu zorunlu';
-      if (!form.passportExpiry) e.passportExpiry='Boş bırakılamaz';
-      else { const iso=maskedDateToISO(form.passportExpiry); if (!iso) e.passportExpiry='GG/AA/YYYY formatı'; else if (iso<=new Date().toISOString().split('T')[0]) e.passportExpiry='Geçerli bir tarih giriniz'; }
       if (form.isTurkishCitizen&&(!form.citizenNo||!isValidTCKimlik(form.citizenNo))) e.citizenNo='TC kimlik 11 haneli olmalı';
     } else {
       if (form.isTurkishCitizen) {
         if (!form.citizenNo||!isValidTCKimlik(form.citizenNo)) e.citizenNo='TC kimlik 11 haneli olmalı';
       } else {
         if (!form.passportNo||form.passportNo.trim().length<5) e.passportNo='Boş bırakılamaz';
-        if (!form.passportCountry||form.passportCountry.length!==2) e.passportCountry='Ülke kodu gerekli';
-        if (!form.passportExpiry) e.passportExpiry='Boş bırakılamaz';
-        else { const iso=maskedDateToISO(form.passportExpiry); if (!iso) e.passportExpiry='GG/AA/YYYY formatı'; else if (iso<=new Date().toISOString().split('T')[0]) e.passportExpiry='Geçerli bir tarih giriniz'; }
       }
     }
     return e;
@@ -258,8 +252,8 @@ export default function PassengerForm({ passengers, onSubmit, isInternational = 
         gender:form.gender as 'M'|'F', birthDate:form.birthDate,
         citizenNo:(form.isTurkishCitizen&&form.citizenNo)?form.citizenNo:null,
         passportNo:!isTurkishDom&&form.passportNo?form.passportNo.toUpperCase():null,
-        passportCountry:!isTurkishDom&&form.passportCountry?form.passportCountry.toUpperCase():null,
-        passportExpiry:!isTurkishDom&&form.passportExpiry?maskedDateToISO(form.passportExpiry):null,
+        passportCountry:null,
+        passportExpiry:null,
         nationality:form.nationality.toUpperCase()||'TR',
         tempTag:pax.tempTag??null, paxReferenceId:pax.paxReferenceId??null,
       };
@@ -280,8 +274,6 @@ export default function PassengerForm({ passengers, onSubmit, isInternational = 
       case 'birthDate': return !!f.birthDate;
       case 'citizenNo': return isValidTCKimlik(f.citizenNo);
       case 'passportNo': return f.passportNo.trim().length >= 5;
-      case 'passportCountry': return f.passportCountry.length === 2;
-      case 'passportExpiry': return !!maskedDateToISO(f.passportExpiry);
       default: return false;
     }
   };
@@ -334,7 +326,6 @@ export default function PassengerForm({ passengers, onSubmit, isInternational = 
         const err = errors[index] || {};
         const paxOfType = sorted.filter(p=>normalizePaxType(p.type)===paxType);
         const paxIdx = paxOfType.findIndex(p=>p.sequenceNo===pax.sequenceNo)+1;
-        const showFB = isInternational || !form.isTurkishCitizen;
 
         return (
           <div key={pax.sequenceNo} className={`pf-card ${duplicateIndices.has(index) ? 'pf-card--error' : ''}`}>
@@ -409,59 +400,43 @@ export default function PassengerForm({ passengers, onSubmit, isInternational = 
                   </label>
                 </div>
 
-                {!isInternational && (
-                  <label className="pf-citizen">
-                    <input type="checkbox"
-                      checked={!form.isTurkishCitizen}
-                      onChange={e=>{
-                        const isFor = e.target.checked;
-                        const isTR = !isFor;
-                        setForms(prev=>{
-                          const n=[...prev];
-                          n[index]={
-                            ...n[index],
-                            isTurkishCitizen:isTR,
-                            nationality:isTR?'TR':n[index].nationality,
-                            passportNo:isTR?'':n[index].passportNo,
-                            passportCountry:isTR?'':n[index].passportCountry,
-                            passportExpiry:isTR?'':n[index].passportExpiry,
-                            citizenNo:isFor?'':n[index].citizenNo,
-                          };
-                          return n;
-                        });
-                        setErrors(prev=>{
-                          const n=[...prev];
-                          n[index]={...n[index],citizenNo:'',passportNo:'',passportCountry:'',passportExpiry:''};
-                          return n;
-                        });
-                      }} />
-                    <span>TC vatandaşı değilim</span>
-                  </label>
-                )}
+                <label className="pf-citizen">
+                  <input type="checkbox"
+                    checked={!form.isTurkishCitizen}
+                    onChange={e=>{
+                      const isFor = e.target.checked;
+                      const isTR = !isFor;
+                      setForms(prev=>{
+                        const n=[...prev];
+                        n[index]={
+                          ...n[index],
+                          isTurkishCitizen:isTR,
+                          nationality:isTR?'TR':n[index].nationality,
+                          // Yurt dışı uçuşlarda pasaport her zaman gerekli — Türk vatandaşına
+                          // geçince bile pasaport numarasını silme
+                          passportNo:(isTR && !isInternational)?'':n[index].passportNo,
+                          citizenNo:isFor?'':n[index].citizenNo,
+                        };
+                        return n;
+                      });
+                      setErrors(prev=>{
+                        const n=[...prev];
+                        n[index]={...n[index],citizenNo:'',passportNo:''};
+                        return n;
+                      });
+                    }} />
+                  <span>TC vatandaşı değilim</span>
+                </label>
               </div>
 
-              {/* International ya da yabancı uyruklu için ek pasaport satırı */}
-              {showFB && (
-                <div className="pf-row pf-row--3col">
-                  {isInternational && form.isTurkishCitizen && (
-                    <Field label="TC Kimlik No" error={err.citizenNo} valid={v(index,'citizenNo')}>
-                      <input type="text" inputMode="numeric" className="pf-input"
-                        value={form.citizenNo}
-                        onChange={e=>update(index,'citizenNo',e.target.value.replace(/\D/g,'').slice(0,11))}
-                        maxLength={11} autoComplete="off" />
-                    </Field>
-                  )}
-                  <Field label="Pasaport Ülkesi" error={err.passportCountry} valid={v(index,'passportCountry')}>
-                    <input type="text" className="pf-input" placeholder="TR, DE, US"
-                      value={form.passportCountry}
-                      onChange={e=>{const v2=e.target.value.replace(/[^A-Za-z]/g,'').slice(0,2).toUpperCase();update(index,'passportCountry',v2);if(!form.isTurkishCitizen)update(index,'nationality',v2);}}
-                      maxLength={2} autoComplete="off" />
-                  </Field>
-                  <Field label="Pasaport Geçerlilik" error={err.passportExpiry} valid={v(index,'passportExpiry')}>
-                    <input type="text" inputMode="numeric" className="pf-input" placeholder="GG/AA/YYYY"
-                      value={form.passportExpiry}
-                      onChange={e=>update(index,'passportExpiry',formatDateMasked(e.target.value))}
-                      maxLength={10} autoComplete="off" />
+              {/* Yurt dışı uçuşta Türk vatandaşı için TC kimlik ek satırı */}
+              {isInternational && form.isTurkishCitizen && (
+                <div className="pf-row pf-row--4col">
+                  <Field label="TC Kimlik No" error={err.citizenNo} valid={v(index,'citizenNo')}>
+                    <input type="text" inputMode="numeric" className="pf-input"
+                      value={form.citizenNo}
+                      onChange={e=>update(index,'citizenNo',e.target.value.replace(/\D/g,'').slice(0,11))}
+                      maxLength={11} autoComplete="off" />
                   </Field>
                 </div>
               )}

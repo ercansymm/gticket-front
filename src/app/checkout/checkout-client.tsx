@@ -49,6 +49,31 @@ const IconLock = ({ size = 14 }: { size?: number }) => (
     <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
   </svg>
 );
+const IconBaggage = ({ size = 15 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="6" y="8" width="12" height="13" rx="2" /><path d="M9 8V6a3 3 0 0 1 6 0v2" /><line x1="12" y1="12" x2="12" y2="17" /><line x1="9.5" y1="14.5" x2="14.5" y2="14.5" />
+  </svg>
+);
+const IconCabin = ({ size = 15 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="4" y="7" width="16" height="13" rx="2" /><path d="M8 7V5a2 2 0 0 1 4 0v2" /><line x1="4" y1="11" x2="20" y2="11" />
+  </svg>
+);
+const IconCheckCircle = ({ size = 14 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
+  </svg>
+);
+const IconXCircle = ({ size = 14 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" />
+  </svg>
+);
+const IconTRY = ({ size = 14 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+    <circle cx="12" cy="12" r="10" fill="#0284c7" /><text x="12" y="16.5" textAnchor="middle" fontSize="12" fontWeight="700" fill="#fff">₺</text>
+  </svg>
+);
 
 function formatDateDDMMYYYY(input?: string | null): string {
   if (!input) return '';
@@ -276,6 +301,62 @@ export default function CheckoutClient() {
     if (flightTypes.some(ft => ft === 'D' || ft === 'DOMESTIC')) return false;
     return false;
   }, [searchParams, airBookings, selectedFlight]);
+
+  const summaryBenefits = useMemo(() => {
+    if (!selectedFlight) return null;
+
+    const CHECKED_CATS = new Set(['BG', 'BAGGAGE', 'CB', 'CHECKED_BAGGAGE']);
+    const CABIN_CATS = new Set(['CY', 'CABIN_BAGGAGE', 'CARRY_ON', 'HAND_BAGGAGE']);
+
+    // Allocate-confirmed baggage > search-level allowances > baggageInfo
+    const confirmAllowances = airBookings[0]?.baggageAllowances ?? [];
+    const searchAllowances = selectedFlight.freeBaggageAllowances ?? [];
+    const allowances = confirmAllowances.length > 0 ? confirmAllowances : searchAllowances;
+
+    const adtChecked = allowances.find(a =>
+      CHECKED_CATS.has((a.category ?? '').toUpperCase()) &&
+      ['ADT', 'ADULT'].includes((a.paxType ?? 'ADT').toUpperCase())
+    ) ?? allowances.find(a => CHECKED_CATS.has((a.category ?? '').toUpperCase()));
+    const adtCabin = allowances.find(a =>
+      CABIN_CATS.has((a.category ?? '').toUpperCase()) &&
+      ['ADT', 'ADULT'].includes((a.paxType ?? 'ADT').toUpperCase())
+    ) ?? allowances.find(a => CABIN_CATS.has((a.category ?? '').toUpperCase()));
+
+    const baggageText = adtChecked?.allowance
+      ? `${adtChecked.allowance}${adtChecked.unit ? ' ' + adtChecked.unit : ''}`
+      : (selectedFlight.baggageInfo?.displayText ?? null);
+    const cabinText = adtCabin?.allowance
+      ? `${adtCabin.allowance}${adtCabin.unit ? ' ' + adtCabin.unit : ''}`
+      : null;
+
+    // Key rules from selected fare package
+    type RuleItem = { category: string; label: string; state: 'included' | 'chargeable' | 'excluded' };
+    const ruleItems: RuleItem[] = [];
+    const selPkg = selectedBrandedFareItemId
+      ? selectedFlight.farePackages?.find(p => p.brandedFareItemId === selectedBrandedFareItemId)
+      : (selectedFlight.farePackages?.find(p => p.isDefault) ?? selectedFlight.farePackages?.[0]);
+
+    if (selPkg?.rules) {
+      const CHANGE_GROUPS = new Set(['VC', 'CE', 'CHANGE', 'VOLUNTARY_CHANGE']);
+      const REFUND_GROUPS = new Set(['VR', 'RE', 'REFUND', 'VOLUNTARY_REFUND']);
+      const seen = new Set<string>();
+      for (const r of selPkg.rules) {
+        const grp = (r.serviceGroup ?? '').toUpperCase();
+        const cat = CHANGE_GROUPS.has(grp) ? 'Değişiklik' : REFUND_GROUPS.has(grp) ? 'İade' : null;
+        if (!cat || seen.has(cat)) continue;
+        seen.add(cat);
+        const state: 'included' | 'chargeable' | 'excluded' = (r.isIncluded && !r.isChargeable)
+          ? 'included' : r.isChargeable ? 'chargeable' : 'excluded';
+        const label = state === 'included' ? 'Ücretsiz'
+          : state === 'chargeable' ? 'Ek ücretli' : 'Yapılamaz';
+        ruleItems.push({ category: cat, label, state });
+      }
+    }
+
+    const pkgName = (selPkg?.brandName && selPkg.brandName.trim()) ? selPkg.brandName.trim() : null;
+    const hasContent = baggageText || cabinText || ruleItems.length > 0;
+    return hasContent ? { pkgName, baggageText, cabinText, ruleItems } : null;
+  }, [selectedFlight, selectedBrandedFareItemId, airBookings]);
 
   const validateCard = useCallback((): boolean => {
     const errs: Record<string, string> = {};
@@ -795,6 +876,46 @@ export default function CheckoutClient() {
                       )}
                     </>
                 }
+                {summaryBenefits && (
+                  <div className="chk-summary__benefits">
+                    {summaryBenefits.pkgName && (
+                      <span className="chk-summary__pkg-badge">{summaryBenefits.pkgName}</span>
+                    )}
+                    <div className="chk-summary__benefit-items">
+                      {summaryBenefits.baggageText && (
+                        <div className="chk-summary__benefit-item">
+                          <span className="chk-summary__benefit-icon"><IconBaggage size={15} /></span>
+                          <div className="chk-summary__benefit-text">
+                            <span className="chk-summary__benefit-sub">Bagaj hakkı</span>
+                            <span className="chk-summary__benefit-val">{summaryBenefits.baggageText} / kişi</span>
+                          </div>
+                        </div>
+                      )}
+                      {summaryBenefits.cabinText && (
+                        <div className="chk-summary__benefit-item">
+                          <span className="chk-summary__benefit-icon"><IconCabin size={15} /></span>
+                          <div className="chk-summary__benefit-text">
+                            <span className="chk-summary__benefit-sub">El bagajı</span>
+                            <span className="chk-summary__benefit-val">{summaryBenefits.cabinText} / kişi</span>
+                          </div>
+                        </div>
+                      )}
+                      {summaryBenefits.ruleItems.map((item, i) => (
+                        <div key={i} className="chk-summary__benefit-item">
+                          <span className={`chk-summary__benefit-icon chk-summary__benefit-icon--${item.state}`}>
+                            {item.state === 'included' ? <IconCheckCircle size={14} />
+                              : item.state === 'chargeable' ? <IconTRY size={14} />
+                              : <IconXCircle size={14} />}
+                          </span>
+                          <div className="chk-summary__benefit-text">
+                            <span className="chk-summary__benefit-sub">{item.category}</span>
+                            <span className="chk-summary__benefit-val">{item.label}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <div className="chk-summary__divider" />
                 {priceSummary.totalBaseFare > 0 && (
                   <div className="chk-summary__row"><span>Esas ücret</span><span>{formatPrice(priceSummary.totalBaseFare)}</span></div>

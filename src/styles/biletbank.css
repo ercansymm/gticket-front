@@ -4319,7 +4319,24 @@ select.bb-flight-form__input {
 /* Copyright bar */
 .bb-footer__bottom {
   border-top: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 18px 0;
+  padding: 16px 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.bb-footer__bottom::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(16, 185, 129, 0.14) 0%,
+    rgba(12, 74, 110, 0.0) 40%,
+    rgba(12, 74, 110, 0.0) 60%,
+    rgba(16, 185, 129, 0.14) 100%
+  );
+  opacity: 0.22;
+  pointer-events: none;
 }
 
 .bb-footer__bottom-inner {
@@ -4328,32 +4345,56 @@ select.bb-flight-form__input {
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
 }
 
 .bb-footer__bottom-inner > span {
-  color: rgba(255, 255, 255, 0.4);
-  font-size: 12px;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
 }
 
 .bb-footer__bottom-links {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .bb-footer__bottom-links a {
-  color: rgba(255, 255, 255, 0.4);
-  font-size: 12px;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 12.5px;
   text-decoration: none;
-  transition: color 0.2s;
+  transition: color 0.2s ease;
+  position: relative;
+  padding: 4px 0;
+}
+
+.bb-footer__bottom-links a::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 1px;
+  background: rgba(16, 185, 129, 0.85);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.22s ease;
 }
 
 .bb-footer__bottom-links a:hover {
-  color: rgba(255, 255, 255, 0.75);
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.bb-footer__bottom-links a:hover::after {
+  transform: scaleX(1);
 }
 
 .bb-footer__bottom-links span {
-  color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.22);
   font-size: 12px;
 }
 
@@ -4372,8 +4413,13 @@ select.bb-flight-form__input {
   .bb-footer__bottom-inner {
     flex-direction: column;
     text-align: center;
+    gap: 10px;
   }
-}
+
+  .bb-footer__bottom-links {
+    justify-content: center;
+    gap: 8px;
+  }
 
 /* Footer responsive: tablet 2x2 */
 @media (max-width: 1023px) and (min-width: 768px) {
@@ -12639,6 +12685,14 @@ footer,
   justify-content: space-between;
   font-size: 12px;
   color: #4b5563;
+}
+
+.bb-pkg-card__empty-note {
+  font-size: 12px;
+  color: #9ca3af;
+  margin: 0;
+  padding: 4px 0;
+  text-align: center;
 }
 
 /* ============================================================

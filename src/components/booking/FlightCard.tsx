@@ -205,6 +205,7 @@ const FlightCard = ({ flight, onSelect, isSelected = false, allocateLoading = fa
           onSelect={handlePackageSelect}
           onContinue={handleContinue}
           loading={allocateLoading}
+          freeBaggageAllowances={flight.freeBaggageAllowances}
         />
       )}
 
