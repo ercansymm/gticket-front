@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import type { FarePackage } from '@/types';
+import type { FarePackage, FreeBaggageAllowance } from '@/types';
 import FarePackageCard from '../flight/FarePackageCard';
 import { findCheapestPackageId } from '@/utils/flightScoring';
 
@@ -9,9 +9,10 @@ interface FarePackageSelectorProps {
   onSelect: (pkg: FarePackage) => void;
   onContinue: () => void;
   loading?: boolean;
+  freeBaggageAllowances?: FreeBaggageAllowance[];
 }
 
-const FarePackageSelector = ({ packages, selectedId, onSelect, onContinue, loading }: FarePackageSelectorProps) => {
+const FarePackageSelector = ({ packages, selectedId, onSelect, onContinue, loading, freeBaggageAllowances }: FarePackageSelectorProps) => {
   // Dinamik "En Uygun" — backend isDefault yerine gerçekten en ucuz paketi seçer.
   const cheapestId = useMemo(() => findCheapestPackageId(packages), [packages]);
 
@@ -26,6 +27,7 @@ const FarePackageSelector = ({ packages, selectedId, onSelect, onContinue, loadi
             isActive={selectedId === pkg.brandedFareItemId}
             isCheapest={pkg.brandedFareItemId === cheapestId}
             onSelect={onSelect}
+            freeBaggageAllowances={freeBaggageAllowances}
           />
         ))}
       </div>
