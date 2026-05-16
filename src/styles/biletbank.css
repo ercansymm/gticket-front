@@ -4562,6 +4562,7 @@ select.bb-flight-form__input {
     justify-content: center;
     gap: 8px;
   }
+}
 
 /* Footer responsive: tablet 2x2 */
 @media (max-width: 1023px) and (min-width: 768px) {
