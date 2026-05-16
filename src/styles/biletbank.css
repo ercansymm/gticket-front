@@ -10114,6 +10114,13 @@ footer,
   background: #dcfce7;
 }
 
+.tc-flight-leg__badge--baggage {
+  display: inline-flex;
+  align-items: center;
+  color: #1d4ed8;
+  background: #dbeafe;
+}
+
 /* Transfer divider */
 .tc-flight-leg__transfer {
   display: flex;

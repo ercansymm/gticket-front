@@ -224,7 +224,7 @@ export default function SuccessClient() {
     window.location.href = '/';
   };
 
-  const shoppingFileId = allocateResult?.shoppingFileId ?? urlShoppingFileId ?? undefined;
+  const shoppingFileId = allocateResult?.shoppingFileId ?? urlShoppingFileId ?? (bookingDetail as any)?.shoppingFileId ?? undefined;
   // PNR oncelik sirasi (ATA PNR gosterilir):
   // 1) Redux finalizeResult.internalPnr (canli akista)
   // 2) bookingDetail.internalPnr (3DS sonrasi backend'den cekilen / self-heal ile uretilen)
@@ -371,14 +371,20 @@ export default function SuccessClient() {
   const totalFare = readResult?.grandTotal || readResult?.totalFare || readPayment?.amount || priceSummary?.grandTotal || airBooking?.totalFare || bookingDetail?.grandTotal || 0;
   const currency = readResult?.currency ?? readPayment?.currency ?? priceSummary?.currency ?? airBooking?.currency ?? bookingDetail?.currency ?? 'TRY';
 
-  // Baggage info from allocateResult
-  const baggageAllowances = airBooking?.baggageAllowances ?? [];
+  // Baggage info — prefer allocateResult, fall back to bookingDetail
+  const detailBaggages: any[] = (bookingDetail as any)?.baggageAllowances ?? [];
+  const baggageAllowances = (airBooking?.baggageAllowances?.length ?? 0) > 0
+    ? (airBooking?.baggageAllowances ?? [])
+    : detailBaggages;
   const firstBaggage = baggageAllowances[0] ?? selectedFlight?.freeBaggageAllowances?.[0];
   const defaultBaggage = formatBaggage(firstBaggage?.allowance ?? null, firstBaggage?.unit ?? null);
 
-  // Branded fare name
+  // Branded fare name — prefer allocateResult, fall back to bookingDetail
   const brandedItems = airBooking?.brandedItems ?? [];
-  const fareName = brandedItems[0]?.brandName ?? selectedFlight?.bookingClassName ?? null;
+  const fareName = brandedItems[0]?.brandName
+    ?? selectedFlight?.bookingClassName
+    ?? (bookingDetail as any)?.brandName
+    ?? null;
 
   // Render a single flight leg
   const renderFlightLeg = (seg: AllocateSegment, idx: number, arr: AllocateSegment[]) => {
@@ -421,13 +427,18 @@ export default function SuccessClient() {
         {/* Badges */}
         <div className="tc-flight-leg__badges">
           <span className="tc-flight-leg__badge">{getAirlineName(seg.marketingAirline)}</span>
-          {fareName && (
+          {(fareName ?? seg.bookingClass) && (
             <span className="tc-flight-leg__badge tc-flight-leg__badge--class">
-              {fareName}
+              {fareName ?? seg.bookingClass}
             </span>
           )}
           {defaultBaggage !== '—' && (
-            <span className="tc-flight-leg__badge">{defaultBaggage}</span>
+            <span className="tc-flight-leg__badge tc-flight-leg__badge--baggage">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 4 }}>
+                <rect x="6" y="7" width="12" height="14" rx="1" /><path d="M10 7V5a2 2 0 0 1 4 0v2" /><line x1="12" y1="12" x2="12" y2="17" /><line x1="9.5" y1="14.5" x2="14.5" y2="14.5" />
+              </svg>
+              {defaultBaggage}
+            </span>
           )}
         </div>
 
