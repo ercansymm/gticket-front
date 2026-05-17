@@ -17,6 +17,7 @@ import { airports } from '@/data/AirportData';
 import { useCurrency } from '@/context/CurrencyContext';
 import AirlineLogo from '@/components/common/AirlineLogo';
 import { summarizeFarePackage, type FareLineState, type FareSummaryLine } from '@/utils/fareSummary';
+import { logger } from '@/lib/logger';
 import './checkout.css';
 
 /* ─────────── BiletBank error mapper ─────────── */
@@ -461,14 +462,9 @@ export default function CheckoutClient() {
   const submitRef = useRef(false);
   const handlePassengerSubmit = useCallback(
     async (passengerItems: PassengerItem[], contact: ContactInfo) => {
-      console.log('[Checkout] handlePassengerSubmit invoked', {
-        passengersCount: passengerItems.length, hasContact: !!contact, agreed,
-        searchId, productId, productItemId,
-      });
-      if (submitRef.current) { console.warn('[Checkout] Already submitting, ignored'); return; }
-      if (!searchId || !productId || !productItemId) { console.warn('[Checkout] Missing IDs', { searchId, productId, productItemId }); return; }
+      if (submitRef.current) return;
+      if (!searchId || !productId || !productItemId) return;
       if (!agreed || !kvkkAgreed) {
-        console.warn('[Checkout] Agreements not accepted', { agreed, kvkkAgreed });
         if (!agreed) setAgreementError(true);
         if (!kvkkAgreed) setKvkkError(true);
         setTimeout(() => {
@@ -478,7 +474,6 @@ export default function CheckoutClient() {
         return;
       }
       if (!validateCard()) {
-        console.warn('[Checkout] Card validation failed');
         setTimeout(() => {
           const el = document.querySelector('.chk-input--error');
           if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -505,7 +500,7 @@ export default function CheckoutClient() {
           expiryMonth: cardForm.expiryMonth, expiryYear: cardForm.expiryYear, cvv: cardForm.cvv,
         }));
       } catch (err) {
-        console.error('[Checkout] Submit chain failed:', err);
+        logger.error('Submit chain failed', err, 'checkout');
         setIsProcessing(false);
       } finally { submitRef.current = false; }
     },
@@ -535,11 +530,8 @@ export default function CheckoutClient() {
     : [];
 
   const triggerPassengerSubmit = () => {
-    console.log('[Checkout] Pay button clicked', {
-      payDisabled, isProcessing, productId, productItemId, searchId, agreed, kvkkAgreed,
-    });
     const form = document.querySelector('.bb-passenger-form') as HTMLFormElement | null;
-    if (!form) { console.warn('[Checkout] PassengerForm not found in DOM'); return; }
+    if (!form) { logger.error('PassengerForm not found in DOM', undefined, 'checkout'); return; }
     form.requestSubmit();
   };
 

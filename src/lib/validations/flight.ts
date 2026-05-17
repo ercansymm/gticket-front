@@ -87,6 +87,20 @@ export const makePaymentClientSchema = z.discriminatedUnion('paymentType', [
   }),
 ]);
 
+// İstemciden gelen retry-payment request
+// Var olan booking için ödemeyi tekrar dener; session bilgisi backend'de booking'den alınır
+export const retryPaymentClientSchema = z.object({
+  bookingId: z.string().min(1).max(100),
+  creditCard: z.object({
+    cardHolderName: z.string().min(3).max(100).trim().regex(/^[A-ZÇĞİÖŞÜa-zçğıöşü\s]+$/, 'Geçersiz kart sahibi adı'),
+    cardNumber: z.string().regex(/^\d{15,16}$/, 'Geçersiz kart numarası'),
+    expiryMonth: z.string().regex(/^(0[1-9]|1[0-2])$/, 'Geçersiz ay'),
+    expiryYear: z.string().regex(/^\d{2,4}$/, 'Geçersiz yıl'),
+    cvv: z.string().regex(/^\d{3,4}$/, 'Geçersiz CVV'),
+  }),
+  installmentOptionId: z.string().max(200).optional(),
+});
+
 // searchId-only endpoints (finalize, poke, read, logout)
 export const searchIdOnlySchema = z.object({
   searchId: z.string().min(1).max(100),
@@ -117,4 +131,5 @@ export type FlightSearchInput = z.infer<typeof flightSearchSchema>;
 export type FlightAllocateClientInput = z.infer<typeof flightAllocateClientSchema>;
 export type RemoveProductClientInput = z.infer<typeof removeProductClientSchema>;
 export type MakePaymentClientInput = z.infer<typeof makePaymentClientSchema>;
+export type RetryPaymentClientInput = z.infer<typeof retryPaymentClientSchema>;
 export type SearchIdOnlyInput = z.infer<typeof searchIdOnlySchema>;
