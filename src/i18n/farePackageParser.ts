@@ -206,6 +206,45 @@ const PATTERN_RULES: PatternRule[] = [
     description: 'Simple kg baggage',
   },
 
+  // "1X15 KG BAGGAGE ALLOWANCE" / "2x23 KG BAGGAGE"
+  {
+    pattern: /^(\d+)\s*X\s*(\d+)\s*KGS?\s+(?:CHECKED\s+)?BAGGAGE(?:\s+ALLOWANCE)?$/,
+    transform: (m) => {
+      const [, pieces, kg] = m;
+      return pieces === '1'
+        ? `${kg} kg bagaj`
+        : `${pieces} parça x ${kg} kg bagaj`;
+    },
+    description: 'Multiplied kg baggage (THY v2)',
+  },
+
+  // "1 PIECE OF 23KG" / "2 PIECES OF 32KGS"
+  {
+    pattern: /^(\d+)\s+PIECES?\s+OF\s+(\d+)\s*KGS?$/,
+    transform: (m) => {
+      const [, pieces, kg] = m;
+      return pieces === '1' ? `${kg} kg bagaj` : `${pieces} parça x ${kg} kg bagaj`;
+    },
+    description: 'Piece of kg baggage (international)',
+  },
+
+  // "1 PIECE BAGGAGE" / "2 PIECES BAGGAGE"
+  {
+    pattern: /^(\d+)\s+PIECES?\s+BAGGAGE$/,
+    transform: (m) => `${m[1]} parça bagaj`,
+    description: 'Piece concept baggage',
+  },
+
+  // "1PC X 23KG" / "2 PC 32 KG"
+  {
+    pattern: /^(\d+)\s*PCS?\s*(?:X|OF)?\s*(\d+)\s*KGS?$/,
+    transform: (m) => {
+      const [, pieces, kg] = m;
+      return pieces === '1' ? `${kg} kg bagaj` : `${pieces} parça x ${kg} kg bagaj`;
+    },
+    description: 'PC abbreviation baggage',
+  },
+
   // ===== EL BAGAJI =====
 
   // "1 Cabin Bag Up To 8kg" / "2 Cabin Bags Up To 8kg"
@@ -242,6 +281,28 @@ const PATTERN_RULES: PatternRule[] = [
     pattern: /^(\d+)\s*KG\s+CABIN\s+BAGGAGE$/,
     transform: (m) => `${m[1]} kg el bagajı`,
     description: 'Simple cabin kg',
+  },
+
+  // "1X8 KG CABIN BAGGAGE" / "2x8 KG CABIN BAGGAGE"
+  {
+    pattern: /^(\d+)\s*X\s*(\d+)\s*KGS?\s+CABIN\s+BAGGAGE$/,
+    transform: (m) => {
+      const [, pieces, kg] = m;
+      return pieces === '1'
+        ? `${kg} kg el bagajı`
+        : `${pieces} parça x ${kg} kg el bagajı`;
+    },
+    description: 'Multiplied cabin baggage (THY v2)',
+  },
+
+  // "1 PIECE OF 8KG CABIN BAGGAGE"
+  {
+    pattern: /^(\d+)\s+PIECES?\s+OF\s+(\d+)\s*KGS?\s+CABIN\s+BAGGAGE$/,
+    transform: (m) => {
+      const [, pieces, kg] = m;
+      return pieces === '1' ? `${kg} kg el bagajı` : `${pieces} parça x ${kg} kg el bagajı`;
+    },
+    description: 'Piece-of-kg cabin baggage',
   },
 
   // ===== MİL =====
