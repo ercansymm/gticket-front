@@ -74,6 +74,17 @@ const FooterOne = () => {
             </div>
          </div>
 
+         {/* ── Agency strip (TÜRSAB) ── */}
+         <div className="bb-footer__agency">
+            <div className="container">
+               <div className="bb-footer__agency-inner">
+                  <span className="bb-footer__agency-item">Zlatna Rota Turizm Seyahat Acentası</span>
+                  <span className="bb-footer__agency-sep">·</span>
+                  <span className="bb-footer__agency-item">TÜRSAB Belge No: 18474</span>
+               </div>
+            </div>
+         </div>
+
          {/* ── Bottom bar ── */}
          <div className="bb-footer__bottom">
             <div className="container">

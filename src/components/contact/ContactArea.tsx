@@ -1,12 +1,21 @@
 "use client";
 
+import type { ReactNode } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 
 const ContactMap = dynamic(() => import("./ContactMap"), { ssr: false });
 
-const INFO_ITEMS = [
+type InfoItem = {
+  icon: ReactNode;
+  label: string;
+  value: string;
+  href: string | null;
+  sublines?: string[];
+};
+
+const INFO_ITEMS: InfoItem[] = [
   {
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -38,6 +47,7 @@ const INFO_ITEMS = [
     label: "Adres",
     value: "İstanbul, Türkiye",
     href: null,
+    sublines: ["Acente: Zlatna Rota Turizm", "TÜRSAB Belge No: 18474"],
   },
 ];
 
@@ -73,6 +83,13 @@ const ContactArea = () => {
                 </Link>
               ) : (
                 <p className="ct-card__value">{item.value}</p>
+              )}
+              {item.sublines && item.sublines.length > 0 && (
+                <div className="ct-card__sublines">
+                  {item.sublines.map((line, idx) => (
+                    <p key={idx} className="ct-card__subline">{line}</p>
+                  ))}
+                </div>
               )}
             </div>
           ))}
