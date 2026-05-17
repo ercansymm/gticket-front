@@ -79,6 +79,7 @@ const FooterOne = () => {
             <div className="container">
                <div className="bb-footer__bottom-inner">
                   <span>© {new Date().getFullYear()} AtaBilet. {t.allRightsReserved}</span>
+                  <span className="bb-footer__tursab">Türsab Belge No: 18474 · Zlatna Rota Turizm Seyahat Acentası</span>
                   <div className="bb-footer__bottom-links">
                      <Link href="/gizlilik">Gizlilik Politikası</Link>
                      <span>·</span>
