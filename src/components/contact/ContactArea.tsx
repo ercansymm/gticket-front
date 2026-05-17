@@ -14,8 +14,8 @@ const INFO_ITEMS = [
       </svg>
     ),
     label: "Acil Bilet Hattı",
-    value: "0532 015 26 38",
-    href: "tel:+905320152638",
+    value: "0850 302 0282",
+    href: "tel:+908503020282",
   },
   {
     icon: (
