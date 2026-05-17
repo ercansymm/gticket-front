@@ -1,9 +1,4 @@
-//butest1 de yazılmıştır
-//butest1 de yazılmıştır
-//butest1 de yazılmıştır 3. satır için test edilecektir.
 
-//deneme bu yazı test feature/ismail-test2 den eklendi conflict testi   
-//merge en son comnmiti mi alıyor deneme
 "use client";
 
 import { useEffect } from "react";

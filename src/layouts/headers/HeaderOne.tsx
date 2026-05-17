@@ -87,6 +87,11 @@ const HeaderOne = () => {
                   </div>
                   <div className="bb-header-right">
 
+                     {/* Türsab badge */}
+                     <span className="bb-tursab-badge d-none d-lg-inline-flex">
+                        Türsab Belge No: 18474
+                     </span>
+
                      {/* Currency Selector — arama sonrası görünür */}
                      <CurrencySelector />
 
