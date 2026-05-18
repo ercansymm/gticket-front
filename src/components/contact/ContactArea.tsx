@@ -23,8 +23,8 @@ const INFO_ITEMS: InfoItem[] = [
       </svg>
     ),
     label: "Bilet Hattı",
-    value: "0850 302 0282",
-    href: "tel:+908503020282",
+    value: "0212 532 0849",
+    href: "tel:+902125320849",
   },
   {
     icon: (
@@ -97,10 +97,13 @@ const ContactArea = () => {
         {/* Şirket bilgileri */}
         <div className="ct-company">
           <p className="ct-company__line">
-            <span className="ct-company__label">Şirket:</span> G Travel Turizm ve Seyahat Acentesi
+            <span className="ct-company__label">Şirket:</span> G Travel Turizm ve Danışmanlık Ticaret Limited Şirketi
           </p>
           <p className="ct-company__line">
-            <span className="ct-company__label">Acente:</span> Zlatna Rota
+            <span className="ct-company__label">Acente:</span> Zlatna Rota Turizim Ve Seyehat Acentası
+          </p>
+           <p className="ct-company__line">
+            <span className="ct-company__label">Adres:</span> Molla Gürhani Mahellesi Muratpaşa Sokak Yeni Han No:2/Z03 Fatih/İstanbul
           </p>
           <p className="ct-company__line">
             <span className="ct-company__label">TÜRSAB Belge No:</span> 18474
