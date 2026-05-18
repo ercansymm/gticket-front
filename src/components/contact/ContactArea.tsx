@@ -22,7 +22,7 @@ const INFO_ITEMS: InfoItem[] = [
         <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 10.8a19.79 19.79 0 01-3.07-8.68A2 2 0 012 0h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 14.92z" />
       </svg>
     ),
-    label: "Acil Bilet Hattı",
+    label: "Bilet Hattı",
     value: "0850 302 0282",
     href: "tel:+908503020282",
   },
@@ -47,11 +47,6 @@ const INFO_ITEMS: InfoItem[] = [
     label: "Adres",
     value: "İstanbul, Türkiye",
     href: null,
-    sublines: [
-      "Şirket: G Travel Turizm ve Seyahat Acentesi",
-      "Acente: Zlatna Rota",
-      "TÜRSAB Belge No: 18474",
-    ],
   },
 ];
 
@@ -97,6 +92,19 @@ const ContactArea = () => {
               )}
             </div>
           ))}
+        </div>
+
+        {/* Şirket bilgileri */}
+        <div className="ct-company">
+          <p className="ct-company__line">
+            <span className="ct-company__label">Şirket:</span> G Travel Turizm ve Seyahat Acentesi
+          </p>
+          <p className="ct-company__line">
+            <span className="ct-company__label">Acente:</span> Zlatna Rota
+          </p>
+          <p className="ct-company__line">
+            <span className="ct-company__label">TÜRSAB Belge No:</span> 18474
+          </p>
         </div>
 
         {/* Destek talebi CTA */}

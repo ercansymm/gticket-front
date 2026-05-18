@@ -14643,6 +14643,29 @@ footer,
   margin-bottom: 0;
 }
 
+/* Şirket bilgileri */
+.ct-company {
+  text-align: center;
+  margin: 8px auto 32px;
+  padding: 20px 24px;
+  max-width: 720px;
+  color: #475569;
+  font-size: 14px;
+  line-height: 1.9;
+  border-top: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.ct-company__line {
+  margin: 0;
+}
+
+.ct-company__label {
+  color: #0a1628;
+  font-weight: 600;
+  margin-right: 6px;
+}
+
 /* Destek CTA */
 .ct-support-cta {
   display: flex;
