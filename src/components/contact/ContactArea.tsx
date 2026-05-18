@@ -47,7 +47,11 @@ const INFO_ITEMS: InfoItem[] = [
     label: "Adres",
     value: "İstanbul, Türkiye",
     href: null,
-    sublines: ["Acente: Zlatna Rota Turizm", "TÜRSAB Belge No: 18474"],
+    sublines: [
+      "Şirket: G Travel Turizm ve Seyahat Acentesi",
+      "Acente: Zlatna Rota",
+      "TÜRSAB Belge No: 18474",
+    ],
   },
 ];
 
