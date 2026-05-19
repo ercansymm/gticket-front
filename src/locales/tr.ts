@@ -36,6 +36,7 @@ export const tr = {
   to: "",
   departureDate: "",
   returnDate: "",
+  addReturnDate: "Dönüş tarihi ekle",
   passenger: "",
   passengers: "",
   class: "Sınıf",

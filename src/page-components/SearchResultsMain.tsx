@@ -570,6 +570,7 @@ const SearchResultsMain = () => {
             origin={loadingSegments ? loadingSegments[0].origin : (searchParams?.origin ?? '...')}
             destination={loadingSegments ? loadingSegments[loadingSegments.length - 1].destination : (searchParams?.destination ?? '...')}
             departureDate={loadingSegments ? loadingSegments[0].departureDate : (searchParams?.departureDate ?? '')}
+            returnDate={!loadingSegments && searchParams?.flightType === 'RT' ? searchParams?.returnDate ?? null : null}
             passengerCount={(searchParams?.adultCount ?? 1) + (searchParams?.childCount ?? 0) + (searchParams?.infantCount ?? 0)}
             cabinClass={searchParams?.flightClass ?? 'Economy'}
             tripType={searchParams?.flightType === 'RT' ? 'round-trip' : 'one-way'}

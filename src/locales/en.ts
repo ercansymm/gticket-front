@@ -37,6 +37,7 @@ export const en = {
   to: "To",
   departureDate: "Departure Date",
   returnDate: "Return Date",
+  addReturnDate: "Add return date",
   passenger: "Passenger",
   passengers: "Passengers",
   class: "Class",
