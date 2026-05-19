@@ -64,11 +64,6 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "https://www.atabilet.com",
   },
-  icons: {
-    icon: [
-      { url: "/favicon.svg", type: "image/svg+xml" },
-    ],
-  },
 };
 
 export default function RootLayout({
