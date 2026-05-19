@@ -6,7 +6,10 @@ import { logger } from '@/lib/logger';
 const API_BASE = process.env.API_BASE_URL;
 
 export async function POST(request: NextRequest) {
-  const rateLimitResponse = checkRateLimit(request, 10, 60_000);
+  // Allocate cache'lenmiyor ve kullanıcı search-results'ta birkaç uçuşa peşpeşe bakabilir
+  // (her tıklama 1 allocate, branded fare modal seçimi de 1 allocate). Limit 10/dk çok dardı;
+  // 30/dk hem abuse'a karşı koruyor hem doğal davranışı engellemiyor.
+  const rateLimitResponse = checkRateLimit(request, 30, 60_000);
   if (rateLimitResponse) return rateLimitResponse;
 
   try {
