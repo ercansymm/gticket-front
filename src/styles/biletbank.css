@@ -1310,6 +1310,20 @@ body.bb-home .bb-header-wrap:not(.bb-header-wrap--scrolled) .bb-header-btn:not(.
   padding-right: 40px;
 }
 
+@media (max-width: 768px) {
+  /* Mobilde tap-target için büyüt */
+  .bb-flight-form__clear-btn {
+    width: 36px;
+    height: 36px;
+    right: 8px;
+    font-size: 14px;
+  }
+  .bb-flight-form__field--with-icon .bb-flight-form__clear-btn ~ .bb-flight-form__input,
+  .bb-flight-form__field--with-icon .bb-flight-form__input:has(~ .bb-flight-form__clear-btn) {
+    padding-right: 52px;
+  }
+}
+
 .bb-flight-form__input:focus {
   border-color: var(--ab-primary);
   box-shadow: 0 0 0 3px var(--ab-primary-light);
