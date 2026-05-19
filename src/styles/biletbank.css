@@ -1278,6 +1278,38 @@ body.bb-home .bb-header-wrap:not(.bb-header-wrap--scrolled) .bb-header-btn:not(.
   top: calc(50% + 11px);
 }
 
+/* Clear button (X) on the right side of a field (used by return date) */
+.bb-flight-form__clear-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(10, 22, 40, 0.06);
+  color: #475569;
+  font-size: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.bb-flight-form__clear-btn:hover {
+  background: #db2525;
+  color: #fff;
+}
+.bb-flight-form__field--with-icon .bb-flight-form__label:not(:empty) ~ .bb-flight-form__clear-btn {
+  top: calc(50% + 11px);
+}
+.bb-flight-form__field--with-icon .bb-flight-form__clear-btn ~ .bb-flight-form__input,
+.bb-flight-form__field--with-icon .bb-flight-form__input:has(~ .bb-flight-form__clear-btn) {
+  padding-right: 40px;
+}
+
 .bb-flight-form__input:focus {
   border-color: var(--ab-primary);
   box-shadow: 0 0 0 3px var(--ab-primary-light);

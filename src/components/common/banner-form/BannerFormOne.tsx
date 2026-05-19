@@ -1264,35 +1264,58 @@ const BannerFormOne = () => {
                )}
             </div>
 
-            {/* Dönüş Tarihi — sadece roundtrip */}
-            {tripType === "roundtrip" && (
-               <div className="bb-flight-form__field bb-calendar-wrapper bb-flight-form__field--with-icon">
-                  <label className="bb-flight-form__label">{t.returnDate}</label>
-                  <i className="fa-solid fa-calendar-days bb-flight-form__input-icon" aria-hidden="true"></i>
-                  <input
-                     type="text"
-                     className={`bb-flight-form__input ${errors.returnDate ? "bb-flight-form__input--error" : ""}`}
-                     value={returnDate ? formatDate(returnDate) : ""}
-                     placeholder={t.selectDate}
-                     readOnly
-                     onClick={() => openCalendar("return")}
+            {/* Dönüş Tarihi — oneway'de "ekle" butonu olarak, roundtrip'te normal alan */}
+            <div className="bb-flight-form__field bb-calendar-wrapper bb-flight-form__field--with-icon">
+               <label className="bb-flight-form__label">{t.returnDate}</label>
+               <i className={`fa-solid ${tripType === "roundtrip" ? "fa-calendar-days" : "fa-plus"} bb-flight-form__input-icon`} aria-hidden="true"></i>
+               <input
+                  type="text"
+                  className={`bb-flight-form__input ${errors.returnDate ? "bb-flight-form__input--error" : ""} ${tripType === "oneway" ? "bb-flight-form__input--add-return" : ""}`}
+                  value={tripType === "roundtrip" && returnDate ? formatDate(returnDate) : ""}
+                  placeholder={tripType === "oneway" ? t.addReturnDate : t.selectDate}
+                  readOnly
+                  onClick={() => {
+                     if (tripType === "oneway") {
+                        setTripType("roundtrip");
+                        // Mode switch render'ından sonra takvimi aç
+                        setTimeout(() => openCalendar("return"), 60);
+                     } else {
+                        openCalendar("return");
+                     }
+                  }}
+               />
+               {tripType === "roundtrip" && (
+                  <button
+                     type="button"
+                     className="bb-flight-form__clear-btn"
+                     aria-label={t.removeFlight}
+                     onClick={(e) => {
+                        e.stopPropagation();
+                        setReturnDate(null);
+                        setTripType("oneway");
+                        if (calendarOpen && calendarTarget === "return") closeCalendar();
+                        setErrors(prev => ({ ...prev, returnDate: '' }));
+                     }}
+                  >
+                     <i className="fa-solid fa-xmark" aria-hidden="true"></i>
+                  </button>
+               )}
+               {errors.returnDate && <span className="bb-flight-form__error">{errors.returnDate}</span>}
+               {tripType === "roundtrip" && calendarOpen && calendarTarget === "return" && (
+                  <Calendar
+                     isOpen
+                     mode="single"
+                     onClose={closeCalendar}
+                     onSelectDate={(date) => {
+                        setReturnDate(date);
+                        closeCalendar();
+                     }}
+                     selectedDate={returnDate}
+                     minDate={departDate || undefined}
+                     initialMonth={departDate || undefined}
                   />
-                  {errors.returnDate && <span className="bb-flight-form__error">{errors.returnDate}</span>}
-                  {calendarOpen && calendarTarget === "return" && (
-                     <Calendar
-                        isOpen
-                        mode="single"
-                        onClose={closeCalendar}
-                        onSelectDate={(date) => {
-                           setReturnDate(date);
-                           closeCalendar();
-                        }}
-                        selectedDate={returnDate}
-                        minDate={departDate || undefined}
-                     />
-                  )}
-               </div>
-            )}
+               )}
+            </div>
 
             {/* Yolcu */}
             <div ref={paxRef} className="bb-flight-form__field bb-flight-form__field--pax bb-flight-form__field--with-icon">

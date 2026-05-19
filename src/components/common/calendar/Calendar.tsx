@@ -13,6 +13,8 @@ interface CalendarProps {
   mode: "single" | "range";
   rangeStart?: Date | null;
   rangeEnd?: Date | null;
+  /** Initial month to display when no date is selected yet (overrides today) */
+  initialMonth?: Date;
 }
 
 /* ── helpers ─────────────────────────────────────────── */
@@ -45,6 +47,7 @@ const Calendar = ({
   mode,
   rangeStart,
   rangeEnd,
+  initialMonth,
 }: CalendarProps) => {
   const { t } = useTranslation();
   const calRef = useRef<HTMLDivElement>(null);
@@ -56,7 +59,7 @@ const Calendar = ({
 
   // Base month for the left panel
   const [baseMonth, setBaseMonth] = useState(() => {
-    const ref = rangeStart || selectedDate || new Date();
+    const ref = rangeStart || selectedDate || initialMonth || new Date();
     return new Date(ref.getFullYear(), ref.getMonth(), 1);
   });
 
@@ -86,7 +89,7 @@ const Calendar = ({
     if (isOpen) {
       setInternalStart(rangeStart ?? null);
       setInternalEnd(rangeEnd ?? null);
-      const ref = rangeStart || selectedDate || new Date();
+      const ref = rangeStart || selectedDate || initialMonth || new Date();
       setBaseMonth(new Date(ref.getFullYear(), ref.getMonth(), 1));
     }
   }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps

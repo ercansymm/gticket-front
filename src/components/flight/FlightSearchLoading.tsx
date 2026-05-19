@@ -35,6 +35,7 @@ interface FlightSearchLoadingProps {
   origin: string;
   destination: string;
   departureDate: string;
+  returnDate?: string | null;
   passengerCount: number;
   cabinClass: string;
   tripType: "one-way" | "round-trip";
@@ -44,6 +45,7 @@ export default function FlightSearchLoading({
   origin,
   destination,
   departureDate,
+  returnDate,
   passengerCount,
   cabinClass,
   tripType,
@@ -99,7 +101,12 @@ export default function FlightSearchLoading({
   }, []);
 
   const tripLabel = tripType === "round-trip" ? "Gidiş-Dönüş" : "Tek Yön";
-  const dateLabel = formatDate(departureDate);
+  const departLabel = formatDate(departureDate);
+  const returnLabel = returnDate ? formatDate(returnDate) : "";
+  const dateLabel =
+    tripType === "round-trip" && returnLabel
+      ? `${departLabel} - ${returnLabel}`
+      : departLabel;
 
   return (
     <div
