@@ -130,7 +130,7 @@ const flightSlice = createSlice({
     setSearchParams: (state, action: PayloadAction<FlightSearchRequest>) => {
       state.searchParams = action.payload;
     },
-    setSelectedFlight: (state, action: PayloadAction<FlightResult>) => {
+    setSelectedFlight: (state, action: PayloadAction<FlightResult | null>) => {
       state.selectedFlight = action.payload;
     },
     setSelectedReturnFlight: (state, action: PayloadAction<FlightResult | null>) => {
