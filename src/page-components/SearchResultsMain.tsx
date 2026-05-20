@@ -133,6 +133,28 @@ const SearchResultsMain = () => {
     }
   }, [searchResults]);
 
+  // bfcache geri-navigasyon: kullanıcı checkout'tan tarayıcı geri tuşuyla dönerse
+  // backend session cache'i (20dk) ve BiletBank shoppingFile state'i bayatlamış olabilir.
+  // Aynı searchId üzerinden ikinci bir allocate denemek "ürün tahsis edilemedi" hatasına
+  // sebep olabiliyor; fresh search ile sessionId/searchId/shoppingFile'ı yenileyip
+  // temiz state'ten devam ediyoruz. searchFlightsThunk.pending bookingSlice ve paymentSlice'ı
+  // da auto-reset eder.
+  const searchParamsRef = useRef(searchParams);
+  useEffect(() => {
+    searchParamsRef.current = searchParams;
+  }, [searchParams]);
+
+  useEffect(() => {
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (!e.persisted) return;
+      const current = searchParamsRef.current;
+      if (!current) return;
+      dispatch(searchFlightsThunk(current));
+    };
+    window.addEventListener('pageshow', onPageShow);
+    return () => window.removeEventListener('pageshow', onPageShow);
+  }, [dispatch]);
+
   // Client-side filtreleme + sıralama — API çağrısı yok
   const displayedFlights = useMemo(() => {
     if (!searchResults?.flights) return [];
@@ -658,9 +680,30 @@ const SearchResultsMain = () => {
       : "Uçuş Tahsis Edilemedi";
     const allocateErrorMessage = isRateLimit
       ? "Çok hızlı işlem yapıyorsunuz. Lütfen bir dakika bekleyip tekrar deneyin."
-      : "Seçilen uçuş tahsis edilemedi. Lütfen başka bir uçuş seçin.";
+      : "Seçilen uçuş şu anda tahsis edilemedi. Yeniden deneyebilir veya başka bir uçuş seçebilirsiniz.";
     const allocateErrorIcon = isRateLimit ? "fa-solid fa-clock" : "fa-solid fa-triangle-exclamation";
-    const allocateErrorBtnLabel = isRateLimit ? "Tekrar Dene" : "Başka Uçuş Seç";
+
+    // Son seçilen uçuşu Redux state'inden yeniden allocate eder. Backend transparent retry
+    // başarısız kaldıysa kullanıcıya manuel tek-tık deneme yolu açar.
+    const handleRetryAllocate = () => {
+      dispatch(clearAllocate());
+      if (!searchResults?.searchId || !selectedFlight?.productId) return;
+      dispatch(allocateFlightThunk({
+        searchId: searchResults.searchId,
+        productId: selectedFlight.productId,
+        brandedFareItemId: undefined,
+      })).unwrap()
+        .then((result: AllocateResponse) => {
+          if (isRealPriceChange(result, selectedFlight, null)) {
+            setPriceChangedData(result);
+          } else {
+            router.push('/checkout');
+          }
+        })
+        .catch(() => {});
+    };
+
+    const canRetry = !isRateLimit && !!selectedFlight?.productId && !!searchResults?.searchId;
 
     return (
       <>
@@ -670,9 +713,20 @@ const SearchResultsMain = () => {
             <div className="bb-empty-state__icon"><i className={allocateErrorIcon}></i></div>
             <h2 className="bb-empty-state__title">{allocateErrorTitle}</h2>
             <p className="bb-empty-state__text">{allocateErrorMessage}</p>
-            <button className="bb-empty-state__btn" onClick={() => dispatch(clearAllocate())}>
-              {allocateErrorBtnLabel}
-            </button>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+              {canRetry && (
+                <button className="bb-empty-state__btn" onClick={handleRetryAllocate}>
+                  Tekrar Dene
+                </button>
+              )}
+              <button
+                className="bb-empty-state__btn"
+                onClick={() => dispatch(clearAllocate())}
+                style={canRetry ? { background: 'transparent', color: '#0a1628', border: '1px solid #0a1628' } : undefined}
+              >
+                {isRateLimit ? 'Tekrar Dene' : 'Başka Uçuş Seç'}
+              </button>
+            </div>
           </div>
         </main>
         <FooterOne />
