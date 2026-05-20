@@ -133,27 +133,35 @@ const SearchResultsMain = () => {
     }
   }, [searchResults]);
 
-  // bfcache geri-navigasyon: kullanıcı checkout'tan tarayıcı geri tuşuyla dönerse
-  // backend session cache'i (20dk) ve BiletBank shoppingFile state'i bayatlamış olabilir.
-  // Aynı searchId üzerinden ikinci bir allocate denemek "ürün tahsis edilemedi" hatasına
-  // sebep olabiliyor; fresh search ile sessionId/searchId/shoppingFile'ı yenileyip
-  // temiz state'ten devam ediyoruz. searchFlightsThunk.pending bookingSlice ve paymentSlice'ı
-  // da auto-reset eder.
-  const searchParamsRef = useRef(searchParams);
+  // SPA-aware geri-navigasyon tespiti: router.push('/checkout') SPA navigation olduğu için
+  // pageshow event'i tetiklenmez. Bunun yerine "kullanıcı bir uçuş allocate ettiyse
+  // selectedFlight Redux'a set olur" gerçeğini kullanıyoruz — bu component mount edildiğinde
+  // selectedFlight + searchParams varsa demek ki checkout'tan geri dönüş var; bayat searchId
+  // ve BiletBank shoppingFile state'i ("Already allocated product") sorununu önlemek için
+  // fresh search tetikleyip temiz session'a geçiyoruz. searchFlightsThunk.pending
+  // bookingSlice/paymentSlice'ı auto-reset eder; selectedFlight'ı manuel temizliyoruz.
+  // Ek güvence: pageshow + e.persisted ile hard refresh / bfcache durumları da kapsanır.
+  const refreshGuardRef = useRef(false);
   useEffect(() => {
-    searchParamsRef.current = searchParams;
-  }, [searchParams]);
+    if (refreshGuardRef.current) return;
+    if (!searchParams) return;
+    if (!selectedFlight) return;
+    refreshGuardRef.current = true;
+    dispatch(clearAllocate());
+    dispatch(setSelectedFlight(null));
+    dispatch(setSelectedBrandedFareItemId(null));
+    dispatch(searchFlightsThunk(searchParams));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const onPageShow = (e: PageTransitionEvent) => {
-      if (!e.persisted) return;
-      const current = searchParamsRef.current;
-      if (!current) return;
-      dispatch(searchFlightsThunk(current));
+      if (!e.persisted || !searchParams) return;
+      dispatch(searchFlightsThunk(searchParams));
     };
     window.addEventListener('pageshow', onPageShow);
     return () => window.removeEventListener('pageshow', onPageShow);
-  }, [dispatch]);
+  }, [dispatch, searchParams]);
 
   // Client-side filtreleme + sıralama — API çağrısı yok
   const displayedFlights = useMemo(() => {
