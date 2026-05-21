@@ -22,11 +22,7 @@ const Banner = () => {
             <div className="row justify-content-center">
                <div className="col-xl-12">
                   <div className="bb-hero-content text-center">
-                     <p className="bb-hero-agency">
-                        Zlatna Rota Turizm Ve Seyahat Acentası
-                        <span className="bb-hero-agency__sep" aria-hidden="true">·</span>
-                        TÜRSAB Belge No: 18474
-                     </p>
+
                      <h1 className="bb-hero-title">{t.heroTitle}</h1>
                      <div className="bb-search-tabs">
                         <div className="bb-search-tabs__nav" role="tablist">
