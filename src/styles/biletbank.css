@@ -4319,22 +4319,22 @@ select.bb-flight-form__input {
   max-width: 280px;
 }
 
-/* TÜRSAB DDS logo (replaces social icons) */
+/* TÜRSAB DDS logo (replaces social icons) — block element, sits between brand-desc and phone */
 .bb-footer__tursab-dds {
-  display: inline-block;
-  margin-top: 8px;
-  padding: 6px;
-  background: #fff;
-  border-radius: 6px;
+  display: block;
+  width: fit-content;
+  margin: 14px 0 0 0;
   line-height: 0;
+  border-radius: 4px;
+  overflow: hidden;
   transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
 .bb-footer__tursab-dds img {
   display: block;
-  width: 110px;
+  width: 140px;
   height: auto;
-  max-height: 110px;
+  max-height: 140px;
 }
 
 .bb-footer__tursab-dds:hover {

@@ -34,7 +34,7 @@ const FooterOne = () => {
                      >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
-                           src="/images/tursab-dds-18474.png"
+                           src="/images/tursab-dds-18474.jpg"
                            alt="TÜRSAB DDS Belge No: 18474"
                            width={120}
                            height={120}
