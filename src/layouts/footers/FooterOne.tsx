@@ -24,38 +24,41 @@ const FooterOne = () => {
                         <i className="fa-solid fa-phone-volume" />
                         0850 302 0282
                      </a>
-                     {/* TÜRSAB Dijital Doğrulama Sistemi (DDS) — referrer header ile doğrulama yapılır, rel="noreferrer" KOYMA */}
-                     <a
-                        href="https://www.tursab.org.tr/tr/ddsv"
-                        target="_blank"
-                        rel="noopener"
-                        aria-label="TÜRSAB Dijital Doğrulama Sistemi"
-                        className="bb-footer__tursab-dds"
-                     >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                           src="/images/tursab-dds-18474.jpg"
-                           alt="TÜRSAB DDS Belge No: 18474"
-                           width={120}
-                           height={120}
-                        />
-                     </a>
-                     {/* ETBİS — Elektronik Ticaret Bilgi Sistemi (T.C. Ticaret Bakanlığı) */}
-                     <a
-                        href="https://etbis.ticaret.gov.tr/tr/SiteSorgulamaSonuc?siteId=be0ca649-1625-4956-8081-c66ed8073fb7"
-                        target="_blank"
-                        rel="noopener"
-                        aria-label="ETBİS Kayıt Belgesi"
-                        className="bb-footer__etbis"
-                     >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                           src="/images/etbis.jpeg"
-                           alt="ETBİS Kayıt Belgesi"
-                           width={120}
-                           height={120}
-                        />
-                     </a>
+                     {/* TÜRSAB + ETBİS QR'lari yan yana — orijinal TÜRSAB konumu ve telefonla mesafesi korunur */}
+                     <div className="bb-footer__certs">
+                        {/* TÜRSAB Dijital Doğrulama Sistemi (DDS) — referrer header ile doğrulama yapılır, rel="noreferrer" KOYMA */}
+                        <a
+                           href="https://www.tursab.org.tr/tr/ddsv"
+                           target="_blank"
+                           rel="noopener"
+                           aria-label="TÜRSAB Dijital Doğrulama Sistemi"
+                           className="bb-footer__tursab-dds"
+                        >
+                           {/* eslint-disable-next-line @next/next/no-img-element */}
+                           <img
+                              src="/images/tursab-dds-18474.jpg"
+                              alt="TÜRSAB DDS Belge No: 18474"
+                              width={120}
+                              height={120}
+                           />
+                        </a>
+                        {/* ETBİS — Elektronik Ticaret Bilgi Sistemi (T.C. Ticaret Bakanlığı) */}
+                        <a
+                           href="https://etbis.ticaret.gov.tr/tr/SiteSorgulamaSonuc?siteId=be0ca649-1625-4956-8081-c66ed8073fb7"
+                           target="_blank"
+                           rel="noopener"
+                           aria-label="ETBİS Kayıt Belgesi"
+                           className="bb-footer__etbis"
+                        >
+                           {/* eslint-disable-next-line @next/next/no-img-element */}
+                           <img
+                              src="/images/etbis.jpeg"
+                              alt="ETBİS Kayıt Belgesi"
+                              width={120}
+                              height={120}
+                           />
+                        </a>
+                     </div>
                   </div>
 
                   {/* Hızlı Erişim */}

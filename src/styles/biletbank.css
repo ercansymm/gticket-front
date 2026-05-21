@@ -4320,10 +4320,19 @@ select.bb-flight-form__input {
 }
 
 /* TÜRSAB DDS logo (replaces social icons) — block element, sits between brand-desc and phone */
+/* Certs wrapper — TÜRSAB ve ETBİS QR'larını yan yana hizalar.
+   TÜRSAB'ın orijinal margin'i (14px) wrapper'a taşındı ki telefonla mesafe değişmesin. */
+.bb-footer__certs {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 14px 0 0 0;
+  flex-wrap: wrap;
+}
+
 .bb-footer__tursab-dds {
   display: block;
   width: fit-content;
-  margin: 12px 0 0 0;
   line-height: 0;
   border-radius: 4px;
   overflow: hidden;
@@ -4332,9 +4341,9 @@ select.bb-flight-form__input {
 
 .bb-footer__tursab-dds img {
   display: block;
-  width: 100px;
-  height: 100px;
-  object-fit: contain;
+  width: 140px;
+  height: auto;
+  max-height: 140px;
 }
 
 .bb-footer__tursab-dds:hover {
@@ -4342,11 +4351,11 @@ select.bb-flight-form__input {
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
 }
 
-/* ETBİS — Elektronik Ticaret Bilgi Sistemi (T.C. Ticaret Bakanlığı) */
+/* ETBİS — Elektronik Ticaret Bilgi Sistemi (T.C. Ticaret Bakanlığı)
+   Yükseklik TÜRSAB ile aynı (140px), genişlik aspect ratio'dan gelir. */
 .bb-footer__etbis {
   display: block;
   width: fit-content;
-  margin: 4px 0 0 0;
   line-height: 0;
   border-radius: 4px;
   overflow: hidden;
@@ -4355,8 +4364,9 @@ select.bb-flight-form__input {
 
 .bb-footer__etbis img {
   display: block;
-  width: 100px;
-  height: 100px;
+  height: 140px;
+  width: auto;
+  max-width: 140px;
   object-fit: contain;
 }
 
