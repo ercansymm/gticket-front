@@ -4323,7 +4323,7 @@ select.bb-flight-form__input {
 .bb-footer__tursab-dds {
   display: block;
   width: fit-content;
-  margin: 14px 0 0 0;
+  margin: 12px 0 0 0;
   line-height: 0;
   border-radius: 4px;
   overflow: hidden;
@@ -4332,8 +4332,8 @@ select.bb-flight-form__input {
 
 .bb-footer__tursab-dds img {
   display: block;
-  width: 140px;
-  height: 140px;
+  width: 100px;
+  height: 100px;
   object-fit: contain;
 }
 
@@ -4346,7 +4346,7 @@ select.bb-flight-form__input {
 .bb-footer__etbis {
   display: block;
   width: fit-content;
-  margin: 10px 0 0 0;
+  margin: 4px 0 0 0;
   line-height: 0;
   border-radius: 4px;
   overflow: hidden;
@@ -4355,8 +4355,8 @@ select.bb-flight-form__input {
 
 .bb-footer__etbis img {
   display: block;
-  width: 140px;
-  height: 140px;
+  width: 100px;
+  height: 100px;
   object-fit: contain;
 }
 
