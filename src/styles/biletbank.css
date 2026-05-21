@@ -4333,8 +4333,8 @@ select.bb-flight-form__input {
 .bb-footer__tursab-dds img {
   display: block;
   width: 140px;
-  height: auto;
-  max-height: 140px;
+  height: 140px;
+  object-fit: contain;
 }
 
 .bb-footer__tursab-dds:hover {
@@ -4356,8 +4356,8 @@ select.bb-flight-form__input {
 .bb-footer__etbis img {
   display: block;
   width: 140px;
-  height: auto;
-  max-height: 140px;
+  height: 140px;
+  object-fit: contain;
 }
 
 .bb-footer__etbis:hover {
