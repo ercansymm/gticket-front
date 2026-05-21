@@ -4320,14 +4320,14 @@ select.bb-flight-form__input {
 }
 
 /* TÜRSAB DDS logo (replaces social icons) — block element, sits between brand-desc and phone */
-/* Certs wrapper — TÜRSAB ve ETBİS QR'larını yan yana hizalar.
+/* Certs wrapper — TÜRSAB ve ETBİS QR'larını dikey hizalar (ETBİS, TÜRSAB'ın altında).
    TÜRSAB'ın orijinal margin'i (14px) wrapper'a taşındı ki telefonla mesafe değişmesin. */
 .bb-footer__certs {
   display: flex;
+  flex-direction: column;
   align-items: flex-start;
-  gap: 10px;
+  gap: 8px;
   margin: 14px 0 0 0;
-  flex-wrap: wrap;
 }
 
 .bb-footer__tursab-dds {
@@ -4364,9 +4364,9 @@ select.bb-flight-form__input {
 
 .bb-footer__etbis img {
   display: block;
-  height: 140px;
-  width: auto;
-  max-width: 140px;
+  width: 140px;
+  height: auto;
+  max-height: 140px;
   object-fit: contain;
 }
 
