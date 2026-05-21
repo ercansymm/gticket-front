@@ -15,7 +15,7 @@ export const airports: Airport[] = [
   // ── Akdeniz ──
   { code: 'AYT', nameTr: 'Antalya Havalimanı', nameEn: 'Antalya Airport', cityTr: 'Antalya', cityEn: 'Antalya', countryCode: 'TR', isDomestic: true },
   { code: 'GZP', nameTr: 'Gazipaşa-Alanya Havalimanı', nameEn: 'Gazipasa-Alanya Airport', cityTr: 'Alanya', cityEn: 'Alanya', countryCode: 'TR', isDomestic: true },
-  { code: 'ADA', nameTr: 'Adana Havalimanı', nameEn: 'Adana Airport', cityTr: 'Adana', cityEn: 'Adana', countryCode: 'TR', isDomestic: true },
+  { code: 'COV', nameTr: 'Çukurova Havalimanı', nameEn: 'Cukurova International Airport', cityTr: 'Mersin', cityEn: 'Mersin', countryCode: 'TR', isDomestic: true },
   { code: 'MZH', nameTr: 'Amasya Merzifon Havalimanı', nameEn: 'Amasya Merzifon Airport', cityTr: 'Amasya', cityEn: 'Amasya', countryCode: 'TR', isDomestic: true },
   { code: 'HTY', nameTr: 'Hatay Havalimanı', nameEn: 'Hatay Airport', cityTr: 'Hatay', cityEn: 'Hatay', countryCode: 'TR', isDomestic: true },
   { code: 'ISE', nameTr: 'Süleyman Demirel Havalimanı', nameEn: 'Isparta Suleyman Demirel Airport', cityTr: 'Isparta', cityEn: 'Isparta', countryCode: 'TR', isDomestic: true },
