@@ -40,6 +40,22 @@ const FooterOne = () => {
                            height={120}
                         />
                      </a>
+                     {/* ETBİS — Elektronik Ticaret Bilgi Sistemi (T.C. Ticaret Bakanlığı) */}
+                     <a
+                        href="https://etbis.ticaret.gov.tr/tr/SiteSorgulamaSonuc?siteId=be0ca649-1625-4956-8081-c66ed8073fb7"
+                        target="_blank"
+                        rel="noopener"
+                        aria-label="ETBİS Kayıt Belgesi"
+                        className="bb-footer__etbis"
+                     >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                           src="/images/etbis.jpeg"
+                           alt="ETBİS Kayıt Belgesi"
+                           width={120}
+                           height={120}
+                        />
+                     </a>
                   </div>
 
                   {/* Hızlı Erişim */}

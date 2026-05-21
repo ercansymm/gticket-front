@@ -4342,6 +4342,29 @@ select.bb-flight-form__input {
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
 }
 
+/* ETBİS — Elektronik Ticaret Bilgi Sistemi (T.C. Ticaret Bakanlığı) */
+.bb-footer__etbis {
+  display: block;
+  width: fit-content;
+  margin: 10px 0 0 0;
+  line-height: 0;
+  border-radius: 4px;
+  overflow: hidden;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.bb-footer__etbis img {
+  display: block;
+  width: 140px;
+  height: auto;
+  max-height: 140px;
+}
+
+.bb-footer__etbis:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+}
+
 /* Column titles */
 .bb-footer__title {
   color: #fff;

@@ -410,6 +410,28 @@ export default function CheckoutClient() {
     }
   }, [is3DSecureRequired, threeDSecureUrl, threeDSecureHtml, searchId, paymentResult]);
 
+  /* 3D Secure geri-nav tespiti: kullanıcı bankanın 3DS sayfasından browser back ile dönerse
+     payment_3ds_session flag'i hâlâ sessionStorage'da durur; callback geldiyse paymentResult.isPaymentSuccessful=true olur.
+     Flag var + paymentResult yok/başarısız → kullanıcı iptal etti veya başarısız döndü → overlay kapat, banner göster. */
+  useEffect(() => {
+    const handlePageShow = () => {
+      const pending = sessionStorage.getItem('payment_3ds_session');
+      if (!pending) return;
+      const cbSuccess = paymentResult && paymentResult.hasError === false && paymentResult.isPaymentSuccessful === true;
+      if (!cbSuccess) {
+        sessionStorage.removeItem('payment_3ds_session');
+        setIsProcessing(false);
+        setThreeDSError('3D Secure işlemi iptal edildi. Ödeme başarısız sayılmıştır. Lütfen tekrar deneyin veya farklı bir kart kullanın.');
+        submitRef.current = false;
+      }
+    };
+    window.addEventListener('pageshow', handlePageShow);
+    // Mount sırasında da kontrol et (bfcache devre dışıysa pageshow tetiklenmeyebilir)
+    handlePageShow();
+    return () => window.removeEventListener('pageshow', handlePageShow);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const isPaymentSuccessful = paymentResult && paymentResult.hasError === false &&
     paymentResult.isPaymentSuccessful === true && !paymentResult.is3DSecureRequired;
 
@@ -663,6 +685,17 @@ export default function CheckoutClient() {
                   {threeDSError && (
                     <div className="chk-alert chk-alert--error"><IconAlert />
                       <div className="chk-alert__body">{threeDSError}</div>
+                      <button
+                        type="button"
+                        onClick={() => setThreeDSError(null)}
+                        aria-label="Hatayı kapat"
+                        style={{
+                          background: 'transparent', border: 'none', cursor: 'pointer',
+                          padding: '4px 8px', color: 'inherit', fontSize: 18, lineHeight: 1, marginLeft: 'auto',
+                        }}
+                      >
+                        ×
+                      </button>
                     </div>
                   )}
                   {finalizeError && !isProcessing && (
