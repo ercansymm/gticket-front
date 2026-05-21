@@ -14,3 +14,7 @@ export function getSessionCache(searchId: string): Record<string, unknown> | nul
 export function setSessionCache(searchId: string, data: Record<string, unknown>, ttlMs = 90_000) {
   _cache.set(searchId, { data, expiresAt: Date.now() + ttlMs });
 }
+
+export function clearSessionCache(searchId: string) {
+  _cache.delete(searchId);
+}

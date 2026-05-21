@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { flightAllocateClientSchema, validateBody, parseBody } from '@/lib/validations';
 import { filterSensitiveFields, normalizeToCamelCase, withTimeout, checkRateLimit } from '@/lib/api-helpers';
+import { clearSessionCache } from '@/lib/session-cache';
 import { logger } from '@/lib/logger';
 
 const API_BASE = process.env.API_BASE_URL;
@@ -79,6 +80,12 @@ export async function POST(request: NextRequest) {
     clear();
 
     const data = await res.json();
+
+    // Allocate sonrası BFF session cache'i invalidate et — backend recovery yapmış olabilir
+    // (yeni sessionId / shoppingFileId). Bir sonraki prepare-booking fresh session çeksin.
+    if (res.ok) {
+      clearSessionCache(searchId);
+    }
 
     // GÜVENLİK: filterSensitiveFields sessionId/sessionToken ve hassas alanları siler
     const safeData = filterSensitiveFields(data) as Record<string, unknown>;
