@@ -14,7 +14,6 @@ const TURKISH_AIRPORT_NAMES: Record<string, AirportTurkishInfo> = {
   // ── Akdeniz ──
   AYT: { cityName: 'Antalya', airportName: 'Antalya Havalimanı' },
   GZP: { cityName: 'Alanya', airportName: 'Gazipaşa-Alanya Havalimanı' },
-  ADA: { cityName: 'Adana', airportName: 'Şakirpaşa Havalimanı' },
   MZH: { cityName: 'Amasya', airportName: 'Merzifon Havalimanı' },
   HTY: { cityName: 'Hatay', airportName: 'Hatay Havalimanı' },
   ISE: { cityName: 'Isparta', airportName: 'Süleyman Demirel Havalimanı' },
