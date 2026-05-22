@@ -406,6 +406,10 @@ const EXACT_MATCH_DICTIONARY: Record<string, string> = {
   'NON CHANGEABLE TICKET': 'Değiştirilemez bilet',
   'CHANGE WITHOUT PENALTY': 'Ücretsiz değişiklik',
   'CHANGE WITH PENALTY': 'Ücretli değişiklik',
+  // BiletBank zaten Türkçe gönderiyor — idempotent check'i geçmemesi için normalize çıktısına da ekle
+  'CEZALI DEĞIŞIKLIK': 'Ücretli değişiklik',
+  'CEZALI DEGISIKLIK': 'Ücretli değişiklik',
+  'CEZALİ DEĞİŞİKLİK': 'Ücretli değişiklik',
   'NO CHANGE': 'Değişiklik yapılamaz',
   'FREE CHANGE': 'Ücretsiz değişiklik',
   NONCHANGEABLE: 'Değiştirilemez',
@@ -419,6 +423,11 @@ const EXACT_MATCH_DICTIONARY: Record<string, string> = {
   'NON REFUNDABLE TICKET': 'İade edilemez bilet',
   'REFUND WITHOUT PENALTY': 'Ücretsiz iade',
   'REFUND WITH PENALTY': 'Ücretli iade',
+  // BiletBank Türkçe formu
+  'CEZALI IADE': 'Ücretli iade',
+  'CEZALI İADE': 'Ücretli iade',
+  'CEZALİ IADE': 'Ücretli iade',
+  'CEZALİ İADE': 'Ücretli iade',
   'NO REFUND': 'İade yapılamaz',
   'FREE REFUND': 'Ücretsiz iade',
   NONREFUNDABLE: 'İade edilemez',
