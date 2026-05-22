@@ -22,6 +22,7 @@
 function normalize(text: string): string {
   if (!text) return '';
   return text
+    .normalize('NFC') // Combining char varyantlarını precomposed forma indir (ğ vs ğ)
     .trim()
     .toUpperCase()
     .replace(/\s+/g, ' ')
@@ -339,6 +340,22 @@ const PATTERN_RULES: PatternRule[] = [
     pattern: /^PERSONAL\s*ITEM\s*(\d+)$/,
     transform: (m) => `${m[1]} kg kişisel eşya`,
     description: 'Compact personal item with kg',
+  },
+
+  // ===== TÜRKÇE KAYNAK METİN OVERRIDE'LARI =====
+  // BiletBank metni zaten Türkçe gönderdiğinde `isLikelyAlreadyTurkish` check
+  // metni olduğu gibi geçirir. EXACT_MATCH bazen Unicode form/karakter farkları
+  // nedeniyle tutmuyor; bu pattern'ler broad match olarak güvenlik ağı sağlar.
+  // "CEZALI DEĞIŞIKLIK" (ASCII I) veya "CEZALI DEĞIŞIKLIK" (Turkish İ) — hepsini yakala
+  {
+    pattern: /^CEZAL[Iİ]\s+DE[ĞG][Iİ]?[ŞS][Iİ]?KL[Iİ]?K$/u,
+    transform: () => 'Ücretli değişiklik',
+    description: 'Cezalı değişiklik → Ücretli değişiklik (her varyant)',
+  },
+  {
+    pattern: /^CEZAL[Iİ]\s+[Iİ]ADE$/u,
+    transform: () => 'Ücretli iade',
+    description: 'Cezalı iade → Ücretli iade (her varyant)',
   },
 
   // ===== MİL =====
