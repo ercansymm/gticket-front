@@ -6222,34 +6222,9 @@ select.bb-flight-form__input {
 .bb-search-results__sidebar {
   width: 280px;
   flex-shrink: 0;
-  position: sticky;
   align-self: flex-start;
-  /* dynamically set via --search-sticky-height JS variable; fallback = 290px */
-  top: calc(66px + var(--search-sticky-height, 290px) + 16px);
-  /* Allow long filter content to scroll inside the sidebar instead of pushing layout */
-  max-height: calc(100vh - 66px - var(--search-sticky-height, 290px) - 32px);
-  overflow-y: auto;
-  overflow-x: hidden;
-  /* Subtle scrollbar styling */
-  scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 transparent;
-}
-
-.bb-search-results__sidebar::-webkit-scrollbar {
-  width: 6px;
-}
-
-.bb-search-results__sidebar::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.bb-search-results__sidebar::-webkit-scrollbar-thumb {
-  background-color: #cbd5e1;
-  border-radius: 3px;
-}
-
-.bb-search-results__sidebar::-webkit-scrollbar-thumb:hover {
-  background-color: #94a3b8;
+  /* Filter content flows naturally with the page — no inner scroll box.
+     Sections can be opened/closed without hiding other sections behind a max-height. */
 }
 
 .bb-search-results__content {
