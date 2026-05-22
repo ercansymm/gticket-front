@@ -2791,21 +2791,108 @@ select.bb-flight-form__input {
 }
 
 /* ══════════════════════════════════════════════════════
-   4c-2. POPULAR DESTINATIONS — BENTO MAGAZINE GRID
-   1 hero card (left) + 4 stacked cards (right 2x2)
+   4c-2. POPULAR DESTINATIONS — HORIZONTAL SLIDER
+   Yatay scroll + sağ/sol ok butonları, kare kare ilerler
    ══════════════════════════════════════════════════════ */
-.bb-dest-grid {
-  display: grid;
-  grid-template-columns: 1.15fr 1fr;
-  gap: 16px;
-  align-items: stretch;
+.bb-dest-slider-wrap {
+  position: relative;
 }
 
-.bb-dest-grid__rest {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  grid-auto-rows: 1fr;
+.bb-dest-slider {
+  display: flex;
   gap: 16px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding: 4px 2px;
+  margin: 0 -2px;
+}
+.bb-dest-slider::-webkit-scrollbar {
+  display: none;
+}
+
+.bb-dest-slider .bb-dest-card {
+  flex: 0 0 calc((100% - 48px) / 4);
+  scroll-snap-align: start;
+  min-height: 260px;
+}
+
+/* Header sağ aksiyon grubu — nav butonları + "Tümünü gör" link */
+.bb-routes-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+/* Slider navigation butonları (header'da, profesyonel tasarım) */
+.bb-slider-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  background: #FFFFFF;
+  border: 1px solid var(--bb-border, #E2E8F0);
+  border-radius: 999px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.bb-slider-nav__btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: #475569;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
+}
+
+.bb-slider-nav__btn:hover {
+  background: #0C4A6E;
+  color: #FFFFFF;
+}
+
+.bb-slider-nav__btn:active {
+  transform: scale(0.92);
+}
+
+.bb-slider-nav__btn:focus-visible {
+  outline: 2px solid #0C4A6E;
+  outline-offset: 2px;
+}
+
+@media (max-width: 1199px) {
+  .bb-dest-slider .bb-dest-card {
+    flex: 0 0 calc((100% - 32px) / 3);
+  }
+}
+
+@media (max-width: 991px) {
+  .bb-dest-slider .bb-dest-card {
+    flex: 0 0 calc((100% - 16px) / 2);
+  }
+  .bb-slider-nav__btn {
+    width: 36px;
+    height: 36px;
+  }
+}
+
+@media (max-width: 575px) {
+  .bb-dest-slider .bb-dest-card {
+    flex: 0 0 80%;
+    min-height: 220px;
+  }
+  .bb-routes-header__actions {
+    width: 100%;
+    justify-content: space-between;
+  }
 }
 
 /* Card */
@@ -15609,10 +15696,7 @@ footer,
   background: rgba(255, 255, 255, 0.11);
 }
 
-.bb-why-stat:nth-child(1)  { transform: translateY(-12px); }
-.bb-why-stat:nth-child(4)  { transform: translateY(-12px); }
-.bb-why-stat:nth-child(1):hover,
-.bb-why-stat:nth-child(4):hover { transform: translateY(-15px); }
+/* Tüm istatistik kartları aynı hizada — staggered/zigzag layout kaldırıldı */
 
 .bb-why-stat__icon {
   width: 40px;
@@ -15721,8 +15805,6 @@ footer,
     gap: 40px;
   }
   .bb-why__content { order: -1; }
-  .bb-why-stat:nth-child(1),
-  .bb-why-stat:nth-child(4) { transform: none; }
   .bb-why__title { font-size: 26px; }
 }
 
@@ -15972,5 +16054,198 @@ footer,
   }
   .ab-legal-page__inner h1 {
     font-size: 22px;
+  }
+}
+
+/* ──────────────────────────────────────────────────────────
+   Trust Strip — Hero altı güven şeridi
+   ────────────────────────────────────────────────────────── */
+.bb-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.bb-trust-strip {
+  background: #F1F5F9;
+  padding: 48px 0;
+}
+
+.bb-trust-strip__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 28px;
+  align-items: center;
+  background: #FFFFFF;
+  border: 1px solid var(--bb-border, #E2E8F0);
+  border-radius: 16px;
+  padding: 28px 32px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+}
+
+.bb-trust-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.bb-trust-item__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.bb-trust-item__body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.bb-trust-item__title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0F172A;
+  line-height: 1.25;
+  margin-bottom: 2px;
+}
+
+.bb-trust-item__desc {
+  font-size: 12.5px;
+  color: #64748B;
+  line-height: 1.35;
+}
+
+@media (max-width: 991px) {
+  .bb-trust-strip__grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .bb-trust-strip {
+    padding: 36px 0;
+  }
+  .bb-trust-strip__grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    padding: 22px 20px;
+    border-radius: 14px;
+  }
+  .bb-trust-item__icon {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* ──────────────────────────────────────────────────────────
+   Airline Partners — Blog altı anlaşmalı havayolları
+   ────────────────────────────────────────────────────────── */
+.bb-airline-partners {
+  background: #FFFFFF;
+  padding: 72px 0 80px;
+}
+
+.bb-airline-partners__header {
+  text-align: center;
+  margin-bottom: 36px;
+}
+
+.bb-airline-partners__title {
+  font-size: 26px;
+  font-weight: 700;
+  color: #0C4A6E;
+  margin: 0 0 10px;
+  line-height: 1.2;
+}
+
+.bb-airline-partners__subtitle {
+  font-size: 15px;
+  color: #64748B;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.bb-airline-partners__grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 16px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.bb-airline-card {
+  background: #FFFFFF;
+  border: 1px solid var(--bb-border, #E2E8F0);
+  border-radius: 12px;
+  aspect-ratio: 1 / 1;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  cursor: default;
+}
+
+.bb-airline-card img {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  filter: grayscale(100%);
+  opacity: 0.65;
+  transition: filter 0.25s ease, opacity 0.25s ease;
+}
+
+.bb-airline-card:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+  border-color: #0C4A6E;
+}
+
+.bb-airline-card:hover img {
+  filter: grayscale(0);
+  opacity: 1;
+}
+
+.bb-airline-partners__note {
+  text-align: center;
+  margin: 24px 0 0;
+  font-size: 13.5px;
+  color: #94A3B8;
+  font-style: italic;
+}
+
+@media (max-width: 991px) {
+  .bb-airline-partners__grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 575px) {
+  .bb-airline-partners {
+    padding: 56px 0 64px;
+  }
+  .bb-airline-partners__grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  .bb-airline-partners__title {
+    font-size: 22px;
+  }
+  .bb-airline-partners__subtitle {
+    font-size: 13.5px;
   }
 }
