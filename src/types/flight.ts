@@ -181,21 +181,70 @@ export interface FilterOptions {
 
 export type FlightSortBy = 'cheapest' | 'expensive' | 'earliest' | 'latest' | 'arrival' | 'shortest' | 'stops' | 'airline';
 
+export type StopBucket = 'direct' | 'one' | 'twoPlus';
+export type BaggageBucket = 'personal' | 'cabin' | 'checked23' | 'checked30';
+
 export interface FlightFilters {
-  directOnly: boolean;
   refundableOnly: boolean;
   minPrice: number | null;
   maxPrice: number | null;
   airlineCodes: string[];
   cabinClasses: string[];
   farePackages: string[];
-  departureTimeFrom: string | null;
-  departureTimeTo: string | null;
+  stopBuckets: StopBucket[];
+  baggageBuckets: BaggageBucket[];
+  airportCodes: string[];
+  // Gidiş yönü (RT değilse tek yön)
+  outboundDepartureFrom: string | null;
+  outboundDepartureTo: string | null;
+  outboundArrivalFrom: string | null;
+  outboundArrivalTo: string | null;
+  outboundMaxDurationMinutes: number | null;
+  // Dönüş yönü (RT)
+  returnDepartureFrom: string | null;
+  returnDepartureTo: string | null;
+  returnArrivalFrom: string | null;
+  returnArrivalTo: string | null;
+  returnMaxDurationMinutes: number | null;
 }
 
 export interface AirlineFilterItem {
   code: string | null;
   name: string | null;
+}
+
+// Frontend'de uçuş listesinden türetilen zengin filtre olanakları (count'lar dahil)
+export interface FilterFacets {
+  totalCount: number;
+  priceMin: number;
+  priceMax: number;
+  stops: {
+    direct: number;
+    one: number;
+    twoPlus: number;
+  };
+  baggage: {
+    personal: number;
+    cabin: number;
+    checked23: number;
+    checked30: number;
+  };
+  airlines: { code: string; name: string; count: number }[];
+  airports: { code: string; name: string; count: number }[];
+  outbound: DirectionFacet | null;
+  returnLeg: DirectionFacet | null;
+}
+
+export interface DirectionFacet {
+  originCode: string | null;
+  originName: string | null;
+  destinationCode: string | null;
+  destinationName: string | null;
+  earliestDeparture: string;
+  latestDeparture: string;
+  earliestArrival: string;
+  latestArrival: string;
+  maxDurationMinutes: number;
 }
 
 // ========== BRANDED FARE ==========
