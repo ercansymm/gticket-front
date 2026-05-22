@@ -133,7 +133,6 @@ const SearchResultsMain = () => {
     }
   }, [searchResults]);
 
-<<<<<<< HEAD
   // SPA-aware geri-navigasyon tespiti: router.push('/checkout') SPA navigation olduğu için
   // pageshow event'i tetiklenmez. Bunun yerine "kullanıcı bir uçuş allocate ettiyse
   // selectedFlight Redux'a set olur" gerçeğini kullanıyoruz — bu component mount edildiğinde
@@ -164,13 +163,6 @@ const SearchResultsMain = () => {
     return () => window.removeEventListener('pageshow', onPageShow);
   }, [dispatch, searchParams]);
 
-  // Client-side filtreleme + sıralama — API çağrısı yok
-  const displayedFlights = useMemo(() => {
-    if (!searchResults?.flights) return [];
-    const filtered = filterFlights(searchResults.flights, filters);
-    return sortFlights(filtered, sortBy);
-  }, [searchResults?.flights, filters, sortBy]);
-=======
   // Gidiş-Dönüş: uçuşları yöne göre ayır (filtreden ÖNCE — yön bazlı saat/süre filtreleri için)
   // BiletBank RT aramasında her T_FlightOption'da segment.sequenceNo=1 → gidiş, sequenceNo=2 → dönüş.
   // Fallback olarak originCode/destinationCode karşılaştırması kullanılır (multi-airport için split+includes).
@@ -228,7 +220,6 @@ const SearchResultsMain = () => {
     () => isRoundTrip ? [...outboundFlights, ...returnFlights] : outboundFlights,
     [isRoundTrip, outboundFlights, returnFlights]
   );
->>>>>>> local
 
   // Multi-city: uçuşları bacak (leg) bazında grupla
   const multiCityLegs = useMemo(() => {
