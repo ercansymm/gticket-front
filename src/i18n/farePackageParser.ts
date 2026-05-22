@@ -573,6 +573,25 @@ export function translateFeature(rawText: string | null | undefined): string {
 
   const normalized = normalize(trimmed);
 
+  // Safety net — Cezalı kelimesini ASCII-fold ederek her Unicode/locale
+  // varyantında yakala. Combining char (NFD) veya Turkish toUpperCase
+  // farklılıklarına karşı dayanıklı.
+  const asciiFold = trimmed
+    .normalize('NFD')                    // combining char'ları ayır
+    .replace(/[̀-ͯ]/g, '')     // accent/diacritic'leri sil (breve, cedilla, dot, ...)
+    .toLowerCase()
+    .replace(/ı/g, 'i')                  // dotless ı → i
+    .replace(/[şŞ]/g, 's')
+    .replace(/[ğĞ]/g, 'g')
+    .replace(/[çÇ]/g, 'c')
+    .replace(/[öÖ]/g, 'o')
+    .replace(/[üÜ]/g, 'u');
+  if (asciiFold.includes('cezali') || asciiFold.includes('cezal i')) {
+    if (asciiFold.includes('degis')) return 'Ücretli değişiklik';
+    if (asciiFold.includes('iade')) return 'Ücretli iade';
+    if (asciiFold.includes(' ade')) return 'Ücretli iade';
+  }
+
   // 1. Tam eşleşme sözlüğü
   const exact = EXACT_MATCH_DICTIONARY[normalized];
   if (exact) return exact;
