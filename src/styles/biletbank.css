@@ -6396,6 +6396,228 @@ select.bb-flight-form__input {
 }
 
 /* ══════════════════════════════════════════════════════
+   FILTER SIDEBAR v2 — bb-fs__*
+   ══════════════════════════════════════════════════════ */
+.bb-fs {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 18px;
+}
+
+.bb-fs__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 12px;
+}
+
+.bb-fs__title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.bb-fs__reset {
+  background: none;
+  border: none;
+  color: var(--ab-primary, #047857);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+}
+.bb-fs__reset:hover { text-decoration: underline; }
+
+.bb-fs__count {
+  font-size: 13px;
+  color: var(--ab-primary, #047857);
+  padding-bottom: 14px;
+  border-bottom: 1px solid #f1f5f9;
+  margin-bottom: 4px;
+}
+
+/* ── Section accordion ── */
+.bb-fs__section {
+  border-bottom: 1px solid #f1f5f9;
+}
+.bb-fs__section:last-child { border-bottom: none; }
+
+.bb-fs__section-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #1f2937;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: left;
+}
+.bb-fs__section-head:hover { color: var(--ab-primary, #047857); }
+
+.bb-fs__section-ic {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: #6b7280;
+  flex-shrink: 0;
+}
+.bb-fs__section-ic svg {
+  width: 16px;
+  height: 16px;
+}
+
+.bb-fs__section-title {
+  flex: 1;
+}
+
+.bb-fs__section-chev {
+  display: inline-flex;
+  align-items: center;
+  color: #9ca3af;
+}
+.bb-fs__section-chev svg {
+  width: 16px;
+  height: 16px;
+}
+
+.bb-fs__section-body {
+  padding: 4px 4px 16px;
+}
+
+/* ── Row (checkbox satırı) ── */
+.bb-fs__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 0;
+  cursor: pointer;
+  font-size: 14px;
+  color: #374151;
+}
+.bb-fs__row input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--ab-primary, #047857);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.bb-fs__row-label {
+  flex: 1;
+}
+.bb-fs__row-count {
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* ── Info satırı (slider üstü) ── */
+.bb-fs__row-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 13px;
+  color: #6b7280;
+  margin-bottom: 10px;
+}
+.bb-fs__row-info--mt { margin-top: 20px; }
+.bb-fs__row-info strong {
+  color: #111827;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.bb-fs__direction-row {
+  font-size: 12.5px;
+  color: #6b7280;
+  letter-spacing: 0.01em;
+}
+
+/* ── react-range track / thumb ── */
+.bb-fs__range-track {
+  height: 4px;
+  width: 100%;
+  border-radius: 999px;
+  align-self: center;
+}
+.bb-fs__range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--ab-primary, #047857);
+  box-shadow: 0 1px 4px rgba(4, 120, 87, 0.25);
+  outline: none;
+  cursor: grab;
+  transition: transform .12s ease;
+}
+.bb-fs__range-thumb.is-dragged {
+  cursor: grabbing;
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(4, 120, 87, 0.35);
+}
+
+/* ── Quick chip'ler (Gece/Sabah/Öğle/Akşam) ── */
+.bb-fs__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.bb-fs__chip {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 13px;
+  color: #374151;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+.bb-fs__chip:hover {
+  border-color: var(--ab-primary, #047857);
+  color: var(--ab-primary, #047857);
+}
+.bb-fs__chip.is-active {
+  background: var(--ab-primary, #047857);
+  border-color: var(--ab-primary, #047857);
+  color: #fff;
+}
+
+/* ── Bulk action linkleri ── */
+.bb-fs__bulk {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+}
+.bb-fs__link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ab-primary, #047857);
+  cursor: pointer;
+}
+.bb-fs__link:hover { text-decoration: underline; }
+.bb-fs__link--muted { color: #9ca3af; }
+
+.bb-fs__footer {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #f1f5f9;
+}
+
+/* ══════════════════════════════════════════════════════
    RESPONSIVE — SEARCH RESULTS
    ══════════════════════════════════════════════════════ */
 @media (max-width: 1024px) {

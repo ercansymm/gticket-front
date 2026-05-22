@@ -13,7 +13,7 @@ import FlightSearchLoading from '../components/flight/FlightSearchLoading';
 import { searchFlightsThunk, setSelectedFlight, setSelectedReturnFlight, setSelectedBrandedFareItemId, setSelectedLegFlight, clearSelectedLegFlight, clearSelectedLegFlights, allocateFlightThunk, clearAllocate, setSearchParams, clearSearch } from '../redux/features/flightSlice';
 import { resetBooking } from '../redux/features/bookingSlice';
 import { resetPayment } from '../redux/features/paymentSlice';
-import { filterFlights, sortFlights, INITIAL_FILTERS } from '../utils/flightFilters';
+import { filterFlights, sortFlights, INITIAL_FILTERS, computeFacets } from '../utils/flightFilters';
 import { airports as staticAirports } from '../data/AirportData';
 import BannerFormOne from '../components/common/banner-form/BannerFormOne';
 import type { RootState, AppDispatch } from '../redux/store';
@@ -128,26 +128,75 @@ const SearchResultsMain = () => {
     if (searchResults?.flights) {
       setFilters({
         ...INITIAL_FILTERS,
-        directOnly: searchParams?.directFlightsOnly ?? false,
+        stopBuckets: searchParams?.directFlightsOnly ? ['direct'] : [],
       });
     }
   }, [searchResults]);
 
-  // Client-side filtreleme + sıralama — API çağrısı yok
-  const displayedFlights = useMemo(() => {
-    if (!searchResults?.flights) return [];
-    const filtered = filterFlights(searchResults.flights, filters);
-    return sortFlights(filtered, sortBy);
-  }, [searchResults?.flights, filters, sortBy]);
+  // Gidiş-Dönüş: uçuşları yöne göre ayır (filtreden ÖNCE — yön bazlı saat/süre filtreleri için)
+  // BiletBank RT aramasında her T_FlightOption'da segment.sequenceNo=1 → gidiş, sequenceNo=2 → dönüş.
+  // Fallback olarak originCode/destinationCode karşılaştırması kullanılır (multi-airport için split+includes).
+  const hasDirectionalSequenceNos = useMemo(() => {
+    return (searchResults?.flights ?? []).some(f => f.segments.some(s => s.sequenceNo === 2));
+  }, [searchResults?.flights]);
+
+  const rawOutbound = useMemo(() => {
+    const all = searchResults?.flights ?? [];
+    if (!isRoundTrip || !searchParams) return all;
+    if (hasDirectionalSequenceNos) {
+      return all.filter(f =>
+        f.segments.length > 0 && f.segments.every(s => s.sequenceNo <= 1)
+      );
+    }
+    const originCodes = searchParams.origin.split(',').map(c => c.trim().toUpperCase());
+    const destCodes = searchParams.destination.split(',').map(c => c.trim().toUpperCase());
+    return all.filter(f =>
+      originCodes.includes((f.originCode ?? '').toUpperCase()) &&
+      destCodes.includes((f.destinationCode ?? '').toUpperCase())
+    );
+  }, [searchResults?.flights, isRoundTrip, searchParams, hasDirectionalSequenceNos]);
+
+  const rawReturn = useMemo(() => {
+    const all = searchResults?.flights ?? [];
+    if (!isRoundTrip || !searchParams) return [];
+    if (hasDirectionalSequenceNos) {
+      return all.filter(f => f.segments.some(s => s.sequenceNo === 2));
+    }
+    const originCodes = searchParams.origin.split(',').map(c => c.trim().toUpperCase());
+    const destCodes = searchParams.destination.split(',').map(c => c.trim().toUpperCase());
+    return all.filter(f =>
+      destCodes.includes((f.originCode ?? '').toUpperCase()) &&
+      originCodes.includes((f.destinationCode ?? '').toUpperCase())
+    );
+  }, [searchResults?.flights, isRoundTrip, searchParams, hasDirectionalSequenceNos]);
+
+  // Filter facets — uçuş listesinden count'lar/range'ler türetilir
+  const facets = useMemo(() => computeFacets({
+    allFlights: searchResults?.flights ?? [],
+    outboundFlights: rawOutbound,
+    returnFlights: rawReturn,
+  }), [searchResults?.flights, rawOutbound, rawReturn]);
+
+  // Yön bazlı filtre + sort — saat/süre filtreleri yöne göre uygulanır
+  const outboundFlights = useMemo(
+    () => sortFlights(filterFlights(rawOutbound, filters, 'outbound'), sortBy),
+    [rawOutbound, filters, sortBy]
+  );
+  const returnFlights = useMemo(
+    () => sortFlights(filterFlights(rawReturn, filters, 'return'), sortBy),
+    [rawReturn, filters, sortBy]
+  );
+  const displayedFlights = useMemo(
+    () => isRoundTrip ? [...outboundFlights, ...returnFlights] : outboundFlights,
+    [isRoundTrip, outboundFlights, returnFlights]
+  );
 
   // Multi-city: uçuşları bacak (leg) bazında grupla
   const multiCityLegs = useMemo(() => {
     if (!isMultiCity || !searchParams?.segments || !displayedFlights.length) return [];
     return searchParams.segments.map((seg, idx) => {
       const legFlights = displayedFlights.filter(f => {
-        // SequenceNo bazında eşleştirme (BiletBank segment SequenceNo ile)
         if (f.segments.length > 0 && f.segments.some(s => s.sequenceNo === idx + 1)) return true;
-        // Fallback: origin/destination eşleştirmesi
         return (
           (f.originCode ?? '').toUpperCase() === seg.origin.toUpperCase() &&
           (f.destinationCode ?? '').toUpperCase() === seg.destination.toUpperCase()
@@ -191,51 +240,6 @@ const SearchResultsMain = () => {
     if (!isMultiCity) return [];
     return displayedFlights.filter(f => !f.isRoundTripBundle);
   }, [isMultiCity, displayedFlights]);
-
-  // Gidiş-Dönüş: uçuşları yöne göre ayır
-  // BiletBank RT aramasında her T_FlightOption'da segment.sequenceNo=1 → gidiş, sequenceNo=2 → dönüş.
-  // Fallback olarak originCode/destinationCode karşılaştırması kullanılır (multi-airport için split+includes).
-  const hasDirectionalSequenceNos = useMemo(() => {
-    return displayedFlights.some(f => f.segments.some(s => s.sequenceNo === 2));
-  }, [displayedFlights]);
-
-  const outboundFlights = useMemo(() => {
-    if (!isRoundTrip || !searchParams) return displayedFlights;
-
-    if (hasDirectionalSequenceNos) {
-      // SequenceNo tabanlı: tüm segmentleri SequenceNo=1 olan uçuşlar gidiş yönüdür
-      return displayedFlights.filter(f =>
-        f.segments.length > 0 && f.segments.every(s => s.sequenceNo <= 1)
-      );
-    }
-
-    // Fallback — origin/destination kodu eşleştirmesi
-    const originCodes = searchParams.origin.split(',').map(c => c.trim().toUpperCase());
-    const destCodes = searchParams.destination.split(',').map(c => c.trim().toUpperCase());
-    return displayedFlights.filter(f =>
-      originCodes.includes((f.originCode ?? '').toUpperCase()) &&
-      destCodes.includes((f.destinationCode ?? '').toUpperCase())
-    );
-  }, [displayedFlights, isRoundTrip, searchParams, hasDirectionalSequenceNos]);
-
-  const returnFlights = useMemo(() => {
-    if (!isRoundTrip || !searchParams) return [];
-
-    if (hasDirectionalSequenceNos) {
-      // SequenceNo tabanlı: herhangi bir segmenti SequenceNo=2 olan uçuşlar dönüş yönüdür
-      return displayedFlights.filter(f =>
-        f.segments.some(s => s.sequenceNo === 2)
-      );
-    }
-
-    // Fallback — origin/destination kodu eşleştirmesi (ters yön)
-    const originCodes = searchParams.origin.split(',').map(c => c.trim().toUpperCase());
-    const destCodes = searchParams.destination.split(',').map(c => c.trim().toUpperCase());
-    return displayedFlights.filter(f =>
-      destCodes.includes((f.originCode ?? '').toUpperCase()) &&
-      originCodes.includes((f.destinationCode ?? '').toUpperCase())
-    );
-  }, [displayedFlights, isRoundTrip, searchParams, hasDirectionalSequenceNos]);
 
   // ── RT Bundle (RecommendationBox) paketleri ──
   // isRoundTripBundle=true olan uçuşları bundleProductId'ye göre eşleştir
@@ -881,11 +885,12 @@ const SearchResultsMain = () => {
             </button>
           </div>
           <FilterSidebar
-            options={searchResults.filterOptions}
+            facets={facets}
             filters={filters}
             onChange={setFilters}
             resultCount={displayedFlights.length}
             totalCount={searchResults.flights.length}
+            isRoundTrip={isRoundTrip}
           />
           <div className="bb-mobile-filter-drawer__footer">
             <button className="bb-mobile-filter-drawer__reset" onClick={() => setFilters(INITIAL_FILTERS)}>
@@ -921,11 +926,12 @@ const SearchResultsMain = () => {
           {/* Sidebar — desktop only */}
           <div className="bb-search-results__sidebar">
             <FilterSidebar
-              options={searchResults.filterOptions}
+              facets={facets}
               filters={filters}
               onChange={setFilters}
               resultCount={displayedFlights.length}
               totalCount={searchResults.flights.length}
+              isRoundTrip={isRoundTrip}
             />
           </div>
 
