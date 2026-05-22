@@ -327,6 +327,20 @@ const PATTERN_RULES: PatternRule[] = [
     description: 'Compact CBAG shorthand',
   },
 
+  // "PERSONALBELONGINGS4" / "PERSONALBELONGINGS 8" (AnadoluJet compact format)
+  {
+    pattern: /^PERSONAL\s*BELONGINGS\s*(\d+)$/,
+    transform: (m) => `${m[1]} kg kişisel eşya`,
+    description: 'Compact personal belongings (AnadoluJet)',
+  },
+
+  // "PERSONALITEM4" — varyant
+  {
+    pattern: /^PERSONAL\s*ITEM\s*(\d+)$/,
+    transform: (m) => `${m[1]} kg kişisel eşya`,
+    description: 'Compact personal item with kg',
+  },
+
   // ===== MİL =====
 
   // "110 Percent Miles Earned" / "25 Percent Extra Miles" / "100 PERCENT MILES"
