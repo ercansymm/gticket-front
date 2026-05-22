@@ -244,6 +244,28 @@ const PATTERN_RULES: PatternRule[] = [
     description: 'Simple cabin kg',
   },
 
+  // ===== PEGASUS / AJET compact format =====
+  // "HBAG8" / "HBAG10" — hand bag with kg
+  {
+    pattern: /^HBAG\s*(\d+)$/,
+    transform: (m) => `${m[1]} kg el bagajı`,
+    description: 'Compact hand bag (Pegasus/AJet)',
+  },
+
+  // "CHECKEDBAG20" / "CHECKEDBAG25" / "CHECKED BAG 30"
+  {
+    pattern: /^CHECKED\s*BAG\s*(\d+)$/,
+    transform: (m) => `${m[1]} kg bagaj hakkı`,
+    description: 'Compact checked bag (Pegasus/AJet)',
+  },
+
+  // "CBAG20" — kısaltma varyantı
+  {
+    pattern: /^CBAG\s*(\d+)$/,
+    transform: (m) => `${m[1]} kg bagaj hakkı`,
+    description: 'Compact CBAG shorthand',
+  },
+
   // ===== MİL =====
 
   // "110 Percent Miles Earned" / "25 Percent Extra Miles" / "100 PERCENT MILES"
@@ -283,10 +305,10 @@ const PATTERN_RULES: PatternRule[] = [
       const actionMap: Record<string, string> = {
         NONCHANGEABLE: 'değiştirilemez',
         CHANGEABLE: 'değiştirilebilir',
-        'CHANGE WITH PENALTY': 'cezalı değişiklik',
+        'CHANGE WITH PENALTY': 'ücretli değişiklik',
         NONREFUNDABLE: 'iade edilemez',
         REFUNDABLE: 'iade edilebilir',
-        'REFUND WITH PENALTY': 'cezalı iade',
+        'REFUND WITH PENALTY': 'ücretli iade',
       };
       const actionTr = actionMap[action] ?? action.toLowerCase();
       const directionTr =
@@ -309,6 +331,11 @@ const EXACT_MATCH_DICTIONARY: Record<string, string> = {
   'NO CHECKED BAGGAGE': 'Bagaj hakkı yok',
   'NO CABIN BAGGAGE': 'El bagajı yok',
   'NO BAGGAGE ALLOWANCE': 'Bagaj hakkı yok',
+  // Compact format (Pegasus/AJet) — kg bilgisi yok, jenerik
+  BAGAJ: 'Bagaj hakkı',
+  HBAG: 'El bagajı',
+  CABINBAG: 'El bagajı',
+  CHECKEDBAG: 'Bagaj hakkı',
 
   // ===== DEĞİŞİKLİK =====
   'CHANGE BEFORE DEPARTURE': 'Kalkıştan önce değişiklik',
@@ -317,7 +344,7 @@ const EXACT_MATCH_DICTIONARY: Record<string, string> = {
   'NON-CHANGEABLE TICKET': 'Değiştirilemez bilet',
   'NON CHANGEABLE TICKET': 'Değiştirilemez bilet',
   'CHANGE WITHOUT PENALTY': 'Ücretsiz değişiklik',
-  'CHANGE WITH PENALTY': 'Cezalı değişiklik',
+  'CHANGE WITH PENALTY': 'Ücretli değişiklik',
   'NO CHANGE': 'Değişiklik yapılamaz',
   'FREE CHANGE': 'Ücretsiz değişiklik',
   NONCHANGEABLE: 'Değiştirilemez',
@@ -330,13 +357,20 @@ const EXACT_MATCH_DICTIONARY: Record<string, string> = {
   'NON-REFUNDABLE TICKET': 'İade edilemez bilet',
   'NON REFUNDABLE TICKET': 'İade edilemez bilet',
   'REFUND WITHOUT PENALTY': 'Ücretsiz iade',
-  'REFUND WITH PENALTY': 'Cezalı iade',
+  'REFUND WITH PENALTY': 'Ücretli iade',
   'NO REFUND': 'İade yapılamaz',
   'FREE REFUND': 'Ücretsiz iade',
   NONREFUNDABLE: 'İade edilemez',
   REFUNDABLE: 'İade edilebilir',
 
   // ===== KOLTUK =====
+  // Compact format (Pegasus/AJet): "Standardseat" → "STANDARDSEAT"
+  STANDARDSEAT: 'Standart koltuk seçimi',
+  PREFERREDSEAT: 'Tercihli koltuk seçimi',
+  FRONTSEAT: 'Ön koltuk seçimi',
+  PREMIUMSEAT: 'Premium koltuk seçimi',
+  EXITROWSEAT: 'Acil çıkış sırası koltuğu',
+  EXTRALEGROOMSEAT: 'Geniş bacak mesafeli koltuk',
   'STANDARD SEAT SELECTION': 'Standart koltuk seçimi',
   'STANDARD SEAT RESERVATION': 'Standart koltuk rezervasyonu',
   'PREFERRED SEAT SELECTION': 'Tercihli koltuk seçimi',
@@ -381,6 +415,11 @@ const EXACT_MATCH_DICTIONARY: Record<string, string> = {
   'NON ALCOHOLIC BEVERAGE': 'Alkolsüz içecek',
   MEAL: 'İkram',
   'FREE MEAL': 'Ücretsiz ikram',
+  // Compact format (Pegasus/AJet)
+  SANDWICH: 'Sandviç ikramı',
+  SANDVIC: 'Sandviç ikramı',
+  COFFEE: 'Kahve ikramı',
+  TEA: 'Çay ikramı',
 
   // ===== LOUNGE =====
   'LOUNGE ACCESS': 'Lounge erişimi',
