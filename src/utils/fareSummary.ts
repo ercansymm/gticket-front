@@ -241,7 +241,7 @@ function summarizePolicy(
   // Etiketi kur
   let stateLabel: string;
   if (state === 'included') stateLabel = `Ücretsiz ${noun}`;
-  else if (state === 'chargeable') stateLabel = `Cezalı ${noun}`;
+  else if (state === 'chargeable') stateLabel = `Ücretli ${noun}`;
   else stateLabel = `${capitalize(noun)} yapılamaz`;
 
   // Zaman penceresi notunu ekle (varsa ve included/chargeable ise anlamlı)
