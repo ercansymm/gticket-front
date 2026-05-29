@@ -22,6 +22,7 @@ const Banner = () => {
             <div className="row justify-content-center">
                <div className="col-xl-12">
                   <div className="bb-hero-content text-center">
+
                      <h1 className="bb-hero-title">{t.heroTitle}</h1>
                      <div className="bb-search-tabs">
                         <div className="bb-search-tabs__nav" role="tablist">

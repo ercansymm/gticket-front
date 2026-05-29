@@ -66,6 +66,7 @@ const BrandedFareModal = ({ flight, returnFlight, onSelect, onClose, loading = f
                 pkg={pkg}
                 isActive={selectedPkg?.brandedFareItemId === pkg.brandedFareItemId}
                 onSelect={setSelectedPkg}
+                freeBaggageAllowances={flight.freeBaggageAllowances ?? []}
               />
             ))}
           </div>

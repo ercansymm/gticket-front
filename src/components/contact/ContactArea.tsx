@@ -1,21 +1,30 @@
 "use client";
 
+import type { ReactNode } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 
 const ContactMap = dynamic(() => import("./ContactMap"), { ssr: false });
 
-const INFO_ITEMS = [
+type InfoItem = {
+  icon: ReactNode;
+  label: string;
+  value: string;
+  href: string | null;
+  sublines?: string[];
+};
+
+const INFO_ITEMS: InfoItem[] = [
   {
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 10.8a19.79 19.79 0 01-3.07-8.68A2 2 0 012 0h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 14.92z" />
       </svg>
     ),
-    label: "Acil Bilet Hattı",
-    value: "0532 015 26 38",
-    href: "tel:+905320152638",
+    label: "Bilet Hattı",
+    value: "0212 532 0849",
+    href: "tel:+902125320849",
   },
   {
     icon: (
@@ -74,8 +83,31 @@ const ContactArea = () => {
               ) : (
                 <p className="ct-card__value">{item.value}</p>
               )}
+              {item.sublines && item.sublines.length > 0 && (
+                <div className="ct-card__sublines">
+                  {item.sublines.map((line, idx) => (
+                    <p key={idx} className="ct-card__subline">{line}</p>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
+        </div>
+
+        {/* Şirket bilgileri */}
+        <div className="ct-company">
+          <p className="ct-company__line">
+            <span className="ct-company__label">Şirket:</span> G Travel Turizm ve Danışmanlık Ticaret Limited Şirketi
+          </p>
+          <p className="ct-company__line">
+            <span className="ct-company__label">Acente:</span> Zlatna Rota Turizim Ve Seyehat Acentası
+          </p>
+           <p className="ct-company__line">
+            <span className="ct-company__label">Adres:</span> Molla Gürhani Mahellesi Muratpaşa Sokak Yeni Han No:2/Z03 Fatih/İstanbul
+          </p>
+          <p className="ct-company__line">
+            <span className="ct-company__label">TÜRSAB Belge No:</span> 18474
+          </p>
         </div>
 
         {/* Destek talebi CTA */}

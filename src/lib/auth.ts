@@ -35,6 +35,12 @@ export const authOptions: NextAuthOptions = {
           if (!response.ok) return null;
 
           const user = await response.json();
+
+          // Telefon doğrulaması gerekiyorsa oturum açmayı reddet —
+          // LoginForm precheck üzerinden akışı yönetir.
+          if (user?.requiresPhoneVerification) return null;
+          if (!user?.token) return null;
+
           return user;
         } catch {
           return null;

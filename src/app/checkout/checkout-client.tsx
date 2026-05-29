@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useCallback, useRef, useState, useMemo } from 'react';
+import { useEffect, useCallback, useRef, useState, useMemo, type ReactNode } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
@@ -16,7 +16,23 @@ import { useSessionTimeout } from '@/hooks/UseSessionTimeout';
 import { airports } from '@/data/AirportData';
 import { useCurrency } from '@/context/CurrencyContext';
 import AirlineLogo from '@/components/common/AirlineLogo';
+import { summarizeFarePackage, type FareLineState, type FareSummaryLine } from '@/utils/fareSummary';
+import { logger } from '@/lib/logger';
 import './checkout.css';
+
+/* ─────────── BiletBank error mapper ─────────── */
+function translateBookingError(msg: string): string {
+  const m = msg.toLowerCase();
+  if (m.includes('passport number cannot be empty') || m.includes('passport') && m.includes('empty'))
+    return 'TC kimlik numaranız doğrulanamadı veya pasaport bilgisi eksik. Lütfen bilgilerinizi kontrol edip tekrar deneyiniz.';
+  if (m.includes('too many requests') || m.includes('too many'))
+    return 'Çok fazla istek yapıldı. Lütfen birkaç dakika bekleyip tekrar deneyiniz.';
+  if (m.includes('session') && (m.includes('expired') || m.includes('invalid')))
+    return 'Oturumunuzun süresi doldu. Lütfen uçuşu yeniden seçiniz.';
+  if (m.includes('citizen') || m.includes('citizenno'))
+    return 'TC kimlik numarası geçersiz. Lütfen kontrol ediniz.';
+  return msg;
+}
 
 /* ─────────── Icons ─────────── */
 const IconArrow = ({ size = 18 }: { size?: number }) => (
@@ -74,6 +90,37 @@ const IconTRY = ({ size = 14 }: { size?: number }) => (
     <circle cx="12" cy="12" r="10" fill="#0284c7" /><text x="12" y="16.5" textAnchor="middle" fontSize="12" fontWeight="700" fill="#fff">₺</text>
   </svg>
 );
+
+/* ─────────── Summary benefit satırı ─────────── */
+function SummaryBenefitRow({
+  icon,
+  stateIcon,
+  sub,
+  line,
+}: {
+  icon?: ReactNode;
+  stateIcon?: FareLineState;
+  sub: string;
+  line: FareSummaryLine;
+}) {
+  const renderIcon = () => {
+    if (icon) return icon;
+    if (stateIcon === 'included') return <IconCheckCircle size={14} />;
+    if (stateIcon === 'chargeable') return <IconTRY size={14} />;
+    return <IconXCircle size={14} />;
+  };
+  return (
+    <div className="chk-summary__benefit-item">
+      <span className={`chk-summary__benefit-icon chk-summary__benefit-icon--${line.state}`}>
+        {renderIcon()}
+      </span>
+      <div className="chk-summary__benefit-text">
+        <span className="chk-summary__benefit-sub">{sub}</span>
+        <span className="chk-summary__benefit-val">{line.label}</span>
+      </div>
+    </div>
+  );
+}
 
 function formatDateDDMMYYYY(input?: string | null): string {
   if (!input) return '';
@@ -305,57 +352,26 @@ export default function CheckoutClient() {
   const summaryBenefits = useMemo(() => {
     if (!selectedFlight) return null;
 
-    const CHECKED_CATS = new Set(['BG', 'BAGGAGE', 'CB', 'CHECKED_BAGGAGE']);
-    const CABIN_CATS = new Set(['CY', 'CABIN_BAGGAGE', 'CARRY_ON', 'HAND_BAGGAGE']);
-
-    // Allocate-confirmed baggage > search-level allowances > baggageInfo
-    const confirmAllowances = airBookings[0]?.baggageAllowances ?? [];
-    const searchAllowances = selectedFlight.freeBaggageAllowances ?? [];
-    const allowances = confirmAllowances.length > 0 ? confirmAllowances : searchAllowances;
-
-    const adtChecked = allowances.find(a =>
-      CHECKED_CATS.has((a.category ?? '').toUpperCase()) &&
-      ['ADT', 'ADULT'].includes((a.paxType ?? 'ADT').toUpperCase())
-    ) ?? allowances.find(a => CHECKED_CATS.has((a.category ?? '').toUpperCase()));
-    const adtCabin = allowances.find(a =>
-      CABIN_CATS.has((a.category ?? '').toUpperCase()) &&
-      ['ADT', 'ADULT'].includes((a.paxType ?? 'ADT').toUpperCase())
-    ) ?? allowances.find(a => CABIN_CATS.has((a.category ?? '').toUpperCase()));
-
-    const baggageText = adtChecked?.allowance
-      ? `${adtChecked.allowance}${adtChecked.unit ? ' ' + adtChecked.unit : ''}`
-      : (selectedFlight.baggageInfo?.displayText ?? null);
-    const cabinText = adtCabin?.allowance
-      ? `${adtCabin.allowance}${adtCabin.unit ? ' ' + adtCabin.unit : ''}`
-      : null;
-
-    // Key rules from selected fare package
-    type RuleItem = { category: string; label: string; state: 'included' | 'chargeable' | 'excluded' };
-    const ruleItems: RuleItem[] = [];
     const selPkg = selectedBrandedFareItemId
       ? selectedFlight.farePackages?.find(p => p.brandedFareItemId === selectedBrandedFareItemId)
       : (selectedFlight.farePackages?.find(p => p.isDefault) ?? selectedFlight.farePackages?.[0]);
 
-    if (selPkg?.rules) {
-      const CHANGE_GROUPS = new Set(['VC', 'CE', 'CHANGE', 'VOLUNTARY_CHANGE']);
-      const REFUND_GROUPS = new Set(['VR', 'RE', 'REFUND', 'VOLUNTARY_REFUND']);
-      const seen = new Set<string>();
-      for (const r of selPkg.rules) {
-        const grp = (r.serviceGroup ?? '').toUpperCase();
-        const cat = CHANGE_GROUPS.has(grp) ? 'Değişiklik' : REFUND_GROUPS.has(grp) ? 'İade' : null;
-        if (!cat || seen.has(cat)) continue;
-        seen.add(cat);
-        const state: 'included' | 'chargeable' | 'excluded' = (r.isIncluded && !r.isChargeable)
-          ? 'included' : r.isChargeable ? 'chargeable' : 'excluded';
-        const label = state === 'included' ? 'Ücretsiz'
-          : state === 'chargeable' ? 'Ek ücretli' : 'Yapılamaz';
-        ruleItems.push({ category: cat, label, state });
-      }
+    // Allocate-confirmed baggage > search-level allowances
+    const confirmAllowances = airBookings[0]?.baggageAllowances ?? [];
+    const searchAllowances = selectedFlight.freeBaggageAllowances ?? [];
+    const allowances = confirmAllowances.length > 0 ? confirmAllowances : searchAllowances;
+
+    if (!selPkg) {
+      // Paket yoksa sadece bagaj fallback'ini göster
+      const fakePkg = { rules: [] } as any;
+      const s = summarizeFarePackage(fakePkg, allowances);
+      const hasContent = s.baggage || s.cabin;
+      return hasContent ? { ...s, brandName: null } : null;
     }
 
-    const pkgName = (selPkg?.brandName && selPkg.brandName.trim()) ? selPkg.brandName.trim() : null;
-    const hasContent = baggageText || cabinText || ruleItems.length > 0;
-    return hasContent ? { pkgName, baggageText, cabinText, ruleItems } : null;
+    const summary = summarizeFarePackage(selPkg, allowances);
+    const hasContent = summary.baggage || summary.cabin || summary.change || summary.refund || summary.extras.length > 0;
+    return hasContent ? summary : null;
   }, [selectedFlight, selectedBrandedFareItemId, airBookings]);
 
   const validateCard = useCallback((): boolean => {
@@ -384,7 +400,7 @@ export default function CheckoutClient() {
       };
       sessionStorage.setItem('payment_3ds_session', JSON.stringify(paymentSession));
       if (threeDSecureUrl) {
-        const timer = setTimeout(() => { window.location.href = threeDSecureUrl; }, 300);
+        const timer = setTimeout(() => { window.location.href = threeDSecureUrl; }, 50);
         return () => clearTimeout(timer);
       } else if (threeDSecureHtml) {
         const win = window.open('', '_blank', 'width=500,height=700,scrollbars=yes');
@@ -393,6 +409,28 @@ export default function CheckoutClient() {
       }
     }
   }, [is3DSecureRequired, threeDSecureUrl, threeDSecureHtml, searchId, paymentResult]);
+
+  /* 3D Secure geri-nav tespiti: kullanıcı bankanın 3DS sayfasından browser back ile dönerse
+     payment_3ds_session flag'i hâlâ sessionStorage'da durur; callback geldiyse paymentResult.isPaymentSuccessful=true olur.
+     Flag var + paymentResult yok/başarısız → kullanıcı iptal etti veya başarısız döndü → overlay kapat, banner göster. */
+  useEffect(() => {
+    const handlePageShow = () => {
+      const pending = sessionStorage.getItem('payment_3ds_session');
+      if (!pending) return;
+      const cbSuccess = paymentResult && paymentResult.hasError === false && paymentResult.isPaymentSuccessful === true;
+      if (!cbSuccess) {
+        sessionStorage.removeItem('payment_3ds_session');
+        setIsProcessing(false);
+        setThreeDSError('3D Secure işlemi iptal edildi. Ödeme başarısız sayılmıştır. Lütfen tekrar deneyin veya farklı bir kart kullanın.');
+        submitRef.current = false;
+      }
+    };
+    window.addEventListener('pageshow', handlePageShow);
+    // Mount sırasında da kontrol et (bfcache devre dışıysa pageshow tetiklenmeyebilir)
+    handlePageShow();
+    return () => window.removeEventListener('pageshow', handlePageShow);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const isPaymentSuccessful = paymentResult && paymentResult.hasError === false &&
     paymentResult.isPaymentSuccessful === true && !paymentResult.is3DSecureRequired;
@@ -412,8 +450,7 @@ export default function CheckoutClient() {
       finalizeTimeoutRef.current = setTimeout(() => {
         if (!finalizeResultRef.current) dispatch({ type: 'payment/finalizeTimeout' });
       }, 60_000);
-      const timer = setTimeout(() => { dispatch(finalizeShoppingThunk({ searchId })); }, 300);
-      return () => clearTimeout(timer);
+      dispatch(finalizeShoppingThunk({ searchId }));
     }
   }, [isPaymentSuccessful, paymentResult?.autoFinalized, searchId, dispatch, finalizeResult, finalizeError]);
 
@@ -434,7 +471,7 @@ export default function CheckoutClient() {
     if (finalizeError && /duplicate|zaten biletlen/i.test(finalizeError) && searchId) {
       if (finalizeTimeoutRef.current) { clearTimeout(finalizeTimeoutRef.current); finalizeTimeoutRef.current = null; }
       setIsProcessing(false);
-      const timer = setTimeout(() => { router.push('/bilet-sorgula'); }, 3000);
+      const timer = setTimeout(() => { router.push('/bilet-sorgula'); }, 1500);
       return () => clearTimeout(timer);
     }
   }, [finalizeError, searchId, router]);
@@ -447,14 +484,9 @@ export default function CheckoutClient() {
   const submitRef = useRef(false);
   const handlePassengerSubmit = useCallback(
     async (passengerItems: PassengerItem[], contact: ContactInfo) => {
-      console.log('[Checkout] handlePassengerSubmit invoked', {
-        passengersCount: passengerItems.length, hasContact: !!contact, agreed,
-        searchId, productId, productItemId,
-      });
-      if (submitRef.current) { console.warn('[Checkout] Already submitting, ignored'); return; }
-      if (!searchId || !productId || !productItemId) { console.warn('[Checkout] Missing IDs', { searchId, productId, productItemId }); return; }
+      if (submitRef.current) return;
+      if (!searchId || !productId || !productItemId) return;
       if (!agreed || !kvkkAgreed) {
-        console.warn('[Checkout] Agreements not accepted', { agreed, kvkkAgreed });
         if (!agreed) setAgreementError(true);
         if (!kvkkAgreed) setKvkkError(true);
         setTimeout(() => {
@@ -464,7 +496,6 @@ export default function CheckoutClient() {
         return;
       }
       if (!validateCard()) {
-        console.warn('[Checkout] Card validation failed');
         setTimeout(() => {
           const el = document.querySelector('.chk-input--error');
           if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -491,7 +522,7 @@ export default function CheckoutClient() {
           expiryMonth: cardForm.expiryMonth, expiryYear: cardForm.expiryYear, cvv: cardForm.cvv,
         }));
       } catch (err) {
-        console.error('[Checkout] Submit chain failed:', err);
+        logger.error('Submit chain failed', err, 'checkout');
         setIsProcessing(false);
       } finally { submitRef.current = false; }
     },
@@ -521,11 +552,8 @@ export default function CheckoutClient() {
     : [];
 
   const triggerPassengerSubmit = () => {
-    console.log('[Checkout] Pay button clicked', {
-      payDisabled, isProcessing, productId, productItemId, searchId, agreed, kvkkAgreed,
-    });
     const form = document.querySelector('.bb-passenger-form') as HTMLFormElement | null;
-    if (!form) { console.warn('[Checkout] PassengerForm not found in DOM'); return; }
+    if (!form) { logger.error('PassengerForm not found in DOM', undefined, 'checkout'); return; }
     form.requestSubmit();
   };
 
@@ -635,7 +663,7 @@ export default function CheckoutClient() {
                   )}
                   {updatePassengersError && (
                     <div className="chk-alert chk-alert--error"><IconAlert />
-                      <div className="chk-alert__body">{updatePassengersError}</div>
+                      <div className="chk-alert__body">{translateBookingError(updatePassengersError)}</div>
                     </div>
                   )}
                   {preBookingError && !isProcessing && (
@@ -657,6 +685,17 @@ export default function CheckoutClient() {
                   {threeDSError && (
                     <div className="chk-alert chk-alert--error"><IconAlert />
                       <div className="chk-alert__body">{threeDSError}</div>
+                      <button
+                        type="button"
+                        onClick={() => setThreeDSError(null)}
+                        aria-label="Hatayı kapat"
+                        style={{
+                          background: 'transparent', border: 'none', cursor: 'pointer',
+                          padding: '4px 8px', color: 'inherit', fontSize: 18, lineHeight: 1, marginLeft: 'auto',
+                        }}
+                      >
+                        ×
+                      </button>
                     </div>
                   )}
                   {finalizeError && !isProcessing && (
@@ -878,40 +917,45 @@ export default function CheckoutClient() {
                 }
                 {summaryBenefits && (
                   <div className="chk-summary__benefits">
-                    {summaryBenefits.pkgName && (
-                      <span className="chk-summary__pkg-badge">{summaryBenefits.pkgName}</span>
+                    {summaryBenefits.brandName && (
+                      <span className="chk-summary__pkg-badge">{summaryBenefits.brandName}</span>
                     )}
                     <div className="chk-summary__benefit-items">
-                      {summaryBenefits.baggageText && (
-                        <div className="chk-summary__benefit-item">
-                          <span className="chk-summary__benefit-icon"><IconBaggage size={15} /></span>
-                          <div className="chk-summary__benefit-text">
-                            <span className="chk-summary__benefit-sub">Bagaj hakkı</span>
-                            <span className="chk-summary__benefit-val">{summaryBenefits.baggageText} / kişi</span>
-                          </div>
-                        </div>
+                      {summaryBenefits.baggage && (
+                        <SummaryBenefitRow
+                          icon={<IconBaggage size={15} />}
+                          sub="Bagaj"
+                          line={summaryBenefits.baggage}
+                        />
                       )}
-                      {summaryBenefits.cabinText && (
-                        <div className="chk-summary__benefit-item">
-                          <span className="chk-summary__benefit-icon"><IconCabin size={15} /></span>
-                          <div className="chk-summary__benefit-text">
-                            <span className="chk-summary__benefit-sub">El bagajı</span>
-                            <span className="chk-summary__benefit-val">{summaryBenefits.cabinText} / kişi</span>
-                          </div>
-                        </div>
+                      {summaryBenefits.cabin && (
+                        <SummaryBenefitRow
+                          icon={<IconCabin size={15} />}
+                          sub="El bagajı"
+                          line={summaryBenefits.cabin}
+                        />
                       )}
-                      {summaryBenefits.ruleItems.map((item, i) => (
-                        <div key={i} className="chk-summary__benefit-item">
-                          <span className={`chk-summary__benefit-icon chk-summary__benefit-icon--${item.state}`}>
-                            {item.state === 'included' ? <IconCheckCircle size={14} />
-                              : item.state === 'chargeable' ? <IconTRY size={14} />
-                              : <IconXCircle size={14} />}
-                          </span>
-                          <div className="chk-summary__benefit-text">
-                            <span className="chk-summary__benefit-sub">{item.category}</span>
-                            <span className="chk-summary__benefit-val">{item.label}</span>
-                          </div>
-                        </div>
+                      {summaryBenefits.change && (
+                        <SummaryBenefitRow
+                          stateIcon={summaryBenefits.change.state}
+                          sub="Değişiklik"
+                          line={summaryBenefits.change}
+                        />
+                      )}
+                      {summaryBenefits.refund && (
+                        <SummaryBenefitRow
+                          stateIcon={summaryBenefits.refund.state}
+                          sub="İade"
+                          line={summaryBenefits.refund}
+                        />
+                      )}
+                      {summaryBenefits.extras.map((item, i) => (
+                        <SummaryBenefitRow
+                          key={`extra-${i}`}
+                          stateIcon={item.state}
+                          sub="Ekstra"
+                          line={item}
+                        />
                       ))}
                     </div>
                   </div>

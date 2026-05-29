@@ -1,12 +1,9 @@
-﻿'use client';
+'use client';
 
-import { useState } from 'react';
-import type { FarePackage, FarePackageRule, FreeBaggageAllowance } from '@/types';
+import { useMemo, useState } from 'react';
+import type { FarePackage, FreeBaggageAllowance } from '@/types';
 import { useCurrency } from '@/context/CurrencyContext';
-import {
-  translateCategory,
-  translateFeature,
-} from '@/i18n/farePackageParser';
+import { summarizeFarePackage, type FareLineState, type FareSummaryLine } from '@/utils/fareSummary';
 
 interface FarePackageCardProps {
   pkg: FarePackage;
@@ -17,22 +14,6 @@ interface FarePackageCardProps {
   freeBaggageAllowances?: FreeBaggageAllowance[];
 }
 
-// Görüntüleme sırası: en önemli kategoriler üstte.
-// Bilinmeyen kodlar sona eklenir.
-const CATEGORY_ORDER = [
-  'BG', 'BAGGAGE',
-  'CY', 'CABIN_BAGGAGE',
-  'VC', 'CE', 'CHANGE',
-  'VR', 'RE', 'REFUND',
-  'SA', 'SE', 'SEAT',
-  'ML', 'MEAL',
-  'LG', 'LOUNGE',
-  'PR', 'PRIORITY', 'PB',
-  'FF', 'FFP', 'MI', 'MILES', 'MESAFE',
-  'IE', 'INTERNET', 'WIFI',
-  'SB', 'SAMEDAY',
-] as const;
-
 const PAX_TYPE_LABELS: Record<string, string> = {
   ADT: 'Yetişkin',
   ADULT: 'Yetişkin',
@@ -42,15 +23,7 @@ const PAX_TYPE_LABELS: Record<string, string> = {
   INFANT: 'Bebek',
 };
 
-type RuleState = 'included' | 'chargeable' | 'excluded';
-
-function getRuleState(rule: FarePackageRule): RuleState {
-  if (rule.isIncluded && !rule.isChargeable) return 'included';
-  if (rule.isChargeable) return 'chargeable';
-  return 'excluded';
-}
-
-function StatusIcon({ state }: { state: RuleState }) {
+function StatusIcon({ state }: { state: FareLineState }) {
   if (state === 'included') {
     return (
       <svg
@@ -64,7 +37,6 @@ function StatusIcon({ state }: { state: RuleState }) {
     );
   }
   if (state === 'chargeable') {
-    // Filled blue circle with white ₺ — clearly distinct from the unselected radio.
     return (
       <svg
         className="bb-pkg-card__rule-status bb-pkg-card__rule-status--chargeable"
@@ -88,63 +60,47 @@ function StatusIcon({ state }: { state: RuleState }) {
   );
 }
 
-function getRuleLabel(rule: FarePackageRule): string {
-  if (rule.description) return translateFeature(rule.description);
-  if (rule.serviceGroup) return translateCategory(rule.serviceGroup);
-  return '';
+function CategorySection({ title, lines }: { title: string; lines: FareSummaryLine[] }) {
+  if (lines.length === 0) return null;
+  return (
+    <div className="bb-pkg-card__category">
+      <h5 className="bb-pkg-card__category-title">{title}</h5>
+      <ul className="bb-pkg-card__rules">
+        {lines.map((line, i) => (
+          <li key={i} className={`bb-pkg-card__rule bb-pkg-card__rule--${line.state}`}>
+            <StatusIcon state={line.state} />
+            <span className="bb-pkg-card__rule-label">{line.label}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 }
 
-function groupRulesByCategory(rules: FarePackageRule[]): Array<{ key: string; rules: FarePackageRule[] }> {
-  const buckets = new Map<string, FarePackageRule[]>();
-  for (const r of rules) {
-    const key = (r.serviceGroup ?? 'OTHER').toUpperCase();
-    if (!buckets.has(key)) buckets.set(key, []);
-    buckets.get(key)!.push(r);
-  }
-  const ordered: Array<{ key: string; rules: FarePackageRule[] }> = [];
-  for (const key of CATEGORY_ORDER) {
-    if (buckets.has(key)) {
-      ordered.push({ key, rules: buckets.get(key)! });
-      buckets.delete(key);
-    }
-  }
-  for (const [key, list] of buckets) {
-    ordered.push({ key, rules: list });
-  }
-  return ordered;
-}
-
-const CHECKED_CATS = new Set(['BG', 'BAGGAGE', 'CB', 'CHECKED_BAGGAGE']);
-const CABIN_CATS = new Set(['CY', 'CABIN_BAGGAGE', 'CARRY_ON', 'HAND_BAGGAGE']);
-const BAGGAGE_ALL_KEYS = new Set(['BG', 'BAGGAGE', 'CY', 'CABIN_BAGGAGE', 'CB', 'CHECKED_BAGGAGE', 'CARRY_ON', 'HAND_BAGGAGE']);
-
-function buildBagFallback(allowances: FreeBaggageAllowance[]): string[] {
-  const items: string[] = [];
-  const adtChecked = allowances.find(a =>
-    CHECKED_CATS.has((a.category ?? '').toUpperCase()) &&
-    ['ADT', 'ADULT'].includes((a.paxType ?? 'ADT').toUpperCase())
-  ) ?? allowances.find(a => CHECKED_CATS.has((a.category ?? '').toUpperCase()));
-  const adtCabin = allowances.find(a =>
-    CABIN_CATS.has((a.category ?? '').toUpperCase()) &&
-    ['ADT', 'ADULT'].includes((a.paxType ?? 'ADT').toUpperCase())
-  ) ?? allowances.find(a => CABIN_CATS.has((a.category ?? '').toUpperCase()));
-  if (adtChecked?.allowance) {
-    items.push(`${adtChecked.allowance}${adtChecked.unit ? ' ' + adtChecked.unit : ''} bagaj hakkı`);
-  }
-  if (adtCabin?.allowance) {
-    items.push(`${adtCabin.allowance}${adtCabin.unit ? ' ' + adtCabin.unit : ''} el bagajı`);
-  }
-  return items;
-}
-
-const FarePackageCard = ({ pkg, isActive, onSelect, compact = false, isCheapest = false, freeBaggageAllowances = [] }: FarePackageCardProps) => {
+const FarePackageCard = ({
+  pkg,
+  isActive,
+  onSelect,
+  compact = false,
+  isCheapest = false,
+  freeBaggageAllowances = [],
+}: FarePackageCardProps) => {
   const [paxOpen, setPaxOpen] = useState(false);
   const { formatPrice } = useCurrency();
-  const grouped = groupRulesByCategory(pkg.rules);
-  const hasBaggageRules = grouped.some(g => BAGGAGE_ALL_KEYS.has(g.key));
-  const bagFallbackItems = (!hasBaggageRules && freeBaggageAllowances.length > 0)
-    ? buildBagFallback(freeBaggageAllowances)
-    : [];
+
+  const summary = useMemo(
+    () => summarizeFarePackage(pkg, freeBaggageAllowances),
+    [pkg, freeBaggageAllowances],
+  );
+
+  const baggageLines = [summary.baggage, summary.cabin].filter(Boolean) as FareSummaryLine[];
+  const changeLines = summary.change ? [summary.change] : [];
+  const refundLines = summary.refund ? [summary.refund] : [];
+  const isEmpty =
+    baggageLines.length === 0 &&
+    changeLines.length === 0 &&
+    refundLines.length === 0 &&
+    summary.extras.length === 0;
 
   return (
     <div
@@ -158,7 +114,7 @@ const FarePackageCard = ({ pkg, isActive, onSelect, compact = false, isCheapest 
       <div className="bb-pkg-card__header">
         <div className="bb-pkg-card__header-left">
           <span className={`bb-pkg-card__radio ${isActive ? 'bb-pkg-card__radio--checked' : ''}`} aria-hidden="true" />
-          <span className="bb-pkg-card__name">{pkg.brandName ?? 'Standart'}</span>
+          <span className="bb-pkg-card__name">{summary.brandName ?? 'Standart'}</span>
         </div>
         {isCheapest && (
           <span className="bb-pkg-card__badge">En Uygun</span>
@@ -166,43 +122,11 @@ const FarePackageCard = ({ pkg, isActive, onSelect, compact = false, isCheapest 
       </div>
 
       <div className="bb-pkg-card__body">
-        {bagFallbackItems.length > 0 && (
-          <div className="bb-pkg-card__category">
-            <h5 className="bb-pkg-card__category-title">BAGAJ</h5>
-            <ul className="bb-pkg-card__rules">
-              {bagFallbackItems.map((item, i) => (
-                <li key={i} className="bb-pkg-card__rule bb-pkg-card__rule--included">
-                  <StatusIcon state="included" />
-                  <span className="bb-pkg-card__rule-label">{item}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-        {grouped.map(({ key, rules }) => (
-          <div key={key} className="bb-pkg-card__category">
-            <h5 className="bb-pkg-card__category-title">
-              {translateCategory(key)}
-            </h5>
-            <ul className="bb-pkg-card__rules">
-              {rules.map((rule, idx) => {
-                const state = getRuleState(rule);
-                return (
-                  <li key={idx} className={`bb-pkg-card__rule bb-pkg-card__rule--${state}`}>
-                    <StatusIcon state={state} />
-                    <span className="bb-pkg-card__rule-label">
-                      {getRuleLabel(rule)}
-                      {state === 'chargeable' && (
-                        <span className="bb-chip bb-chip--chargeable">+ Ek ücretli</span>
-                      )}
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        ))}
-        {grouped.length === 0 && bagFallbackItems.length === 0 && (
+        <CategorySection title="BAGAJ" lines={baggageLines} />
+        <CategorySection title="DEĞİŞİKLİK" lines={changeLines} />
+        <CategorySection title="İADE" lines={refundLines} />
+        <CategorySection title="EKSTRA" lines={summary.extras} />
+        {isEmpty && (
           <p className="bb-pkg-card__empty-note">Bu tarife için detaylı bilgi mevcut değildir.</p>
         )}
       </div>

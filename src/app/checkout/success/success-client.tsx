@@ -260,7 +260,7 @@ export default function SuccessClient() {
     }
   }, [shoppingFileId, pnr, pdfLoading]);
 
-  if (!hasReduxData && !hasUrlData) return null;
+  if (!hasReduxData && !hasUrlData && !bookingDetail) return null;
 
   // Build today's date in Turkish
   const today = new Date();

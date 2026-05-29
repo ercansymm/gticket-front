@@ -3,6 +3,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import type { PassengerItem, ContactInfo } from '@/types/booking';
 import type { AllocatePassenger } from '@/types/flight';
+import { isValidTCKN } from '@/lib/validations/turkish-id';
 
 /* ───────── helpers ───────── */
 const PAX_LABELS: Record<string, string> = { ADT: 'Yetişkin', CHD: 'Çocuk', INF: 'Bebek' };
@@ -27,7 +28,7 @@ function getDateLimits(paxType: 'ADT' | 'CHD' | 'INF') {
 function turkishToUpper(s: string) {
   return s.replace(/i/g,'İ').replace(/ı/g,'I').replace(/ğ/g,'Ğ').replace(/ü/g,'Ü').replace(/ş/g,'Ş').replace(/ö/g,'Ö').replace(/ç/g,'Ç').toUpperCase();
 }
-function isValidTCKimlik(tc: string) { return /^\d{11}$/.test(tc); }
+function isValidTCKimlik(tc: string) { return isValidTCKN(tc); }
 function turkishToLatin(s: string) {
   return s.replace(/ç/g,'c').replace(/Ç/g,'C').replace(/ğ/g,'g').replace(/Ğ/g,'G')
     .replace(/ı/g,'i').replace(/İ/g,'I').replace(/ö/g,'o').replace(/Ö/g,'O')
@@ -187,16 +188,21 @@ export default function PassengerForm({ passengers, onSubmit, isInternational = 
     if (!form.birthDate) {
       e.birthDate = (form.birthDateMasked && form.birthDateMasked.length > 0) ? 'GG/AA/YYYY formatı' : 'Boş bırakılamaz';
     } else {
-      const lim = getDateLimits(paxType);
-      if (form.birthDate<lim.min||form.birthDate>lim.max)
-        e.birthDate = paxType==='ADT'?'12 yaş ve üzeri':paxType==='CHD'?'2–12 yaş arası':'0–2 yaş arası';
+      const todayIso = new Date().toISOString().slice(0, 10);
+      if (form.birthDate > todayIso) {
+        e.birthDate = 'Doğum tarihi gelecekte olamaz';
+      } else {
+        const lim = getDateLimits(paxType);
+        if (form.birthDate < lim.min || form.birthDate > lim.max)
+          e.birthDate = paxType === 'ADT' ? '12 yaş ve üzeri' : paxType === 'CHD' ? '2–12 yaş arası' : '0–2 yaş arası';
+      }
     }
     if (isInternational) {
       if (!form.passportNo||form.passportNo.trim().length<5) e.passportNo='Boş bırakılamaz';
-      if (form.isTurkishCitizen&&(!form.citizenNo||!isValidTCKimlik(form.citizenNo))) e.citizenNo='TC kimlik 11 haneli olmalı';
+      if (form.isTurkishCitizen&&(!form.citizenNo||!isValidTCKimlik(form.citizenNo))) e.citizenNo='Geçersiz TC kimlik numarası';
     } else {
       if (form.isTurkishCitizen) {
-        if (!form.citizenNo||!isValidTCKimlik(form.citizenNo)) e.citizenNo='TC kimlik 11 haneli olmalı';
+        if (!form.citizenNo||!isValidTCKimlik(form.citizenNo)) e.citizenNo='Geçersiz TC kimlik numarası';
       } else {
         if (!form.passportNo||form.passportNo.trim().length<5) e.passportNo='Boş bırakılamaz';
       }

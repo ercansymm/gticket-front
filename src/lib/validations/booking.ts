@@ -1,4 +1,18 @@
 import { z } from 'zod';
+import { isValidTCKN } from './turkish-id';
+
+// Bugünden ileri olamaz, 120 yıldan eski olamaz.
+function isValidBirthDate(iso: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return false;
+  const d = new Date(iso + 'T00:00:00');
+  if (Number.isNaN(d.getTime())) return false;
+  const today = new Date();
+  today.setHours(23, 59, 59, 999);
+  if (d > today) return false;
+  const minDate = new Date();
+  minDate.setFullYear(minDate.getFullYear() - 120);
+  return d >= minDate;
+}
 
 const passengerItemSchema = z.object({
   paxType: z.enum(['ADT', 'CHD', 'INF']),
@@ -6,8 +20,10 @@ const passengerItemSchema = z.object({
   firstName: z.string().min(2).max(50).trim().regex(/^[A-ZÇĞİÖŞÜa-zçğıöşü\s'-]+$/, 'Geçersiz isim'),
   lastName: z.string().min(2).max(50).trim().regex(/^[A-ZÇĞİÖŞÜa-zçğıöşü\s'-]+$/, 'Geçersiz soyisim'),
   gender: z.enum(['M', 'F']),
-  birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  citizenNo: z.string().length(11).regex(/^\d{11}$/).nullable().optional()
+  birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(isValidBirthDate, 'Doğum tarihi gelecekte olamaz'),
+  citizenNo: z.string().length(11).regex(/^\d{11}$/)
+    .refine(isValidTCKN, 'Geçersiz TC kimlik numarası')
+    .nullable().optional()
     .or(z.literal('')).transform(v => v || null),
   passportNo: z.string().min(5).max(20).regex(/^[A-Z0-9]+$/i).nullable().optional()
     .or(z.literal('')).transform(v => v || null),
@@ -20,6 +36,9 @@ const passengerItemSchema = z.object({
   paxReferenceId: z.string().max(200).nullable().optional(),
 });
 
+// Telefon: TR (+90 5XXXXXXXXX) veya boşluk/parantezli format kabul.
+// Backend'e gönderilirken zaten +90 prefix'i ile birleştiriliyor (PassengerForm.tsx).
+// Bu schema BFF tarafı validation — saldırgan koruması, daha sıkı format kullanıcı tarafında.
 const contactSchema = z.object({
   email: z.string().email().max(254),
   phone: z.string().min(10).max(20).regex(/^\+?[\d\s()-]+$/),

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { filterSensitiveFields, withTimeout, checkRateLimit } from '@/lib/api-helpers';
+import { retryPaymentClientSchema, validateBody, parseBody } from '@/lib/validations';
 import { logger } from '@/lib/logger';
 
 const API_BASE = process.env.API_BASE_URL;
@@ -25,7 +26,18 @@ export async function POST(
       return NextResponse.json({ error: 'Geçersiz booking ID' }, { status: 400 });
     }
 
-    const body = await request.json();
+    const parsed = await parseBody(request);
+    if ('error' in parsed) return parsed.error;
+
+    const validation = validateBody(retryPaymentClientSchema, parsed.data);
+    if (!validation.success) return validation.response;
+
+    if (validation.data.bookingId !== bookingId) {
+      return NextResponse.json(
+        { error: 'URL ve body içindeki bookingId uyumsuz' },
+        { status: 400 },
+      );
+    }
 
     const { signal, clear } = withTimeout(60_000);
     const res = await fetch(
@@ -37,7 +49,7 @@ export async function POST(
           'Content-Type': 'application/json; charset=utf-8',
           'X-Transaction-Id': crypto.randomUUID(),
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify(validation.data),
         signal,
       },
     );
