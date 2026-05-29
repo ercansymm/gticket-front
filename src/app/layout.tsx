@@ -64,15 +64,8 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "https://www.atabilet.com",
   },
-  icons: {
-    icon: [
-      { url: "/favicon.ico", sizes: "any", type: "image/x-icon" },
-      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
-      { url: "/favicon.svg", type: "image/svg+xml" },
-    ],
-    shortcut: "/favicon.ico",
-    apple: { url: "/apple-icon.png", sizes: "256x256", type: "image/png" },
-  },
+  // icon.svg, apple-icon.png and favicon.ico in /src/app/ are auto-discovered by
+  // Next.js App Router and emitted as <link rel="icon"> / <link rel="apple-touch-icon">.
 };
 
 export default function RootLayout({
