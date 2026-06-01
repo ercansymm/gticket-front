@@ -155,6 +155,11 @@ function FarePkgRow({ pkg, isSelected, isDefault, onPick, onContinue, loading }:
         {diffText && (
           <span className="bb-bundle-card__fare-price-diff">{diffText}</span>
         )}
+        {(pkg.grandTotalFare ?? pkg.totalFare) > pkg.totalFare + 0.01 && (
+          <span className="bb-bundle-card__fare-price-total">
+            Toplam {formatPrice(pkg.grandTotalFare)}
+          </span>
+        )}
       </div>
 
       {/* Seç butonu (seçiliyse) */}
@@ -192,11 +197,17 @@ export default function BundleFlightCard({
     : null;
   const [selectedPkg, setSelectedPkg] = useState<FarePackage | null>(defaultPkg);
 
-  // Görüntülenecek fiyat: seçili paket varsa onun fiyatı, yoksa outbound.totalFare
+  // Görüntülenecek fiyat: seçili paket varsa onun fiyatı, yoksa outbound.totalFare (KİŞİ BAŞI)
   const displayFare = (hasFares && selectedPkg)
     ? selectedPkg.totalFare
     : (outbound.totalFare ?? 0);
   const displayFormatted = formatPrice(displayFare);
+
+  // Tüm yolcuların toplamı (kişi başının altında gösterilir)
+  const displayGrandTotal = (hasFares && selectedPkg)
+    ? (selectedPkg.grandTotalFare ?? selectedPkg.totalFare)
+    : (outbound.grandTotalFare ?? outbound.totalFare ?? 0);
+  const showGrandTotal = displayGrandTotal > displayFare + 0.01;
 
   const handleContinue = (pkg: FarePackage) => {
     onSelect(pkg.brandedFareItemId);
@@ -253,10 +264,13 @@ export default function BundleFlightCard({
         /* Fare yok — sadece fiyat ve tek buton */
         <div className="bb-bundle-card__footer">
           <div className="bb-bundle-card__price-wrap">
-            <span className="bb-bundle-card__price-label">Toplam</span>
+            <span className="bb-bundle-card__price-label">{showGrandTotal ? 'Kişi başı' : 'Toplam'}</span>
             <div className="bb-bundle-card__price">
               <span className="bb-bundle-card__price-amount">{displayFormatted}</span>
             </div>
+            {showGrandTotal && (
+              <span className="bb-bundle-card__price-total">Toplam {formatPrice(displayGrandTotal)}</span>
+            )}
             <span className="bb-bundle-card__price-note">Gidiş + dönüş dahil</span>
           </div>
           <button

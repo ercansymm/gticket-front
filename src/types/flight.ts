@@ -66,8 +66,11 @@ export interface FlightResult {
   taxes: number;
   serviceFee: number;
   totalFare: number;
+  /** Tüm yolcuların markup dahil toplam fiyatı (checkout grandTotal ile aynı) — "Toplam" satırı için */
+  grandTotalFare: number;
   currency: string | null;
   totalFareFormatted: string | null;
+  grandTotalFareFormatted: string | null;
   isRefundable: boolean;
   isReservable: boolean;
   refundableText: string | null;
@@ -105,11 +108,17 @@ export interface FarePackage {
   brandCode: string | null;
   brandName: string | null;
   totalFare: number;
+  /** Tüm yolcuların markup dahil toplamı — "{N} kişi için toplam" satırı için */
+  grandTotalFare: number;
   totalTaxes: number;
   currency: string | null;
   totalFareFormatted: string | null;
+  grandTotalFareFormatted: string | null;
   priceDifference: number;
   priceDifferenceFormatted: string | null;
+  /** Tüm yolcuların toplam fiyat farkı — "{N} kişi için toplam +X" satırı için */
+  grandPriceDifference: number;
+  grandPriceDifferenceFormatted: string | null;
   cabinClass: string | null;
   bookingClass: string | null;
   isDefault: boolean;

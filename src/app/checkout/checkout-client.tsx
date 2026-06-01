@@ -312,6 +312,27 @@ export default function CheckoutClient() {
     };
   })();
 
+  // Gidiş-dönüş / çok bacaklı: her bileti (airBooking) ayrı göster (BiletBank panel mantığı).
+  // Hizmet bedeli BİRLEŞİK gösterilir (Acente+BB ayrılmaz — müşteri kâr marjını görmemeli).
+  const legBreakdown = airBookings.length >= 2
+    ? airBookings.map((ab, i) => {
+        const segs = ab.segments ?? [];
+        const origin = segs[0]?.originCode ?? '';
+        const dest = segs[segs.length - 1]?.destinationCode ?? '';
+        const label = airBookings.length === 2
+          ? (i === 0 ? 'GİDİŞ' : 'DÖNÜŞ')
+          : `${i + 1}. UÇUŞ`;
+        return {
+          label,
+          route: origin && dest ? `${origin} → ${dest}` : '',
+          baseFare: ab.baseFare ?? 0,
+          taxes: ab.taxes ?? 0,
+          serviceFee: ab.serviceFee ?? 0,
+          totalFare: ab.totalFare ?? 0,
+        };
+      })
+    : null;
+
   const paxCounts = passengers.reduce((acc, p) => {
     const t = (p.type ?? 'ADT').toUpperCase();
     if (t === 'CHD' || t === 'CHILD') acc.child++;
@@ -961,14 +982,37 @@ export default function CheckoutClient() {
                   </div>
                 )}
                 <div className="chk-summary__divider" />
-                {priceSummary.totalBaseFare > 0 && (
-                  <div className="chk-summary__row"><span>Esas ücret</span><span>{formatPrice(priceSummary.totalBaseFare)}</span></div>
-                )}
-                {priceSummary.totalTaxes > 0 && (
-                  <div className="chk-summary__row"><span>Vergi ve ücretler</span><span>{formatPrice(priceSummary.totalTaxes)}</span></div>
-                )}
-                {priceSummary.totalServiceFee > 0 && (
-                  <div className="chk-summary__row"><span>Hizmet bedeli</span><span>{formatPrice(priceSummary.totalServiceFee)}</span></div>
+                {legBreakdown ? (
+                  legBreakdown.map((leg, i) => (
+                    <div key={i} className="chk-summary__leg">
+                      <div className="chk-summary__leg-head">
+                        <span>{leg.label}</span>
+                        {leg.route && <span className="chk-summary__leg-route">{leg.route}</span>}
+                      </div>
+                      {leg.baseFare > 0 && (
+                        <div className="chk-summary__row"><span>Esas ücret</span><span>{formatPrice(leg.baseFare)}</span></div>
+                      )}
+                      {leg.taxes > 0 && (
+                        <div className="chk-summary__row"><span>Vergi ve ücretler</span><span>{formatPrice(leg.taxes)}</span></div>
+                      )}
+                      {leg.serviceFee > 0 && (
+                        <div className="chk-summary__row"><span>Hizmet bedeli</span><span>{formatPrice(leg.serviceFee)}</span></div>
+                      )}
+                      <div className="chk-summary__row chk-summary__row--sub"><span>Ara toplam</span><span>{formatPrice(leg.totalFare)}</span></div>
+                    </div>
+                  ))
+                ) : (
+                  <>
+                    {priceSummary.totalBaseFare > 0 && (
+                      <div className="chk-summary__row"><span>Esas ücret</span><span>{formatPrice(priceSummary.totalBaseFare)}</span></div>
+                    )}
+                    {priceSummary.totalTaxes > 0 && (
+                      <div className="chk-summary__row"><span>Vergi ve ücretler</span><span>{formatPrice(priceSummary.totalTaxes)}</span></div>
+                    )}
+                    {priceSummary.totalServiceFee > 0 && (
+                      <div className="chk-summary__row"><span>Hizmet bedeli</span><span>{formatPrice(priceSummary.totalServiceFee)}</span></div>
+                    )}
+                  </>
                 )}
                 <div className="chk-summary__total">
                   <div>

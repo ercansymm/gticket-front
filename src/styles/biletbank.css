@@ -8654,6 +8654,13 @@ footer,
   font-weight: 400;
 }
 
+/* Kişi başı fiyatın altında tüm yolcuların toplamı */
+.bb-flight-card__price-total {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 600;
+}
+
 .bb-flight-card__select-btn {
   background: var(--ab-primary);
   color: #fff;
@@ -13274,10 +13281,20 @@ footer,
   display: flex;
   align-items: baseline;
   justify-content: flex-end;
-  gap: 10px;
+  flex-wrap: wrap;
+  gap: 4px 10px;
   padding-top: 12px;
   border-top: 1px solid #f1f5f9;
   margin-top: auto;
+}
+
+/* "{N} kişi için toplam" satırı — fiyatın altına tam satır olarak iner */
+.bb-pkg-card__grand-total {
+  flex-basis: 100%;
+  text-align: right;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
 }
 
 .bb-pkg-card__diff {
@@ -13745,6 +13762,15 @@ footer,
 .bb-bundle-card__price-note {
   font-size: 10px;
   color: #94a3b8;
+}
+
+/* Bundle: tüm yolcuların toplamı (kişi başının altında) */
+.bb-bundle-card__price-total,
+.bb-bundle-card__fare-price-total {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
 }
 
 .bb-bundle-card__select-btn {
