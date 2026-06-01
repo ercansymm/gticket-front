@@ -93,6 +93,11 @@ const FarePackageCard = ({
     [pkg, freeBaggageAllowances],
   );
 
+  // Toplam yolcu sayısı (paket fiyat kırılımından) — "{N} kişi için toplam" satırı için.
+  const totalPax = (pkg.passengerFares ?? []).reduce((acc, pf) => acc + (pf.passengerCount ?? 0), 0);
+  const grandTotal = pkg.grandTotalFare ?? pkg.totalFare;
+  const showGrandTotal = totalPax > 1 && grandTotal > pkg.totalFare + 0.01;
+
   const baggageLines = [summary.baggage, summary.cabin].filter(Boolean) as FareSummaryLine[];
   const changeLines = summary.change ? [summary.change] : [];
   const refundLines = summary.refund ? [summary.refund] : [];
@@ -138,6 +143,11 @@ const FarePackageCard = ({
         <span className="bb-pkg-card__total">
           {formatPrice(pkg.totalFare)}
         </span>
+        {showGrandTotal && (
+          <span className="bb-pkg-card__grand-total">
+            {totalPax} kişi için toplam {formatPrice(grandTotal)}
+          </span>
+        )}
       </div>
 
       {pkg.passengerFares && pkg.passengerFares.length > 0 && (

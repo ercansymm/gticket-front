@@ -35,6 +35,13 @@ const FlightCard = ({ flight, onSelect, isSelected = false, allocateLoading = fa
   const displayPrice = (hasPackages && selectedPkg) ? selectedPkg.totalFare : flight.totalFare;
   const displayPriceFormatted = formatPrice(displayPrice);
 
+  // Tüm yolcuların toplam fiyatı (kişi başı fiyatın altında "Toplam" olarak gösterilir).
+  // Tek yolcuda kişi başı ile aynı olacağından gizlenir.
+  const displayGrandTotal = (hasPackages && selectedPkg)
+    ? (selectedPkg.grandTotalFare ?? selectedPkg.totalFare)
+    : (flight.grandTotalFare ?? flight.totalFare);
+  const showGrandTotal = displayGrandTotal > displayPrice + 0.01;
+
   const handlePackageSelect = (pkg: FarePackage) => {
     setSelectedPkg(pkg);
   };
@@ -118,6 +125,11 @@ const FlightCard = ({ flight, onSelect, isSelected = false, allocateLoading = fa
           <div className="bb-flight-card__price-amount">
             {displayPriceFormatted}
           </div>
+          {showGrandTotal && (
+            <div className="bb-flight-card__price-total">
+              Toplam {formatPrice(displayGrandTotal)}
+            </div>
+          )}
           <button
             className="bb-flight-card__select-btn"
             onClick={() => {
