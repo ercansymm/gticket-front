@@ -649,6 +649,26 @@
 }
 .chk-summary__row span:last-child { color: var(--chk-navy); font-weight: 600; }
 
+/* Gidiş-dönüş / çok bacaklı: her bilet ayrı blok */
+.chk-summary__leg { padding: 4px 0 8px; }
+.chk-summary__leg + .chk-summary__leg {
+  margin-top: 8px; border-top: 1px dashed var(--chk-border-soft); padding-top: 12px;
+}
+.chk-summary__leg-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: 4px;
+  font-size: 12px; font-weight: 700; color: var(--chk-navy);
+  text-transform: uppercase; letter-spacing: 0.03em;
+}
+.chk-summary__leg-route {
+  font-size: 12px; font-weight: 600; color: var(--chk-text-muted);
+  text-transform: none; letter-spacing: 0;
+}
+.chk-summary__row--sub {
+  border-top: 1px solid var(--chk-border-soft); margin-top: 3px; padding-top: 7px;
+}
+.chk-summary__row--sub span { font-weight: 700; color: var(--chk-navy); }
+
 .chk-summary__total {
   display: flex; justify-content: space-between; align-items: baseline;
   margin-top: 10px; padding-top: 12px;
