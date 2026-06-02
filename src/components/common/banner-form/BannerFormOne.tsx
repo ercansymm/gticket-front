@@ -319,8 +319,20 @@ const BannerFormOne = () => {
       if (!code) return "";
       const a = allAirports.find(ap => ap.iataCode === code);
       const trInfo = getTurkishAirportInfo(code);
-      const city = trInfo?.cityName ?? a?.city ?? code;
-      if (isCity && a) {
+
+      // Şehir grubu kodu (örn. "LON"): doğrudan havalimanı eşleşmesi yok — cityCode üyeleriyle çöz
+      if (!a) {
+         const members = allAirports.filter(ap => ap.cityCode === code && ap.iataCode !== code);
+         if (members.length > 0) {
+            const city = trInfo?.cityName ?? members[0].city ?? code;
+            const codes = members.map(ap => ap.iataCode).join(', ');
+            return `${city} (${codes})`;
+         }
+         return code;
+      }
+
+      const city = trInfo?.cityName ?? a.city ?? code;
+      if (isCity) {
          const cityKey = normalizeForSearch(a.city || '');
          const members = cityIndex.get(cityKey);
          if (members && members.length > 1) {
@@ -328,7 +340,7 @@ const BannerFormOne = () => {
             return `${city} (${codes})`;
          }
       }
-      return a ? `${city} (${a.iataCode})` : code;
+      return `${city} (${a.iataCode})`;
    };
 
    /** Tüm allAirports'u şehir bazında indeksle — grupları hızlıca bulmak için */
