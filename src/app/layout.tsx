@@ -53,13 +53,13 @@ export const metadata: Metadata = {
     title: "AtaBilet — Ucuz Uçak Bileti Ara",
     description:
       "En uygun uçak bileti fiyatları. Karşılaştır, satın al.",
-    images: [{ url: "/og-image.jpg", width: 1200, height: 630, alt: "AtaBilet" }],
+    images: [{ url: "/og-image.webp", width: 1200, height: 630, alt: "AtaBilet" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "AtaBilet — Ucuz Uçak Bileti",
     description: "En uygun uçak bileti fiyatları. Karşılaştır, satın al.",
-    images: ["/og-image.jpg"],
+    images: ["/og-image.webp"],
   },
   alternates: {
     canonical: "https://www.atabilet.com",

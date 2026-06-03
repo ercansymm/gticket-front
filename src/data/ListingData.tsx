@@ -21,7 +21,7 @@ const listing_data: DataType[] = [
    {
       id: 1,
       page: "home_1",
-      thumb: "/assets/img/listing/su/listing-1.jpg",
+      thumb: "/assets/img/listing/su/listing-1.webp",
       tag: "Featured",
       time: "7 Days",
       guest: "12 Guests",
@@ -34,7 +34,7 @@ const listing_data: DataType[] = [
    {
       id: 2,
       page: "home_1",
-      thumb: "/assets/img/listing/su/listing-2.jpg",
+      thumb: "/assets/img/listing/su/listing-2.webp",
       time: "7 Days",
       guest: "12 Guests",
       title: "When you visit the Eternal Dubai City",
@@ -46,7 +46,7 @@ const listing_data: DataType[] = [
    {
       id: 3,
       page: "home_1",
-      thumb: "/assets/img/listing/su/listing-3.jpg",
+      thumb: "/assets/img/listing/su/listing-3.webp",
       tag: "Featured",
       time: "7 Days",
       guest: "12 Guests",
@@ -59,7 +59,7 @@ const listing_data: DataType[] = [
    {
       id: 4,
       page: "home_1",
-      thumb: "/assets/img/listing/su/listing-4.jpg",
+      thumb: "/assets/img/listing/su/listing-4.webp",
       time: "7 Days",
       guest: "12 Guests",
       title: "Vatican Museums, Sistine Chapel Skip the Line",
@@ -71,7 +71,7 @@ const listing_data: DataType[] = [
    {
       id: 5,
       page: "home_1",
-      thumb: "/assets/img/listing/su/listing-5.jpg",
+      thumb: "/assets/img/listing/su/listing-5.webp",
       tag: "Featured",
       time: "7 Days",
       guest: "12 Guests",
@@ -84,7 +84,7 @@ const listing_data: DataType[] = [
    {
       id: 6,
       page: "home_1",
-      thumb: "/assets/img/listing/su/listing-6.jpg",
+      thumb: "/assets/img/listing/su/listing-6.webp",
       tag: "Featured",
       time: "7 Days",
       guest: "12 Guests",
@@ -99,7 +99,7 @@ const listing_data: DataType[] = [
    {
       id: 1,
       page: "home_3",
-      thumb: "/assets/img/listing/listing-1.jpg",
+      thumb: "/assets/img/listing/listing-1.webp",
       tag: "New",
       time: "7 Days",
       title: "Two Hour Walking Tour of Manhattan",
@@ -111,7 +111,7 @@ const listing_data: DataType[] = [
    {
       id: 2,
       page: "home_3",
-      thumb: "/assets/img/listing/listing-2.jpg",
+      thumb: "/assets/img/listing/listing-2.webp",
       tag: "% Offer",
       time: "2 Days",
       title: "When you visit the Eternal Dubai City",
@@ -124,7 +124,7 @@ const listing_data: DataType[] = [
    {
       id: 3,
       page: "home_3",
-      thumb: "/assets/img/listing/listing-3.jpg",
+      thumb: "/assets/img/listing/listing-3.webp",
       tag: "New",
       time: "5 Days",
       title: "The Pulau Seribu, Jakarta Indonesia",
@@ -136,7 +136,7 @@ const listing_data: DataType[] = [
    {
       id: 4,
       page: "home_3",
-      thumb: "/assets/img/listing/listing-4.jpg",
+      thumb: "/assets/img/listing/listing-4.webp",
       tag: "% Offer",
       featured: "Featured",
       time: "3 Days",
@@ -150,7 +150,7 @@ const listing_data: DataType[] = [
    {
       id: 5,
       page: "home_3",
-      thumb: "/assets/img/listing/listing-5.jpg",
+      thumb: "/assets/img/listing/listing-5.webp",
       time: "3 Days",
       title: "southwestern Switzerland Akam City",
       location: "Switzerland city",
@@ -162,7 +162,7 @@ const listing_data: DataType[] = [
    {
       id: 6,
       page: "home_3",
-      thumb: "/assets/img/listing/listing-6.jpg",
+      thumb: "/assets/img/listing/listing-6.webp",
       featured: "Featured",
       time: "5 Days",
       title: "Modern Stefano La Piazze Wergeland",
@@ -175,7 +175,7 @@ const listing_data: DataType[] = [
    {
       id: 7,
       page: "home_3",
-      thumb: "/assets/img/listing/listing-8.jpg",
+      thumb: "/assets/img/listing/listing-8.webp",
       time: "7 Days",
       title: "Vatican Museums, Sistine Chapel Skip the Line",
       location: "Rome City",
@@ -187,7 +187,7 @@ const listing_data: DataType[] = [
    {
       id: 8,
       page: "home_3",
-      thumb: "/assets/img/listing/listing-4.jpg",
+      thumb: "/assets/img/listing/listing-4.webp",
       time: "4 Days",
       title: "win cities on opposite sides of the",
       location: "Sydney, Australia",
@@ -202,7 +202,7 @@ const listing_data: DataType[] = [
    {
       id: 1,
       page: "home_5",
-      thumb: "/assets/img/listing/listing-3/list.jpg",
+      thumb: "/assets/img/listing/listing-3/list.webp",
       tag: "Offer",
       time: "7 Days",
       title: "Two Hour Walking Tour of Manhattan",
@@ -214,7 +214,7 @@ const listing_data: DataType[] = [
    {
       id: 2,
       page: "home_5",
-      thumb: "/assets/img/listing/listing-3/list-2.jpg",
+      thumb: "/assets/img/listing/listing-3/list-2.webp",
       tag: "Offer",
       time: "7 Days",
       title: "Vatican Museums, Sistine Chapel Skip the Line",
@@ -226,7 +226,7 @@ const listing_data: DataType[] = [
    {
       id: 3,
       page: "home_5",
-      thumb: "/assets/img/listing/listing-3/list-3.jpg",
+      thumb: "/assets/img/listing/listing-3/list-3.webp",
       time: "7 Days",
       title: "southwestern Switzerland Akam City",
       location: "51 Dekor Land, Thailand",
@@ -237,7 +237,7 @@ const listing_data: DataType[] = [
    {
       id: 4,
       page: "home_5",
-      thumb: "/assets/img/listing/listing-3/list-4.jpg",
+      thumb: "/assets/img/listing/listing-3/list-4.webp",
       tag: "Offer",
       time: "7 Days",
       title: "Modern Stefano La Piazze Wergeland",
@@ -249,7 +249,7 @@ const listing_data: DataType[] = [
    {
       id: 5,
       page: "home_5",
-      thumb: "/assets/img/listing/listing-3/list-5.jpg",
+      thumb: "/assets/img/listing/listing-3/list-5.webp",
       time: "7 Days",
       title: "southwestern Switzerland Akam City",
       location: "51 Dekor Land, Thailand",
@@ -260,7 +260,7 @@ const listing_data: DataType[] = [
    {
       id: 6,
       page: "home_5",
-      thumb: "/assets/img/listing/listing-3/list-6.jpg",
+      thumb: "/assets/img/listing/listing-3/list-6.webp",
       tag: "Offer",
       time: "7 Days",
       title: "When you visit the Eternal Dubai City",
@@ -272,7 +272,7 @@ const listing_data: DataType[] = [
    {
       id: 7,
       page: "home_5",
-      thumb: "/assets/img/listing/listing-3/list-7.jpg",
+      thumb: "/assets/img/listing/listing-3/list-7.webp",
       time: "7 Days",
       title: "win cities on opposite sides of the",
       location: "51 Dekor Land, Thailand",
@@ -283,7 +283,7 @@ const listing_data: DataType[] = [
    {
       id: 8,
       page: "home_5",
-      thumb: "/assets/img/listing/listing-3/list-8.jpg",
+      thumb: "/assets/img/listing/listing-3/list-8.webp",
       tag: "Offer",
       time: "7 Days",
       title: "Two Hour Walking Tour of Manhattan",
@@ -297,7 +297,7 @@ const listing_data: DataType[] = [
    {
       id: 1,
       page: "home_7",
-      thumb: "/assets/img/listing/listing-5/listing-1.jpg",
+      thumb: "/assets/img/listing/listing-5/listing-1.webp",
       tag: "Open",
       featured: "Featured",
       recommended: "Recommended",
@@ -311,7 +311,7 @@ const listing_data: DataType[] = [
    {
       id: 2,
       page: "home_7",
-      thumb: "/assets/img/listing/listing-5/listing-2.jpg",
+      thumb: "/assets/img/listing/listing-5/listing-2.webp",
       tag: "Close",
       country: "Italian",
       time: "7 Days",
@@ -323,7 +323,7 @@ const listing_data: DataType[] = [
    {
       id: 3,
       page: "home_7",
-      thumb: "/assets/img/listing/listing-5/listing-3.jpg",
+      thumb: "/assets/img/listing/listing-5/listing-3.webp",
       tag: "Open",
       recommended: "Recommended",
       country: "Japanese",
@@ -336,7 +336,7 @@ const listing_data: DataType[] = [
    {
       id: 4,
       page: "home_7",
-      thumb: "/assets/img/listing/listing-5/listing-4.jpg",
+      thumb: "/assets/img/listing/listing-5/listing-4.webp",
       tag: "Open",
       country: "Mexican",
       time: "7 Days",
@@ -348,7 +348,7 @@ const listing_data: DataType[] = [
    {
       id: 5,
       page: "home_7",
-      thumb: "/assets/img/listing/listing-5/listing-3.jpg",
+      thumb: "/assets/img/listing/listing-5/listing-3.webp",
       tag: "Open",
       recommended: "Recommended",
       country: "Japanese",

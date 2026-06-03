@@ -16,16 +16,16 @@ interface RouteItem {
 }
 
 const staticRoutes: RouteItem[] = [
-   { id: 1, from: "İstanbul", fromCode: "IST", to: "Antalya", toCode: "AYT", price: "899", img: "/assets/img/cities/antalya.jpg" },
-   { id: 2, from: "İstanbul", fromCode: "IST", to: "İzmir", toCode: "ADB", price: "749", img: "/assets/img/cities/izmir.jpg" },
-   { id: 3, from: "Ankara", fromCode: "ESB", to: "İstanbul", toCode: "IST", price: "649", img: "/assets/img/cities/istanbul.jpg" },
-   { id: 4, from: "İstanbul", fromCode: "IST", to: "Trabzon", toCode: "TZX", price: "799", img: "/assets/img/cities/trabzon.jpg" },
-   { id: 5, from: "İstanbul", fromCode: "IST", to: "Bodrum", toCode: "BJV", price: "949", img: "/assets/img/cities/bodrum.jpg" },
-   { id: 6, from: "İstanbul", fromCode: "IST", to: "Ankara", toCode: "ESB", price: "599", img: "/assets/img/cities/ankara.jpg" },
-   { id: 7, from: "İstanbul", fromCode: "IST", to: "Dalaman", toCode: "DLM", price: "899", img: "/assets/img/cities/dalaman.jpg" },
-   { id: 8, from: "İstanbul", fromCode: "IST", to: "Adana", toCode: "ADA", price: "679", img: "/assets/img/cities/adana.jpg" },
-   { id: 9, from: "İstanbul", fromCode: "IST", to: "Gaziantep", toCode: "GZT", price: "749", img: "/assets/img/cities/gaziantep.jpg" },
-   { id: 10, from: "İstanbul", fromCode: "IST", to: "Kayseri", toCode: "ASR", price: "649", img: "/assets/img/cities/kayseri.jpg" },
+   { id: 1, from: "İstanbul", fromCode: "IST", to: "Antalya", toCode: "AYT", price: "899", img: "/assets/img/cities/antalya.webp" },
+   { id: 2, from: "İstanbul", fromCode: "IST", to: "İzmir", toCode: "ADB", price: "749", img: "/assets/img/cities/izmir.webp" },
+   { id: 3, from: "Ankara", fromCode: "ESB", to: "İstanbul", toCode: "IST", price: "649", img: "/assets/img/cities/istanbul.webp" },
+   { id: 4, from: "İstanbul", fromCode: "IST", to: "Trabzon", toCode: "TZX", price: "799", img: "/assets/img/cities/trabzon.webp" },
+   { id: 5, from: "İstanbul", fromCode: "IST", to: "Bodrum", toCode: "BJV", price: "949", img: "/assets/img/cities/bodrum.webp" },
+   { id: 6, from: "İstanbul", fromCode: "IST", to: "Ankara", toCode: "ESB", price: "599", img: "/assets/img/cities/ankara.webp" },
+   { id: 7, from: "İstanbul", fromCode: "IST", to: "Dalaman", toCode: "DLM", price: "899", img: "/assets/img/cities/dalaman.webp" },
+   { id: 8, from: "İstanbul", fromCode: "IST", to: "Adana", toCode: "COV", price: "679", img: "/assets/img/cities/adana.webp" },
+   { id: 9, from: "İstanbul", fromCode: "IST", to: "Gaziantep", toCode: "GZT", price: "749", img: "/assets/img/cities/gaziantep.webp" },
+   { id: 10, from: "İstanbul", fromCode: "IST", to: "Kayseri", toCode: "ASR", price: "649", img: "/assets/img/cities/kayseri.webp" },
 ];
 
 /** Havalimanı kodundan şehir ismi bul (API'den gelmezse AirportData fallback) */
@@ -37,24 +37,24 @@ const getCityName = (code: string, lang: 'tr' | 'en' = 'tr'): string => {
 
 /** Varış şehrine göre görsel seç — şehir kodu eşleşmezse fallback döner */
 const cityImageMap: Record<string, string> = {
-   AYT: '/assets/img/cities/antalya.jpg',
-   ADB: '/assets/img/cities/izmir.jpg',
-   IST: '/assets/img/cities/istanbul.jpg',
-   SAW: '/assets/img/cities/istanbul.jpg',
-   TZX: '/assets/img/cities/trabzon.jpg',
-   BJV: '/assets/img/cities/bodrum.jpg',
-   ESB: '/assets/img/cities/ankara.jpg',
-   DLM: '/assets/img/cities/dalaman.jpg',
-   ADA: '/assets/img/cities/adana.jpg',
-   GZT: '/assets/img/cities/gaziantep.jpg',
-   ASR: '/assets/img/cities/kayseri.jpg',
+   AYT: '/assets/img/cities/antalya.webp',
+   ADB: '/assets/img/cities/izmir.webp',
+   IST: '/assets/img/cities/istanbul.webp',
+   SAW: '/assets/img/cities/istanbul.webp',
+   TZX: '/assets/img/cities/trabzon.webp',
+   BJV: '/assets/img/cities/bodrum.webp',
+   ESB: '/assets/img/cities/ankara.webp',
+   DLM: '/assets/img/cities/dalaman.webp',
+   COV: '/assets/img/cities/adana.webp',
+   GZT: '/assets/img/cities/gaziantep.webp',
+   ASR: '/assets/img/cities/kayseri.webp',
 };
 
 const fallbackImages = [
-   '/assets/img/cities/istanbul.jpg',
-   '/assets/img/cities/antalya.jpg',
-   '/assets/img/cities/izmir.jpg',
-   '/assets/img/cities/bodrum.jpg',
+   '/assets/img/cities/istanbul.webp',
+   '/assets/img/cities/antalya.webp',
+   '/assets/img/cities/izmir.webp',
+   '/assets/img/cities/bodrum.webp',
 ];
 
 const getRouteImage = (toCode: string, index: number): string => {

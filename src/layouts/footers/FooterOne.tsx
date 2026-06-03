@@ -36,7 +36,7 @@ const FooterOne = () => {
                         >
                            {/* eslint-disable-next-line @next/next/no-img-element */}
                            <img
-                              src="/images/tursab-dds-18474.jpg"
+                              src="/images/tursab-dds-18474.webp"
                               alt="TÜRSAB DDS Belge No: 18474"
                               width={120}
                               height={120}
@@ -52,7 +52,7 @@ const FooterOne = () => {
                         >
                            {/* eslint-disable-next-line @next/next/no-img-element */}
                            <img
-                              src="/images/etbis.jpeg"
+                              src="/images/etbis.webp"
                               alt="ETBİS Kayıt Belgesi"
                               width={120}
                               height={120}

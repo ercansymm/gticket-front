@@ -48,6 +48,7 @@ function LegRow({ flight, label, labelColor }: LegRowProps) {
             alt={flight.airlineName ?? "airline"}
             width={30}
             height={30}
+            unoptimized
             onError={() => setLogoError(true)}
           />
         ) : (

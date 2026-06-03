@@ -24,7 +24,7 @@ const shop_data: DataType[] = [
    {
       id: 1,
       page: "shop_1",
-      thumb: "/assets/img/listing/listing-4/thumb-2.jpg",
+      thumb: "/assets/img/listing/listing-4/thumb-2.webp",
       tag: "New",
       title: "Two Hour Walking Tour of Manhattan",
       location: "51 Dekor Land, Thailand",
@@ -38,7 +38,7 @@ const shop_data: DataType[] = [
    {
       id: 2,
       page: "shop_1",
-      thumb: "/assets/img/listing/listing-4/thumb.jpg",
+      thumb: "/assets/img/listing/listing-4/thumb.webp",
       featured: "Featured",
       offer: "% Offer",
       title: "American Parks Trail end Rapid City Express",
@@ -54,7 +54,7 @@ const shop_data: DataType[] = [
    {
       id: 3,
       page: "shop_1",
-      thumb: "/assets/img/listing/listing-4/thumb-3.jpg",
+      thumb: "/assets/img/listing/listing-4/thumb-3.webp",
       title: "Modern Stefano La Piazze Wergeland",
       location: "51 Dekor Land, Thailand",
       price: 190,
@@ -67,7 +67,7 @@ const shop_data: DataType[] = [
    {
       id: 4,
       page: "shop_1",
-      thumb: "/assets/img/listing/listing-4/thumb-4.jpg",
+      thumb: "/assets/img/listing/listing-4/thumb-4.webp",
       title: "American Parks Trail end Rapid City Express",
       location: "51 Dekor Land, Thailand",
       price: 180,
@@ -80,7 +80,7 @@ const shop_data: DataType[] = [
    {
       id: 5,
       page: "shop_1",
-      thumb: "/assets/img/listing/listing-4/thumb-5.jpg",
+      thumb: "/assets/img/listing/listing-4/thumb-5.webp",
       offer: "% Offer",
       title: "Vatican Museums, Sistine Chapel Skip the",
       location: "51 Dekor Land, Thailand",
@@ -95,7 +95,7 @@ const shop_data: DataType[] = [
    {
       id: 6,
       page: "shop_1",
-      thumb: "/assets/img/listing/listing-4/thumb-6.jpg",
+      thumb: "/assets/img/listing/listing-4/thumb-6.webp",
       offer: "% Offer",
       title: "American Parks Trail end Rapid City Express",
       location: "51 Dekor Land, Thailand",
@@ -110,7 +110,7 @@ const shop_data: DataType[] = [
    {
       id: 7,
       page: "shop_1",
-      thumb: "/assets/img/listing/listing-4/thumb-7.jpg",
+      thumb: "/assets/img/listing/listing-4/thumb-7.webp",
       title: "Modern Stefano La Piazze Wergeland",
       location: "51 Dekor Land, Thailand",
       price: 180,
@@ -123,7 +123,7 @@ const shop_data: DataType[] = [
    {
       id: 8,
       page: "shop_1",
-      thumb: "/assets/img/listing/listing-4/thumb-8.jpg",
+      thumb: "/assets/img/listing/listing-4/thumb-8.webp",
       offer: "% Offer",
       title: "Vatican Museums, Sistine Chapel Skip the",
       location: "51 Dekor Land, Thailand",
@@ -138,7 +138,7 @@ const shop_data: DataType[] = [
    {
       id: 9,
       page: "shop_1",
-      thumb: "/assets/img/listing/listing-4/thumb.jpg",
+      thumb: "/assets/img/listing/listing-4/thumb.webp",
       offer: "% Offer",
       title: "American Parks Trail end Rapid City Express",
       location: "51 Dekor Land, Thailand",
@@ -153,7 +153,7 @@ const shop_data: DataType[] = [
    {
       id: 10,
       page: "shop_1",
-      thumb: "/assets/img/listing/listing-4/thumb-6.jpg",
+      thumb: "/assets/img/listing/listing-4/thumb-6.webp",
       offer: "% Offer",
       title: "American Parks Trail end Rapid City Express",
       location: "51 Dekor Land, Thailand",
@@ -168,7 +168,7 @@ const shop_data: DataType[] = [
    {
       id: 11,
       page: "shop_1",
-      thumb: "/assets/img/listing/listing-4/thumb-7.jpg",
+      thumb: "/assets/img/listing/listing-4/thumb-7.webp",
       title: "Modern Stefano La Piazze Wergeland",
       location: "51 Dekor Land, Thailand",
       price: 180,
@@ -181,7 +181,7 @@ const shop_data: DataType[] = [
    {
       id: 12,
       page: "shop_1",
-      thumb: "/assets/img/listing/listing-4/thumb-8.jpg",
+      thumb: "/assets/img/listing/listing-4/thumb-8.webp",
       offer: "% Offer",
       title: "Vatican Museums, Sistine Chapel Skip the",
       location: "51 Dekor Land, Thailand",
@@ -196,7 +196,7 @@ const shop_data: DataType[] = [
    {
       id: 13,
       page: "shop_1",
-      thumb: "/assets/img/listing/listing-4/thumb.jpg",
+      thumb: "/assets/img/listing/listing-4/thumb.webp",
       offer: "% Offer",
       title: "American Parks Trail end Rapid City Express",
       location: "51 Dekor Land, Thailand",
@@ -213,7 +213,7 @@ const shop_data: DataType[] = [
    {
       id: 1,
       page: "shop_2",
-      thumb: "/assets/img/listing/listing-3.jpg",
+      thumb: "/assets/img/listing/listing-3.webp",
       tag: "New",
       title: "Two Hour Walking Tour of Manhattan",
       location: "Veins City, italy",
@@ -228,7 +228,7 @@ const shop_data: DataType[] = [
    {
       id: 2,
       page: "shop_2",
-      thumb: "/assets/img/listing/listing-2.jpg",
+      thumb: "/assets/img/listing/listing-2.webp",
       offer: "% Offer",
       title: "When you visit the Eternal Dubai City",
       location: "Dubai, Emirates",
@@ -244,7 +244,7 @@ const shop_data: DataType[] = [
    {
       id: 3,
       page: "shop_2",
-      thumb: "/assets/img/listing/listing-1.jpg",
+      thumb: "/assets/img/listing/listing-1.webp",
       tag: "New",
       title: "The Pulau Seribu, Jakarta Indonesia",
       location: "51 Dekor Land, Thailand",
@@ -259,7 +259,7 @@ const shop_data: DataType[] = [
    {
       id: 4,
       page: "shop_2",
-      thumb: "/assets/img/listing/listing-1.jpg",
+      thumb: "/assets/img/listing/listing-1.webp",
       tag: "New",
       title: "southwestern Switzerland Akam City",
       location: "51 Dekor Land, Thailand",
@@ -275,7 +275,7 @@ const shop_data: DataType[] = [
    {
       id: 5,
       page: "shop_2",
-      thumb: "/assets/img/listing/listing-6.jpg",
+      thumb: "/assets/img/listing/listing-6.webp",
       title: "Modern Stefano La Piazze Wergeland",
       location: "Switzerland city",
       price: 180,
@@ -289,7 +289,7 @@ const shop_data: DataType[] = [
    {
       id: 6,
       page: "shop_2",
-      thumb: "/assets/img/listing/listing-7.jpg",
+      thumb: "/assets/img/listing/listing-7.webp",
       featured: "Featured",
       title: "win cities on opposite sides of the",
       location: "East Norway",
@@ -304,7 +304,7 @@ const shop_data: DataType[] = [
    {
       id: 7,
       page: "shop_2",
-      thumb: "/assets/img/listing/listing-4.jpg",
+      thumb: "/assets/img/listing/listing-4.webp",
       title: "Modern Stefano La Piazze Wergeland",
       location: "Sydney, Australia",
       delete_price: 240,
@@ -319,7 +319,7 @@ const shop_data: DataType[] = [
    {
       id: 8,
       page: "shop_2",
-      thumb: "/assets/img/listing/listing-2.jpg",
+      thumb: "/assets/img/listing/listing-2.webp",
       offer: "% Offer",
       title: "When you visit the Eternal Dubai City",
       location: "Dubai, Emirates",
@@ -335,7 +335,7 @@ const shop_data: DataType[] = [
    {
       id: 9,
       page: "shop_2",
-      thumb: "/assets/img/listing/listing-4.jpg",
+      thumb: "/assets/img/listing/listing-4.webp",
       title: "southwestern Switzerland Akam City",
       location: "Sydney, Australia",
       delete_price: 240,
@@ -350,7 +350,7 @@ const shop_data: DataType[] = [
    {
       id: 10,
       page: "shop_2",
-      thumb: "/assets/img/listing/listing-4.jpg",
+      thumb: "/assets/img/listing/listing-4.webp",
       title: "Modern Stefano La Piazze Wergeland",
       location: "Sydney, Australia",
       delete_price: 240,
@@ -365,7 +365,7 @@ const shop_data: DataType[] = [
    {
       id: 11,
       page: "shop_2",
-      thumb: "/assets/img/listing/listing-2.jpg",
+      thumb: "/assets/img/listing/listing-2.webp",
       offer: "% Offer",
       title: "When you visit the Eternal Dubai City",
       location: "Dubai, Emirates",
@@ -381,7 +381,7 @@ const shop_data: DataType[] = [
    {
       id: 12,
       page: "shop_2",
-      thumb: "/assets/img/listing/listing-4.jpg",
+      thumb: "/assets/img/listing/listing-4.webp",
       title: "southwestern Switzerland Akam City",
       location: "Sydney, Australia",
       delete_price: 240,
@@ -398,7 +398,7 @@ const shop_data: DataType[] = [
    {
       id: 1,
       page: "shop_3",
-      thumb: "/assets/img/listing/listing-2/listing.jpg",
+      thumb: "/assets/img/listing/listing-2/listing.webp",
       tag: "New",
       title: "Two Hour Walking Tour of Manhattan",
       location: "Veins City, italy",
@@ -413,7 +413,7 @@ const shop_data: DataType[] = [
    {
       id: 2,
       page: "shop_3",
-      thumb: "/assets/img/listing/listing-2/listing-2.jpg",
+      thumb: "/assets/img/listing/listing-2/listing-2.webp",
       offer: "% Offer",
       title: "When you visit the Eternal Dubai City",
       location: "Dubai, Emirates",
@@ -429,7 +429,7 @@ const shop_data: DataType[] = [
    {
       id: 3,
       page: "shop_3",
-      thumb: "/assets/img/listing/listing-2/listing-3.jpg",
+      thumb: "/assets/img/listing/listing-2/listing-3.webp",
       tag: "New",
       title: "The Pulau Seribu, Jakarta Indonesia",
       location: "51 Dekor Land, Thailand",
@@ -444,7 +444,7 @@ const shop_data: DataType[] = [
    {
       id: 4,
       page: "shop_3",
-      thumb: "/assets/img/listing/listing-2/listing-9.jpg",
+      thumb: "/assets/img/listing/listing-2/listing-9.webp",
       tag: "New",
       title: "southwestern Switzerland Akam City",
       location: "51 Dekor Land, Thailand",
@@ -460,7 +460,7 @@ const shop_data: DataType[] = [
    {
       id: 5,
       page: "shop_3",
-      thumb: "/assets/img/listing/listing-2/listing-4.jpg",
+      thumb: "/assets/img/listing/listing-2/listing-4.webp",
       title: "Modern Stefano La Piazze Wergeland",
       location: "Switzerland city",
       price: 180,
@@ -474,7 +474,7 @@ const shop_data: DataType[] = [
    {
       id: 6,
       page: "shop_3",
-      thumb: "/assets/img/listing/listing-2/listing-5.jpg",
+      thumb: "/assets/img/listing/listing-2/listing-5.webp",
       featured: "Featured",
       title: "win cities on opposite sides of the",
       location: "East Norway",
@@ -489,7 +489,7 @@ const shop_data: DataType[] = [
    {
       id: 7,
       page: "shop_3",
-      thumb: "/assets/img/listing/listing-2/listing-10.jpg",
+      thumb: "/assets/img/listing/listing-2/listing-10.webp",
       title: "Modern Stefano La Piazze Wergeland",
       location: "Sydney, Australia",
       delete_price: 240,
@@ -504,7 +504,7 @@ const shop_data: DataType[] = [
    {
       id: 8,
       page: "shop_3",
-      thumb: "/assets/img/listing/listing-2/listing-8.jpg",
+      thumb: "/assets/img/listing/listing-2/listing-8.webp",
       offer: "% Offer",
       title: "When you visit the Eternal Dubai City",
       location: "Dubai, Emirates",
@@ -520,7 +520,7 @@ const shop_data: DataType[] = [
    {
       id: 9,
       page: "shop_3",
-      thumb: "/assets/img/listing/listing-2/listing-1.jpg",
+      thumb: "/assets/img/listing/listing-2/listing-1.webp",
       title: "southwestern Switzerland Akam City",
       location: "Sydney, Australia",
       delete_price: 240,
@@ -535,7 +535,7 @@ const shop_data: DataType[] = [
    {
       id: 10,
       page: "shop_3",
-      thumb: "/assets/img/listing/listing-2/listing-3.jpg",
+      thumb: "/assets/img/listing/listing-2/listing-3.webp",
       title: "Modern Stefano La Piazze Wergeland",
       location: "Sydney, Australia",
       delete_price: 240,
@@ -550,7 +550,7 @@ const shop_data: DataType[] = [
    {
       id: 11,
       page: "shop_3",
-      thumb: "/assets/img/listing/listing-2/listing-11.jpg",
+      thumb: "/assets/img/listing/listing-2/listing-11.webp",
       offer: "% Offer",
       title: "When you visit the Eternal Dubai City",
       location: "Dubai, Emirates",
@@ -566,7 +566,7 @@ const shop_data: DataType[] = [
    {
       id: 12,
       page: "shop_3",
-      thumb: "/assets/img/listing/listing-2/listing-12.jpg",
+      thumb: "/assets/img/listing/listing-2/listing-12.webp",
       title: "southwestern Switzerland Akam City",
       location: "Sydney, Australia",
       delete_price: 240,
@@ -581,7 +581,7 @@ const shop_data: DataType[] = [
    {
       id: 13,
       page: "shop_3",
-      thumb: "/assets/img/listing/listing-2/listing-3.jpg",
+      thumb: "/assets/img/listing/listing-2/listing-3.webp",
       title: "Modern Stefano La Piazze Wergeland",
       location: "Sydney, Australia",
       delete_price: 240,
@@ -596,7 +596,7 @@ const shop_data: DataType[] = [
    {
       id: 14,
       page: "shop_3",
-      thumb: "/assets/img/listing/listing-2/listing-11.jpg",
+      thumb: "/assets/img/listing/listing-2/listing-11.webp",
       offer: "% Offer",
       title: "When you visit the Eternal Dubai City",
       location: "Dubai, Emirates",
@@ -612,7 +612,7 @@ const shop_data: DataType[] = [
    {
       id: 15,
       page: "shop_3",
-      thumb: "/assets/img/listing/listing-2/listing-12.jpg",
+      thumb: "/assets/img/listing/listing-2/listing-12.webp",
       title: "southwestern Switzerland Akam City",
       location: "Sydney, Australia",
       delete_price: 240,
@@ -630,7 +630,7 @@ const shop_data: DataType[] = [
       id: 1,
       page: "shop_4",
       tag: "New",
-      thumb: "/assets/img/listing/map-list/list.jpg",
+      thumb: "/assets/img/listing/map-list/list.webp",
       title: "Two Hour Walking Tour of Manhattan",
       location: "Veins City, italy",
       delete_price: 240,
@@ -644,7 +644,7 @@ const shop_data: DataType[] = [
    {
       id: 2,
       page: "shop_4",
-      thumb: "/assets/img/listing/map-list/list-2.jpg",
+      thumb: "/assets/img/listing/map-list/list-2.webp",
       featured: "Featured",
       offer: "% Offer",
       title: "southwestern Switzerland Akam City",
@@ -660,7 +660,7 @@ const shop_data: DataType[] = [
    {
       id: 3,
       page: "shop_4",
-      thumb: "/assets/img/listing/map-list/list-3.jpg",
+      thumb: "/assets/img/listing/map-list/list-3.webp",
       title: "The Pulau Seribu, Jakarta Indonesia",
       location: "East Norway",
       delete_price: 340,
@@ -674,7 +674,7 @@ const shop_data: DataType[] = [
    {
       id: 4,
       page: "shop_4",
-      thumb: "/assets/img/listing/map-list/list-4.jpg",
+      thumb: "/assets/img/listing/map-list/list-4.webp",
       offer: "% Offer",
       title: "win cities on opposite sides of the",
       location: "Sydney, Australia",
@@ -689,7 +689,7 @@ const shop_data: DataType[] = [
    {
       id: 5,
       page: "shop_4",
-      thumb: "/assets/img/listing/map-list/list-5.jpg",
+      thumb: "/assets/img/listing/map-list/list-5.webp",
       title: "southwestern Switzerland Akam City",
       location: "Switzerland city",
       delete_price: 140,
@@ -703,7 +703,7 @@ const shop_data: DataType[] = [
    {
       id: 6,
       page: "shop_4",
-      thumb: "/assets/img/listing/map-list/list-6.jpg",
+      thumb: "/assets/img/listing/map-list/list-6.webp",
       title: "Vatican Museums, Sistine Chapel Skip the Line",
       location: "Rome City",
       delete_price: 240,
@@ -717,7 +717,7 @@ const shop_data: DataType[] = [
    {
       id: 7,
       page: "shop_4",
-      thumb: "/assets/img/listing/map-list/list-5.jpg",
+      thumb: "/assets/img/listing/map-list/list-5.webp",
       title: "southwestern Switzerland Akam City",
       location: "Switzerland city",
       delete_price: 140,
@@ -731,7 +731,7 @@ const shop_data: DataType[] = [
    {
       id: 8,
       page: "shop_4",
-      thumb: "/assets/img/listing/map-list/list-6.jpg",
+      thumb: "/assets/img/listing/map-list/list-6.webp",
       title: "Vatican Museums, Sistine Chapel Skip the Line",
       location: "Rome City",
       delete_price: 240,
@@ -747,7 +747,7 @@ const shop_data: DataType[] = [
    {
       id: 1,
       page: "shop_5",
-      thumb: "/assets/img/shop/product.jpg",
+      thumb: "/assets/img/shop/product.webp",
       title: "Noise Fit Halo Smartwatch",
       location: "Sydney, Australia",
       price: 980,
@@ -758,7 +758,7 @@ const shop_data: DataType[] = [
    {
       id: 2,
       page: "shop_5",
-      thumb: "/assets/img/shop/product-2.jpg",
+      thumb: "/assets/img/shop/product-2.webp",
       title: "Canon EOS R100 Mirrorless",
       location: "Sydney, Australia",
       price: 120,
@@ -769,7 +769,7 @@ const shop_data: DataType[] = [
    {
       id: 3,
       page: "shop_5",
-      thumb: "/assets/img/shop/product-3.jpg",
+      thumb: "/assets/img/shop/product-3.webp",
       title: "Camera | instax | FUJIFILM",
       location: "Sydney, Australia",
       price: 280,
@@ -780,7 +780,7 @@ const shop_data: DataType[] = [
    {
       id: 4,
       page: "shop_5",
-      thumb: "/assets/img/shop/product-4.jpg",
+      thumb: "/assets/img/shop/product-4.webp",
       title: "EDIFIER WH950NB Wireless Noise",
       location: "Sydney, Australia",
       price: 100,
@@ -791,7 +791,7 @@ const shop_data: DataType[] = [
    {
       id: 5,
       page: "shop_5",
-      thumb: "/assets/img/shop/product-5.jpg",
+      thumb: "/assets/img/shop/product-5.webp",
       title: "Woodland Backpack TB 142F12",
       location: "Sydney, Australia",
       price: 230,
@@ -802,7 +802,7 @@ const shop_data: DataType[] = [
    {
       id: 6,
       page: "shop_5",
-      thumb: "/assets/img/shop/product-6.jpg",
+      thumb: "/assets/img/shop/product-6.webp",
       title: "SoundPro 20 15W TWS",
       location: "Sydney, Australia",
       price: 199,
@@ -814,7 +814,7 @@ const shop_data: DataType[] = [
    {
       id: 7,
       page: "shop_5",
-      thumb: "/assets/img/shop/product-7.jpg",
+      thumb: "/assets/img/shop/product-7.webp",
       title: "Taran 6 Persons Tant Tent",
       location: "Sydney, Australia",
       price: 299,
@@ -825,7 +825,7 @@ const shop_data: DataType[] = [
    {
       id: 8,
       page: "shop_5",
-      thumb: "/assets/img/shop/product-8.jpg",
+      thumb: "/assets/img/shop/product-8.webp",
       title: "Kiyo UVC Water Bottle",
       location: "Sydney, Australia",
       price: 240,
@@ -837,7 +837,7 @@ const shop_data: DataType[] = [
    {
       id: 9,
       page: "shop_5",
-      thumb: "/assets/img/shop/product-9.jpg",
+      thumb: "/assets/img/shop/product-9.webp",
       title: "Hats Men Baseball Caps",
       location: "Sydney, Australia",
       price: 320,
@@ -848,7 +848,7 @@ const shop_data: DataType[] = [
    {
       id: 10,
       page: "shop_5",
-      thumb: "/assets/img/shop/product-6.jpg",
+      thumb: "/assets/img/shop/product-6.webp",
       title: "SoundPro 20 15W TWS",
       location: "Sydney, Australia",
       price: 199,
@@ -860,7 +860,7 @@ const shop_data: DataType[] = [
    {
       id: 11,
       page: "shop_5",
-      thumb: "/assets/img/shop/product-7.jpg",
+      thumb: "/assets/img/shop/product-7.webp",
       title: "Taran 6 Persons Tant Tent",
       location: "Sydney, Australia",
       price: 299,
@@ -871,7 +871,7 @@ const shop_data: DataType[] = [
    {
       id: 12,
       page: "shop_5",
-      thumb: "/assets/img/shop/product-8.jpg",
+      thumb: "/assets/img/shop/product-8.webp",
       title: "Kiyo UVC Water Bottle",
       location: "Sydney, Australia",
       price: 240,
@@ -882,7 +882,7 @@ const shop_data: DataType[] = [
    {
       id: 13,
       page: "shop_5",
-      thumb: "/assets/img/shop/product-9.jpg",
+      thumb: "/assets/img/shop/product-9.webp",
       title: "Hats Men Baseball Caps",
       location: "Sydney, Australia",
       price: 320,

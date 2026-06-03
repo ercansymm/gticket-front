@@ -157,7 +157,10 @@ const BannerFormOne = () => {
       const urlTo = searchParams?.get("to");
       const urlDate = searchParams?.get("date");
       const urlReturn = searchParams?.get("retdate");
-      const urlPax = searchParams?.get("pax");
+      const urlAdt = searchParams?.get("adt");
+      const urlChd = searchParams?.get("chd");
+      const urlInf = searchParams?.get("inf");
+      const urlPax = searchParams?.get("pax"); // eski link uyumu
       const urlClass = searchParams?.get("class");
       const urlType = searchParams?.get("type");
 
@@ -171,7 +174,17 @@ const BannerFormOne = () => {
          const d = new Date(urlReturn.includes('T') ? urlReturn : urlReturn + 'T00:00:00');
          if (!isNaN(d.getTime())) setReturnDate(d);
       }
-      if (urlPax) {
+      if (urlAdt || urlChd || urlInf) {
+         const a = parseInt(urlAdt ?? "1", 10);
+         const c = parseInt(urlChd ?? "0", 10);
+         const i = parseInt(urlInf ?? "0", 10);
+         setPassengers({
+            adult: a > 0 && a <= 9 ? a : 1,
+            child: c >= 0 && c <= 9 ? c : 0,
+            infant: i >= 0 && i <= 9 ? i : 0,
+         });
+      } else if (urlPax) {
+         // Geriye dönük uyumluluk (eski 'pax' parametreli linkler)
          const n = parseInt(urlPax, 10);
          if (n > 0 && n <= 9) setPassengers(prev => ({ ...prev, adult: n }));
       }

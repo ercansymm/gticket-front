@@ -80,6 +80,7 @@ const FlightCard = ({ flight, onSelect, isSelected = false, allocateLoading = fa
                 alt={flight.airlineName ?? 'airline'}
                 width={36}
                 height={36}
+                unoptimized
                 onError={() => setLogoError(true)}
               />
             ) : (
