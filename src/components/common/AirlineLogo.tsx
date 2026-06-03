@@ -58,8 +58,8 @@ export default function AirlineLogo({
     );
   }
 
-  // kiwi.com returns icon-only (no wordmark) airline logos for all IATA codes
-  const src = `https://images.kiwi.com/airlines/64x64/${upperCode}.png`;
+  // Local airline logos (public/airlines/{CODE}.webp); falls back to IATA text on error
+  const src = `/airlines/${upperCode}.webp`;
 
   return (
     <span className={className} style={containerStyle}>
