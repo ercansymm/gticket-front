@@ -23,7 +23,7 @@ const staticRoutes: RouteItem[] = [
    { id: 5, from: "İstanbul", fromCode: "IST", to: "Bodrum", toCode: "BJV", price: "949", img: "/assets/img/cities/bodrum.webp" },
    { id: 6, from: "İstanbul", fromCode: "IST", to: "Ankara", toCode: "ESB", price: "599", img: "/assets/img/cities/ankara.webp" },
    { id: 7, from: "İstanbul", fromCode: "IST", to: "Dalaman", toCode: "DLM", price: "899", img: "/assets/img/cities/dalaman.webp" },
-   { id: 8, from: "İstanbul", fromCode: "IST", to: "Adana", toCode: "ADA", price: "679", img: "/assets/img/cities/adana.webp" },
+   { id: 8, from: "İstanbul", fromCode: "IST", to: "Adana", toCode: "COV", price: "679", img: "/assets/img/cities/adana.webp" },
    { id: 9, from: "İstanbul", fromCode: "IST", to: "Gaziantep", toCode: "GZT", price: "749", img: "/assets/img/cities/gaziantep.webp" },
    { id: 10, from: "İstanbul", fromCode: "IST", to: "Kayseri", toCode: "ASR", price: "649", img: "/assets/img/cities/kayseri.webp" },
 ];
@@ -45,7 +45,7 @@ const cityImageMap: Record<string, string> = {
    BJV: '/assets/img/cities/bodrum.webp',
    ESB: '/assets/img/cities/ankara.webp',
    DLM: '/assets/img/cities/dalaman.webp',
-   ADA: '/assets/img/cities/adana.webp',
+   COV: '/assets/img/cities/adana.webp',
    GZT: '/assets/img/cities/gaziantep.webp',
    ASR: '/assets/img/cities/kayseri.webp',
 };
