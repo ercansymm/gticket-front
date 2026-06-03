@@ -11,19 +11,19 @@ interface DataType {
 const feature_data: DataType[] = [
    {
       id: 1,
-      icon: "/assets/img/about/su/fun-3.png",
+      icon: "/assets/img/about/su/fun-3.webp",
       title: "Top Destination",
       count: 5000,
    },
    {
       id: 2,
-      icon: "/assets/img/about/su/fun-2.png",
+      icon: "/assets/img/about/su/fun-2.webp",
       title: "Booking Completed",
       count: 3000
    },
    {
       id: 3,
-      icon: "/assets/img/about/su/fun-1.png",
+      icon: "/assets/img/about/su/fun-1.webp",
       title: "Top Destination",
       count: 5000
    },
@@ -32,18 +32,18 @@ const feature_data: DataType[] = [
 const About = () => {
    return (
       <div className="tg-about-area p-relative z-index-1 pb-80">
-         <Image className="tg-about-su-right-shape d-none d-xl-block" src="/assets/img/about/su/right-shape.png" alt="" width={200} height={200} />
+         <Image className="tg-about-su-right-shape d-none d-xl-block" src="/assets/img/about/su/right-shape.webp" alt="" width={200} height={200} />
          <div className="container">
             <div className="row align-items-end">
                <div className="col-lg-5">
                   <div className="tg-about-su-thumb p-relative mb-40 wow fadeInLeft" data-wow-delay=".4s" data-wow-duration=".6s">
                      <div className="tg-about-su-shape-2">
-                        <Image src="/assets/img/about/su/shape.png" alt="" width={200} height={200} />
+                        <Image src="/assets/img/about/su/shape.webp" alt="" width={200} height={200} />
                      </div>
                      <div className="tg-about-su-shape">
-                        <Image src="/assets/img/about/su/shape-2.png" alt="" width={200} height={200} />
+                        <Image src="/assets/img/about/su/shape-2.webp" alt="" width={200} height={200} />
                      </div>
-                     <Image src="/assets/img/about/su/thumb.png" alt="" width={600} height={400} />
+                     <Image src="/assets/img/about/su/thumb.webp" alt="" width={600} height={400} />
                   </div>
                </div>
                <div className="col-lg-7">
@@ -74,7 +74,7 @@ const About = () => {
                         </div>
                         <div className="tg-about-su-author d-flex align-items-center mb-10">
                            <div className="tg-about-su-author-avatar mr-10">
-                              <Image src="/assets/img/about/su/author.jpg" alt="" width={80} height={80} />
+                              <Image src="/assets/img/about/su/author.webp" alt="" width={80} height={80} />
                            </div>
                            <div className="tg-about-su-author-info">
                               <h5>Richard Kemel</h5>

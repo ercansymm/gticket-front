@@ -19,8 +19,8 @@ const Listing = () => {
 
    return (
       <div className="tg-listing-area tg-listing-su-spacing tg-grey-bg-2 pt-120 p-relative">
-         <Image className="tg-listing-su-shape d-none d-xl-block" src="/assets/img/listing/su/shape-2.png" alt="" width={200} height={200} />
-         <Image className="tg-listing-su-shape-2 d-none d-xxl-block" src="/assets/img/listing/su/shape-1.png" alt="" width={200} height={200} />
+         <Image className="tg-listing-su-shape d-none d-xl-block" src="/assets/img/listing/su/shape-2.webp" alt="" width={200} height={200} />
+         <Image className="tg-listing-su-shape-2 d-none d-xxl-block" src="/assets/img/listing/su/shape-1.webp" alt="" width={200} height={200} />
          <div className="container">
             <div className="row justify-content-center">
                <div className="col-lg-6">

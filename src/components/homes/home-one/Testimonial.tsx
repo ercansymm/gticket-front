@@ -5,11 +5,11 @@ import { type JSX, useState } from "react"
 import Image from "next/image";
 
 const avatar_data: string[] = [
-   "/assets/img/testimonial/tes-4/tes-1.png",
-   "/assets/img/testimonial/tes-4/tes-2.png",
-   "/assets/img/testimonial/tes-4/tes-3.png",
-   "/assets/img/testimonial/tes-4/tes-4.png",
-   "/assets/img/testimonial/tes-4/tes-2.png",];
+   "/assets/img/testimonial/tes-4/tes-1.webp",
+   "/assets/img/testimonial/tes-4/tes-2.webp",
+   "/assets/img/testimonial/tes-4/tes-3.webp",
+   "/assets/img/testimonial/tes-4/tes-4.webp",
+   "/assets/img/testimonial/tes-4/tes-2.webp",];
 
 interface DataType {
    id: number;
@@ -87,8 +87,8 @@ const Testimonial = () => {
 
    return (
       <div className="tg-testimonial-area tg-testimonial-su-wrap p-relative pt-160 pb-50">
-         <Image className="tg-testimonial-su-shape d-none d-xxl-block" src="/assets/img/testimonial/su/shape.png" alt="" width={200} height={200} />
-         <Image className="tg-testimonial-su-shape-2 d-none d-lg-block" src="/assets/img/testimonial/su/shape-2.png" alt="" width={200} height={200} />
+         <Image className="tg-testimonial-su-shape d-none d-xxl-block" src="/assets/img/testimonial/su/shape.webp" alt="" width={200} height={200} />
+         <Image className="tg-testimonial-su-shape-2 d-none d-lg-block" src="/assets/img/testimonial/su/shape-2.webp" alt="" width={200} height={200} />
          <div className="container">
             <div className="row justify-content-center">
                <div className="col-xl-10">

@@ -1,10 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Görsel optimizasyonu — unoptimized: true ile next/image encode adımı atlanır,
-  // resimler doğrudan kaynak URL'den sunulur. Cloudflare Cache-Control ile cache'ler.
+  // Görsel optimizasyonu — next/image kaynak görselleri otomatik WebP/AVIF'e çevirir
+  // ve cihaz genişliğine göre yeniden boyutlandırır. İlk istekte encode edilip cache'lenir.
+  // Kaynak dosyalar da fiziksel olarak WebP'ye çevrildi (bkz. public/), bu da encode yükünü düşürür.
   images: {
-    unoptimized: true,
+    formats: ["image/avif", "image/webp"],
   },
 
   // SEO-uyumlu trailing slash

@@ -33,7 +33,7 @@ const AirlinePartners = () => (
         {airlines.map((airline) => (
           <div key={airline.code} className="bb-airline-card" title={airline.name}>
             <Image
-              src={`/airlines/${airline.code}.png`}
+              src={`/airlines/${airline.code}.webp`}
               alt={airline.name}
               width={64}
               height={64}

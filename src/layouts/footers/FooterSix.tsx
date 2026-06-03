@@ -4,7 +4,7 @@ import Image from "next/image";
 const FooterSix = () => {
    return (
       <footer>
-         <div className="tg-footer-area pt-130 include-bg" style={{ backgroundImage: `url(/assets/img/footer/footer-2.jpg)` }}>
+         <div className="tg-footer-area pt-130 include-bg" style={{ backgroundImage: `url(/assets/img/footer/footer-2.webp)` }}>
             <div className="container">
                <div className="tg-footer-top pb-40">
                   <div className="row">
