@@ -13,7 +13,11 @@ import HomePageClient from "./page-client";
 import JsonLd from "@/components/JsonLd";
 
 export const metadata: Metadata = {
-  title: "Ucuz Uçak Bileti | Uçuş Ara, Karşılaştır, Satın Al",
+  // absolute: kök layout'taki "%s | AtaBilet" template'ini bypass eder; aksi halde
+  // sona ikinci kez marka eklenir. "Ata Bilet" (ayrı) kullanıcıların aradığı sorgu.
+  title: {
+    absolute: "Ucuz Uçak Bileti | Uçuş Ara ve Karşılaştır - Ata Bilet",
+  },
   description:
     "En uygun uçak bileti fiyatları AtaBilet'te. Yurt içi ve yurt dışı uçuşları karşılaştırın, online satın alın. 7/24 destek.",
   alternates: {

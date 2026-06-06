@@ -5,14 +5,19 @@ import { getToken } from "next-auth/jwt";
 const PROTECTED_PATHS = ["/favoriler"];
 
 export async function middleware(request: NextRequest) {
-  // HTTPS redirect in production
-  if (
-    process.env.NODE_ENV === "production" &&
-    request.headers.get("x-forwarded-proto") !== "https"
-  ) {
-    const httpsUrl = new URL(request.url);
-    httpsUrl.protocol = "https:";
-    return NextResponse.redirect(httpsUrl, 301);
+  // Canonical host + HTTPS redirect in production.
+  // Canonical is https://www.atabilet.com (see layout.tsx alternates), so force
+  // both https AND the www host. Without the apex->www 301, atabilet.com and
+  // www.atabilet.com resolve as two URLs and split SEO signals.
+  if (process.env.NODE_ENV === "production") {
+    const needsHttps = request.headers.get("x-forwarded-proto") !== "https";
+    const needsWww = request.headers.get("host") === "atabilet.com";
+    if (needsHttps || needsWww) {
+      const url = new URL(request.url);
+      url.protocol = "https:";
+      if (needsWww) url.hostname = "www.atabilet.com";
+      return NextResponse.redirect(url, 301);
+    }
   }
 
   // Auth protection for specific routes
