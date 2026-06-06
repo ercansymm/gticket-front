@@ -30,7 +30,7 @@ const FooterOne = () => {
                         <a
                            href="https://www.tursab.org.tr/tr/ddsv"
                            target="_blank"
-                           rel="noopener"
+                           rel="noopener nofollow"
                            aria-label="TÜRSAB Dijital Doğrulama Sistemi"
                            className="bb-footer__tursab-dds"
                         >
@@ -46,7 +46,7 @@ const FooterOne = () => {
                         <a
                            href="https://etbis.ticaret.gov.tr/tr/SiteSorgulamaSonuc?siteId=be0ca649-1625-4956-8081-c66ed8073fb7"
                            target="_blank"
-                           rel="noopener"
+                           rel="noopener nofollow"
                            aria-label="ETBİS Kayıt Belgesi"
                            className="bb-footer__etbis"
                         >
